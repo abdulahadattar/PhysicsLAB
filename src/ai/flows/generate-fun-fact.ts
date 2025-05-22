@@ -29,7 +29,7 @@ const FunContentItemSchema = z.object({
 export type FunContentItem = z.infer<typeof FunContentItemSchema>;
 
 const GenerateFunContentOutputSchema = z.object({
-  items: z.array(FunContentItemSchema).min(3).max(5)
+  items: z.array(FunContentItemSchema).min(3).max(20)
     .describe('An array of 3 to 5 diverse physics content items (facts, quotes, history, experiments), each with a main statement and an explanation.'),
 });
 export type GenerateFunContentOutput = z.infer<typeof GenerateFunContentOutputSchema>;

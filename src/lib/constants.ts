@@ -1,5 +1,6 @@
+
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -14,9 +15,10 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/simulations', label: 'Simulations', icon: Orbit },
   { href: '/study-material', label: 'Study Material', icon: BookOpen },
   { href: '/quizzes', label: 'Quizzes', icon: ListChecks },
-  { 
-    href: '/teacher-dashboard', 
-    label: 'Teacher Panel', 
+  { href: '/learn-with-ai', label: 'Learn with AI', icon: Brain },
+  {
+    href: '/teacher-dashboard',
+    label: 'Teacher Panel',
     icon: UserCog,
     subItems: [
       { href: '/teacher-dashboard/accounts', label: 'Student Accounts', icon: Users },
@@ -63,3 +65,4 @@ export const QUIZ_TOPICS = [
   { id: "dynamics", name: "Dynamics Quiz" },
   { id: "electromagnetism", name: "Electromagnetism Quiz" },
 ];
+
