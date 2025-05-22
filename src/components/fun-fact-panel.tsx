@@ -4,7 +4,7 @@
 import { generateFunContentBatch, type GenerateFunContentInput, type FunContentItem } from '@/ai/flows/generate-fun-fact';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lightbulb, RefreshCw, X } from 'lucide-react';
+import { Lightbulb, RefreshCw, WifiOff, X } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
 import { Skeleton } from './ui/skeleton';
@@ -19,15 +19,35 @@ export function FunFactPanel() {
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState<boolean>(false);
   const { isPanelVisible, togglePanelVisibility, isMounted } = useFunFactsSettings();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOffline(!navigator.onLine);
+      const handleOnline = () => setIsOffline(false);
+      const handleOffline = () => setIsOffline(true);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
+
   const fetchNewBatch = useCallback(async (topic: string = "general physics", gradeLevel: number = 10) => {
+    if (isOffline) {
+      setError("You are offline. Fun facts will load when you're back online.");
+      setIsLoading(false);
+      // Do not clear existing batch if offline, user might want to cycle through what they have
+      if (batch.length === 0) setCurrentFactToDisplay(null);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
       const input: GenerateFunContentInput = { topic, gradeLevel };
-      // Intentionally not passing chapterId for general facts in the panel, 
-      // unless a specific page context is made available to the panel later.
       const result = await generateFunContentBatch(input);
       
       if (result.items && result.items.length > 0) {
@@ -38,19 +58,16 @@ export function FunFactPanel() {
         localStorage.setItem(LOCAL_STORAGE_KEY_CURRENT_INDEX, JSON.stringify(0));
       } else {
         setError("No fun content received. Try again later.");
-        setBatch([]); // Clear previous batch
+        setBatch([]); 
         setCurrentFactToDisplay(null);
       }
     } catch (err) {
       console.error("Failed to generate fun content batch:", err);
       setError("Could not fetch fun content. Please try again.");
-      // Potentially keep old batch/fact displayed on error, or clear it:
-      // setBatch([]); 
-      // setCurrentFactToDisplay(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isOffline, batch.length]);
 
   const loadFromLocalStorage = useCallback(() => {
     try {
@@ -72,24 +89,30 @@ export function FunFactPanel() {
         const validIndex = Math.min(Math.max(0, loadedIndex), loadedBatch.length - 1);
         setCurrentIndex(validIndex);
         setCurrentFactToDisplay(loadedBatch[validIndex]);
-        return true; // Indicate that data was loaded
+        return true; 
       }
     } catch (e) {
       console.error("Error loading fun facts from localStorage:", e);
-      localStorage.removeItem(LOCAL_STORAGE_KEY_BATCH); // Clear corrupted data
+      localStorage.removeItem(LOCAL_STORAGE_KEY_BATCH); 
       localStorage.removeItem(LOCAL_STORAGE_KEY_CURRENT_INDEX);
     }
-    return false; // Indicate no data was loaded
+    return false; 
   }, []);
 
   useEffect(() => {
     if (isPanelVisible && isMounted) {
       const dataLoaded = loadFromLocalStorage();
       if (!dataLoaded) {
-        fetchNewBatch();
+        // Only fetch new batch if online, or if forced by user action later
+        if (!isOffline) {
+          fetchNewBatch();
+        } else {
+           setError("No fun facts cached. Connect to the internet to load them.");
+           setCurrentFactToDisplay(null);
+        }
       }
     }
-  }, [isPanelVisible, isMounted, loadFromLocalStorage, fetchNewBatch]);
+  }, [isPanelVisible, isMounted, loadFromLocalStorage, fetchNewBatch, isOffline]);
 
   const handleShowNextFact = () => {
     if (isLoading) return;
@@ -100,7 +123,7 @@ export function FunFactPanel() {
       setCurrentFactToDisplay(batch[nextIndex]);
       localStorage.setItem(LOCAL_STORAGE_KEY_CURRENT_INDEX, JSON.stringify(nextIndex));
     } else {
-      // End of current batch, fetch a new one
+      // End of current batch, fetch a new one (will check for online status)
       fetchNewBatch();
     }
   };
@@ -129,28 +152,38 @@ export function FunFactPanel() {
             <Skeleton className="h-3 w-2/3 mt-1" />
           </div>
         )}
-        {error && !isLoading && <p className="text-sm text-destructive">{error}</p>}
+        {error && !isLoading && (
+            <div className="flex flex-col items-center text-center">
+                {isOffline && <WifiOff className="h-6 w-6 text-destructive mb-1" />}
+                <p className="text-sm text-destructive">{error}</p>
+            </div>
+        )}
         {!isLoading && !error && currentFactToDisplay && (
           <>
             <p className="text-sm font-semibold">{currentFactToDisplay.content}</p>
             <CardDescription className="mt-1 text-xs">{currentFactToDisplay.explanation}</CardDescription>
           </>
         )}
-        {!isLoading && !error && !currentFactToDisplay && (
+        {!isLoading && !error && !currentFactToDisplay && !isOffline && (
              <p className="text-sm text-muted-foreground">No fun fact available at the moment.</p>
+        )}
+         {!isLoading && !error && !currentFactToDisplay && isOffline && (
+             <div className="flex flex-col items-center text-center">
+                <WifiOff className="h-6 w-6 text-muted-foreground mb-1" />
+                <p className="text-sm text-muted-foreground">Fun facts will appear here when you're online or if previously cached.</p>
+            </div>
         )}
         <Button
           variant="outline"
           size="sm"
           onClick={handleShowNextFact}
-          disabled={isLoading}
+          disabled={isLoading || (isOffline && batch.length === 0)}
           className="mt-3 w-full"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Next Tidbit
+          {isOffline && batch.length === 0 ? "Offline" : "Next Tidbit"}
         </Button>
       </CardContent>
     </Card>
   );
 }
-

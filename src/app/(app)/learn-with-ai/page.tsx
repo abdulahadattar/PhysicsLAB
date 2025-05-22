@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Brain, Camera, FileImage, Send, Sparkles, Loader2 } from "lucide-react";
+import { Brain, Camera, FileImage, Send, Sparkles, Loader2, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from 'next/image';
 import { aiLearningAssistant, type AiLearningAssistantInput, type AiLearningAssistantOutput } from '@/ai/flows/ai-learning-assistant-flow';
@@ -21,9 +21,24 @@ export default function LearnWithAiPage() {
   
   const [textQuery, setTextQuery] = useState("");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
+  // const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null); // Keep if needed for other processing
   const [aiResponse, setAiResponse] = useState<AiLearningAssistantOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
 
   const getCameraPermission = useCallback(async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -40,8 +55,10 @@ export default function LearnWithAiPage() {
       setHasCameraPermission(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+             setIsStreaming(true);
+        };
       }
-      setIsStreaming(true);
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -54,12 +71,10 @@ export default function LearnWithAiPage() {
   }, [toast]);
 
   useEffect(() => {
-    // Automatically request camera permission on mount if not already determined
     if (hasCameraPermission === null) {
        getCameraPermission();
     }
     
-    // Cleanup stream on component unmount
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
@@ -72,7 +87,7 @@ export default function LearnWithAiPage() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setUploadedImageFile(file);
+      // setUploadedImageFile(file); // Keep if file object needed elsewhere
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result as string);
@@ -82,7 +97,7 @@ export default function LearnWithAiPage() {
   };
 
   const captureFromCamera = () => {
-    if (videoRef.current && isStreaming) {
+    if (videoRef.current && isStreaming && videoRef.current.readyState >= videoRef.current.HAVE_METADATA) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
@@ -91,18 +106,22 @@ export default function LearnWithAiPage() {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/png');
         setUploadedImage(dataUri);
-        // To convert data URI to file for consistency, if needed by backend
-        // fetch(dataUri).then(res => res.blob()).then(blob => {
-        //   setUploadedImageFile(new File([blob], "camera-capture.png", { type: "image/png" }));
-        // });
       }
        toast({ title: "Image Captured", description: "Image from camera has been captured." });
     } else {
-       toast({ title: "Camera Not Ready", description: "Please enable and start the camera stream first.", variant: "destructive" });
+       toast({ title: "Camera Not Ready", description: "Please enable and start the camera stream first, or wait for it to initialize.", variant: "destructive" });
     }
   };
 
   const handleSubmitToAI = async () => {
+    if (!isOnline) {
+      toast({
+        title: "Offline",
+        description: "AI features require an internet connection. Please connect and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!textQuery.trim() && !uploadedImage) {
       toast({
         title: "Input Required",
@@ -147,6 +166,16 @@ export default function LearnWithAiPage() {
         </CardHeader>
       </Card>
 
+      {!isOnline && (
+        <Alert variant="destructive">
+          <WifiOff className="h-4 w-4" />
+          <AlertTitle>You are currently offline</AlertTitle>
+          <AlertDescription>
+            The AI learning assistant requires an internet connection to function. Please connect to the internet to use this feature.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -168,7 +197,7 @@ export default function LearnWithAiPage() {
               )}
                {hasCameraPermission === true && !isStreaming && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground p-2 bg-background/80 rounded-md">Initializing camera...</p>
                 </div>
               )}
             </div>
@@ -188,7 +217,7 @@ export default function LearnWithAiPage() {
               <div className="mt-4 space-y-2">
                 <Label>Preview:</Label>
                 <Image src={uploadedImage} alt="Uploaded preview" width={200} height={150} className="rounded-md border object-contain" />
-                <Button variant="outline" size="sm" onClick={() => { setUploadedImage(null); setUploadedImageFile(null); }}>Clear Image</Button>
+                <Button variant="outline" size="sm" onClick={() => { setUploadedImage(null); /* setUploadedImageFile(null); */ }}>Clear Image</Button>
               </div>
             )}
           </CardContent>
@@ -209,9 +238,9 @@ export default function LearnWithAiPage() {
                 onChange={(e) => setTextQuery(e.target.value)}
               />
             </div>
-            <Button onClick={handleSubmitToAI} disabled={isLoading} className="w-full">
+            <Button onClick={handleSubmitToAI} disabled={isLoading || !isOnline} className="w-full">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              {isLoading ? "Thinking..." : "Ask AI"}
+              {isLoading ? "Thinking..." : (isOnline ? "Ask AI" : "Offline - AI Disabled")}
             </Button>
             
             {aiResponse && (
@@ -234,7 +263,7 @@ export default function LearnWithAiPage() {
              {!isLoading && !aiResponse && (
                 <div className="mt-4 p-4 border rounded-md border-dashed text-center text-muted-foreground">
                     <Brain className="mx-auto h-8 w-8 mb-2"/>
-                    The AI's response will appear here.
+                    {isOnline ? "The AI's response will appear here." : "AI is offline. Connect to the internet to ask questions."}
                 </div>
             )}
           </CardContent>
