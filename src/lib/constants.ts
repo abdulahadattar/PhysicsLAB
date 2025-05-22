@@ -41,28 +41,10 @@ export const SIMULATION_TOPICS = [
   { id: "wave-properties", name: "Wave Properties", grade: 12, description: "Visualize wavelength, frequency, amplitude, and speed of waves." },
 ];
 
-export const STUDY_GRADES = [
-  { id: "9", name: "Grade 9", chapters: [
-    { id: "chapter-1", name: "Physical Quantities and Measurement" },
-    { id: "chapter-2", name: "Kinematics" },
-  ]},
-  { id: "10", name: "Grade 10", chapters: [
-    { id: "chapter-1", name: "Simple Harmonic Motion and Waves" },
-    { id: "chapter-2", name: "Sound" },
-  ]},
-  { id: "11", name: "Grade 11", chapters: [
-    { id: "chapter-1", name: "Measurements" },
-    { id: "chapter-2", name: "Vectors and Equilibrium" },
-  ]},
-  { id: "12", name: "Grade 12", chapters: [
-    { id: "chapter-1", name: "Electrostatics" },
-    { id: "chapter-2", name: "Current Electricity" },
-  ]},
-];
+// STUDY_GRADES is now fetched from /api/study-materials
 
 export const QUIZ_TOPICS = [
   { id: "kinematics", name: "Kinematics Quiz" },
   { id: "dynamics", name: "Dynamics Quiz" },
   { id: "electromagnetism", name: "Electromagnetism Quiz" },
 ];
-

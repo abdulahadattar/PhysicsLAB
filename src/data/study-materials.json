@@ -1,0 +1,43 @@
+
+[
+  {
+    "id": "9",
+    "name": "Grade 9",
+    "chapters": [
+      { "id": "g9-chapter-1", "name": "Physical Quantities and Measurement" },
+      { "id": "g9-chapter-2", "name": "Kinematics" },
+      { "id": "g9-chapter-3", "name": "Dynamics" },
+      { "id": "g9-chapter-4", "name": "Turning Effect of Forces" }
+    ]
+  },
+  {
+    "id": "10",
+    "name": "Grade 10",
+    "chapters": [
+      { "id": "g10-chapter-1", "name": "Simple Harmonic Motion and Waves" },
+      { "id": "g10-chapter-2", "name": "Sound" },
+      { "id": "g10-chapter-3", "name": "Geometrical Optics" },
+      { "id": "g10-chapter-4", "name": "Electrostatics" }
+    ]
+  },
+  {
+    "id": "11",
+    "name": "Grade 11",
+    "chapters": [
+      { "id": "g11-chapter-1", "name": "Measurements" },
+      { "id": "g11-chapter-2", "name": "Vectors and Equilibrium" },
+      { "id": "g11-chapter-3", "name": "Motion and Force" },
+      { "id": "g11-chapter-4", "name": "Work and Energy" }
+    ]
+  },
+  {
+    "id": "12",
+    "name": "Grade 12",
+    "chapters": [
+      { "id": "g12-chapter-1", "name": "Electrostatics" },
+      { "id": "g12-chapter-2", "name": "Current Electricity" },
+      { "id": "g12-chapter-3", "name": "Electromagnetism" },
+      { "id": "g12-chapter-4", "name": "Electromagnetic Induction" }
+    ]
+  }
+]
