@@ -11,13 +11,13 @@ import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 300;
 const NUM_PARTICLES = 50;
-const PARTICLE_RADIUS = 5; // Slightly larger for better visibility
+const PARTICLE_RADIUS = 5;
 
 interface Particle {
   id: number;
@@ -38,6 +38,11 @@ interface PVDataPoint {
   pressure: number;
 }
 
+// Define fixed domains for the P-V chart to make point movement clearer
+const PV_CHART_VOLUME_DOMAIN: [number, number] = [0, 25]; // Conceptual Volume Units
+const PV_CHART_PRESSURE_DOMAIN: [number, number] = [0, 10]; // Conceptual Pressure Units
+
+
 export default function StatesOfMatterPage() {
   const [matterState, setMatterState] = useState<MatterState>("solid");
   const [temperatureFactor, setTemperatureFactor] = useState(0.3); // 0 to 1
@@ -45,24 +50,29 @@ export default function StatesOfMatterPage() {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [predictedStateText, setPredictedStateText] = useState<PredictedState>("Solid");
   const [triplePointHint, setTriplePointHint] = useState<string | null>(null);
-  const [pvData, setPvData] = useState<PVDataPoint[]>([]);
+  const [pvData, setPvData] = useState<PVDataPoint[]>([{ volume: 10, pressure: 1 }]); // Initial dummy point
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
 
   const getPredictedState = useCallback((temp: number, pres: number): PredictedState => {
-    // Simplified thresholds for conceptual prediction
-    if (temp < 0.25) { // Low temp
-      if (pres > 0.4) return "Solid";
-      return "Solid"; // Default to solid at very low temp
-    } else if (temp < 0.65) { // Medium temp
-      if (pres > 0.75) return "Liquid"; // High pressure can keep it liquid
-      if (pres < 0.25) return "Gas"; // Low pressure allows gas
-      if (temp > 0.4 && temp < 0.55 && pres > 0.4 && pres < 0.6) return "Liquid"; // "Triple point like" region
-      return "Liquid"; // Default to liquid
-    } else { // High temp
-      if (pres > 0.8 && temp < 0.8) return "Supercritical Fluid"; // Conceptual
-      return "Gas";
+    // Simplified conceptual thresholds
+    if (temp < 0.1) { // Very Low Temp
+        if (pres > 0.05) return "Solid"; // Even slight pressure keeps it solid
+        return "Solid";
+    } else if (temp < 0.35) { // Low Temp
+        if (pres > 0.7) return "Solid";
+        if (pres < 0.1 && temp > 0.2) return "Gas"; // Sublimation?
+        if (temp > 0.25 && temp < 0.35 && pres > 0.3 && pres < 0.45) return "Melting";
+        return "Solid";
+    } else if (temp < 0.75) { // Medium Temp
+        if (pres > 0.85) return "Liquid"; // High pressure can keep it liquid
+        if (pres < 0.15) return "Gas";
+        if (temp > 0.45 && temp < 0.6 && pres > 0.35 && pres < 0.55) return "Boiling"; // Near "critical point like" transition
+        return "Liquid";
+    } else { // High Temp
+        if (pres > 0.6 && temp < 0.85) return "Supercritical Fluid";
+        return "Gas";
     }
   }, []);
   
@@ -73,18 +83,18 @@ export default function StatesOfMatterPage() {
     let alpha2 = 0.3;
 
     if (state === "gas") {
-        const tempEffect = Math.min(1, tempFactor * 1.5); // More pronounced effect for gas
-        baseHue = 20 + tempEffect * 40; // Shift from blueish (cold gas) to orange/red (hot gas)
+        const tempEffect = Math.min(1, tempFactor * 1.5);
+        baseHue = 20 + tempEffect * 40; 
         saturation = 80 + tempEffect * 20;
         lightness = 50 + tempEffect * 15;
         alpha1 = 0.7 + tempEffect * 0.2;
         alpha2 = 0.1 + tempEffect * 0.2;
     } else if (state === "liquid") {
-        baseHue = 200; // Consistent blue for liquid
+        baseHue = 200; 
         saturation = 70 + tempFactor * 10;
         lightness = 55 + tempFactor * 5;
     } else { // Solid
-        baseHue = 280; // Consistent purple/magenta for solid
+        baseHue = 280; 
         saturation = 60 + tempFactor * 10;
         lightness = 50 + tempFactor * 5;
     }
@@ -109,8 +119,8 @@ export default function StatesOfMatterPage() {
       if (matterState === "solid") {
         const numCols = Math.floor(Math.sqrt(NUM_PARTICLES * (CANVAS_WIDTH / (particlePadding * 1.5)) / (CANVAS_HEIGHT / (particlePadding*1.5)))) || 5;
         const numRows = Math.ceil(NUM_PARTICLES / numCols);
-        const spacingX = (CANVAS_WIDTH - 2 * particlePadding) / Math.max(1, numCols -1 + (numCols > 1 ? 1 : 0) );
-        const spacingY = (CANVAS_HEIGHT - 2 * particlePadding) / Math.max(1, numRows -1 + (numRows > 1 ? 1 : 0));
+        const spacingX = (CANVAS_WIDTH - 2 * particlePadding) / Math.max(1, numCols > 1 ? numCols -1 : 1 );
+        const spacingY = (CANVAS_HEIGHT - 2 * particlePadding) / Math.max(1, numRows > 1 ? numRows -1 : 1);
         
         const col = i % numCols;
         const row = Math.floor(i / numCols);
@@ -119,11 +129,11 @@ export default function StatesOfMatterPage() {
         p.initialY = particlePadding + row * spacingY;
         p.x = p.initialX;
         p.y = p.initialY;
-        p.vx = (Math.random() - 0.5) * 0.1; // Tiny initial kick
+        p.vx = (Math.random() - 0.5) * 0.1; 
         p.vy = (Math.random() - 0.5) * 0.1;
       } else if (matterState === "liquid") {
         p.x = Math.random() * (CANVAS_WIDTH - PARTICLE_RADIUS * 4) + PARTICLE_RADIUS * 2;
-        p.y = CANVAS_HEIGHT * 0.6 + Math.random() * (CANVAS_HEIGHT * 0.4 - PARTICLE_RADIUS * 2); // Start lower
+        p.y = CANVAS_HEIGHT * 0.7 + Math.random() * (CANVAS_HEIGHT * 0.3 - PARTICLE_RADIUS * 2); // Start lower
         const angle = Math.random() * 2 * Math.PI;
         const speed = 0.1 + Math.random() * 0.2; 
         p.vx = Math.cos(angle) * speed;
@@ -161,16 +171,16 @@ export default function StatesOfMatterPage() {
         let ax = 0, ay = 0;   
         
         const newColorStops = getParticleColorStops(
-            matterState === "solid" ? 280 : matterState === "liquid" ? 200 : 30, // baseHue depends on selected state for primary color
-            temperatureFactor, // tempFactor for color intensity/shift
+            matterState === "solid" ? 280 : matterState === "liquid" ? 200 : (20 + Math.min(1, temperatureFactor * 1.5) * 40), 
+            temperatureFactor, 
             matterState
         );
 
         if (matterState === "solid") {
           if (p.initialX === undefined || p.initialY === undefined) return {...p, colorStops: newColorStops };
           
-          const restoringForceFactor = 0.15 + pressureFactor * 0.15; 
-          const vibrationStrength = 0.02 * tempEffect + temperatureFactor * 0.1;
+          const restoringForceFactor = 0.15 + pressureFactor * 0.25; 
+          const vibrationStrength = 0.02 * tempEffect + temperatureFactor * 0.2;
 
           ax += (p.initialX - x) * restoringForceFactor; 
           ay += (p.initialY - y) * restoringForceFactor; 
@@ -179,63 +189,66 @@ export default function StatesOfMatterPage() {
           ay += (Math.random() - 0.5) * vibrationStrength;
 
           vx += ax; vy += ay;
-          vx *= (0.85 - pressureFactor * 0.05); 
-          vy *= (0.85 - pressureFactor * 0.05);
+          vx *= (0.85 - pressureFactor * 0.1); 
+          vy *= (0.85 - pressureFactor * 0.1);
 
-          x += vx * tempEffect * 0.5; // Solids move less overall
+          x += vx * tempEffect * 0.5; 
           y += vy * tempEffect * 0.5;
 
-          const maxDisplacement = PARTICLE_RADIUS * (0.2 + tempEffect * 0.5);
+          const maxDisplacement = PARTICLE_RADIUS * (0.2 + tempEffect * 0.8);
           x = Math.max(p.initialX - maxDisplacement, Math.min(x, p.initialX + maxDisplacement));
           y = Math.max(p.initialY - maxDisplacement, Math.min(y, p.initialY + maxDisplacement));
           x = Math.max(PARTICLE_RADIUS, Math.min(x, CANVAS_WIDTH - PARTICLE_RADIUS));
           y = Math.max(PARTICLE_RADIUS, Math.min(y, CANVAS_HEIGHT - PARTICLE_RADIUS));
 
         } else if (matterState === "liquid") {
-          ay += 0.025 * tempEffect; // Gravity
+          ay += 0.03 * tempEffect; // Gravity
 
-          const cohesionFactor = 0.001 * (1 - temperatureFactor); // Weaker cohesion at high temp
-          const horizontalCohesionForce = cohesionFactor * 0.1;
-          const verticalCohesionForce = cohesionFactor * 0.8; // Stronger vertical pull to settle
-          ax += (centerX - x) * horizontalCohesionForce;
-          ay += (centerY - y) * verticalCohesionForce;
+          const cohesionFactor = 0.0005 * (1 - temperatureFactor*0.5); // Weaker cohesion overall
+          const horizontalCohesionForce = cohesionFactor * 0.05; // Very weak horizontal pull
+          const verticalCohesionForce = cohesionFactor * 0.3; // Moderate vertical pull
           
-          const agitationStrength = 0.05 * tempEffect * (1 + pressureFactor * 0.5);
+          if(particles.length > 0) { // Avoid division by zero
+             ax += (centerX - x) * horizontalCohesionForce;
+             ay += (centerY - y) * verticalCohesionForce;
+          }
+          
+          const agitationStrength = 0.08 * tempEffect * (1 + pressureFactor * 0.8);
           ax += (Math.random() - 0.5) * agitationStrength;
           ay += (Math.random() - 0.5) * agitationStrength;
 
           vx += ax; vy += ay;
           x += vx * tempEffect; y += vy * tempEffect;
 
-          if (x < PARTICLE_RADIUS) { vx *= -0.3; x = PARTICLE_RADIUS; }
-          if (x > CANVAS_WIDTH - PARTICLE_RADIUS) { vx *= -0.3; x = CANVAS_WIDTH - PARTICLE_RADIUS; }
-          if (y < PARTICLE_RADIUS) { vy *= -0.1; y = PARTICLE_RADIUS; vx *= 0.85; } 
-          if (y > CANVAS_HEIGHT - PARTICLE_RADIUS) { vy *= -0.3; y = CANVAS_HEIGHT - PARTICLE_RADIUS; }
+          if (x < PARTICLE_RADIUS) { vx *= -0.2; x = PARTICLE_RADIUS; }
+          if (x > CANVAS_WIDTH - PARTICLE_RADIUS) { vx *= -0.2; x = CANVAS_WIDTH - PARTICLE_RADIUS; }
+          if (y < PARTICLE_RADIUS) { vy *= -0.05; y = PARTICLE_RADIUS; vx *= 0.9; } 
+          if (y > CANVAS_HEIGHT - PARTICLE_RADIUS) { vy *= -0.2; y = CANVAS_HEIGHT - PARTICLE_RADIUS; }
 
-          vx *= 0.96; vy *= 0.96; // Viscosity
+          vx *= 0.97; vy *= 0.97; // Viscosity
 
         } else { // Gas
-          const effectivePressureInfluence = 0.3 + pressureFactor * 1.7; 
-          const effectiveVolumeWidth = CANVAS_WIDTH / (effectivePressureInfluence * 0.4 + 0.6);
-          const effectiveVolumeHeight = CANVAS_HEIGHT / (effectivePressureInfluence * 0.4 + 0.6);
+          const effectivePressureInfluence = 0.1 + pressureFactor * 2.0; 
+          const effectiveVolumeWidth = CANVAS_WIDTH / (effectivePressureInfluence * 0.3 + 0.7);
+          const effectiveVolumeHeight = CANVAS_HEIGHT / (effectivePressureInfluence * 0.3 + 0.7);
           const offsetX = (CANVAS_WIDTH - effectiveVolumeWidth) / 2;
           const offsetY = (CANVAS_HEIGHT - effectiveVolumeHeight) / 2;
 
           x += vx * tempEffect; y += vy * tempEffect;
 
           if (x < offsetX + PARTICLE_RADIUS || x > offsetX + effectiveVolumeWidth - PARTICLE_RADIUS) {
-            vx *= -0.9; 
+            vx *= -0.85; 
             x = Math.max(offsetX + PARTICLE_RADIUS, Math.min(x, offsetX + effectiveVolumeWidth - PARTICLE_RADIUS));
           }
           if (y < offsetY + PARTICLE_RADIUS || y > offsetY + effectiveVolumeHeight - PARTICLE_RADIUS) {
-            vy *= -0.9;
+            vy *= -0.85;
             y = Math.max(offsetY + PARTICLE_RADIUS, Math.min(y, offsetY + effectiveVolumeHeight - PARTICLE_RADIUS));
           }
           
-           vx += (Math.random() - 0.5) * 0.03 * tempEffect;
-           vy += (Math.random() - 0.5) * 0.03 * tempEffect;
+           vx += (Math.random() - 0.5) * 0.035 * tempEffect;
+           vy += (Math.random() - 0.5) * 0.035 * tempEffect;
 
-            const maxSpeed = 1.5 * tempEffect; // Adjusted max speed for gas
+            const maxSpeed = 1.8 * tempEffect;
             const speed = Math.sqrt(vx*vx + vy*vy);
             if (speed > maxSpeed) {
                 vx = (vx / speed) * maxSpeed;
@@ -245,7 +258,7 @@ export default function StatesOfMatterPage() {
         return { ...p, x, y, vx, vy, colorStops: newColorStops };
       })
     );
-  }, [matterState, temperatureFactor, pressureFactor, particles, getParticleColorStops]); // particles dependency for liquid CoM
+  }, [matterState, temperatureFactor, pressureFactor, particles, getParticleColorStops]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -254,14 +267,14 @@ export default function StatesOfMatterPage() {
 
     const draw = () => {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.fillStyle = "hsl(var(--muted) / 0.5)"; // Slightly transparent background for canvas
+      ctx.fillStyle = "hsl(var(--muted) / 0.5)";
       ctx.fillRect(0,0,CANVAS_WIDTH, CANVAS_HEIGHT);
 
 
       if (matterState === "gas") {
-        const effectivePressureInfluence = 0.3 + pressureFactor * 1.7;
-        let effectiveVolumeWidth = CANVAS_WIDTH / (effectivePressureInfluence * 0.4 + 0.6);
-        let effectiveVolumeHeight = CANVAS_HEIGHT / (effectivePressureInfluence * 0.4 + 0.6);
+        const effectivePressureInfluence = 0.1 + pressureFactor * 2.0; 
+        let effectiveVolumeWidth = CANVAS_WIDTH / (effectivePressureInfluence * 0.3 + 0.7);
+        let effectiveVolumeHeight = CANVAS_HEIGHT / (effectivePressureInfluence * 0.3 + 0.7);
         let offsetX = (CANVAS_WIDTH - effectiveVolumeWidth) / 2;
         let offsetY = (CANVAS_HEIGHT - effectiveVolumeHeight) / 2;
 
@@ -275,7 +288,7 @@ export default function StatesOfMatterPage() {
         if (p.colorStops && p.colorStops.length >=2) {
             gradient.addColorStop(p.colorStops[0].offset, p.colorStops[0].color);
             gradient.addColorStop(p.colorStops[1].offset, p.colorStops[1].color);
-        } else { // Fallback if colorStops are not defined
+        } else { 
             gradient.addColorStop(0, "hsla(200, 70%, 70%, 0.9)");
             gradient.addColorStop(1, "hsla(200, 70%, 50%, 0.3)");
         }
@@ -303,30 +316,36 @@ export default function StatesOfMatterPage() {
     const predState = getPredictedState(temperatureFactor, pressureFactor);
     setPredictedStateText(predState);
 
-    if (temperatureFactor > 0.42 && temperatureFactor < 0.58 && pressureFactor > 0.38 && pressureFactor < 0.62) {
+    if (temperatureFactor > 0.30 && temperatureFactor < 0.40 && pressureFactor > 0.35 && pressureFactor < 0.50) {
         setTriplePointHint("Conditions are near a conceptual triple point: particles may exhibit mixed behaviors or rapid transitions.");
     } else {
         setTriplePointHint(null);
     }
     
     // Update PV Data
-    let conceptualVolume = 1.0; // Arbitrary units
-    let conceptualPressure = 1.0; // Arbitrary units
+    let conceptualVolumeValue = 10; // Default for solid/liquid for chart display
+    let conceptualPressureValue = 1; // Default for solid/liquid
 
     if (matterState === "gas") {
-        const effectivePressureInfluence = 0.3 + pressureFactor * 1.7; 
-        const invVolumeFactor = (effectivePressureInfluence * 0.4 + 0.6);
-        conceptualVolume = 1 / invVolumeFactor; // Volume is inversely related to pressure factor
-        conceptualPressure = (0.5 + temperatureFactor * 1.5) * invVolumeFactor ; // P is related to T and 1/V
+        const baseVolume = PV_CHART_VOLUME_DOMAIN[1] * 0.8; // Start with a larger base volume for gas
+        // Volume is inversely related to pressureFactor and slightly increases with temperatureFactor
+        conceptualVolumeValue = baseVolume / (1 + pressureFactor * 3) * (1 + temperatureFactor * 0.3);
+        
+        // Pressure is directly related to temperatureFactor and increases with pressureFactor (confinement)
+        conceptualPressureValue = (PV_CHART_PRESSURE_DOMAIN[1] * 0.15) + (temperatureFactor * PV_CHART_PRESSURE_DOMAIN[1] * 0.7) + (pressureFactor * PV_CHART_PRESSURE_DOMAIN[1] * 0.5);
     } else if (matterState === "liquid") {
-        conceptualVolume = 0.2 + (0.1 * temperatureFactor); // Liquids slightly expand with temp
-        conceptualPressure = 1.0 + pressureFactor * 2 + temperatureFactor; // Pressure builds in confined liquid
+        conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[1] * 0.25 * (1 + temperatureFactor * 0.05); // Liquids are less compressible but expand slightly
+        conceptualPressureValue = (PV_CHART_PRESSURE_DOMAIN[1] * 0.3) + (pressureFactor * PV_CHART_PRESSURE_DOMAIN[1] * 0.6) + (temperatureFactor * PV_CHART_PRESSURE_DOMAIN[1] * 0.2);
     } else { // Solid
-        conceptualVolume = 0.15; // Solids are dense
-        conceptualPressure = 1.5 + pressureFactor * 2; // High conceptual pressure for solids
+        conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[1] * 0.15 * (1 + temperatureFactor * 0.02); // Solids are least compressible
+        conceptualPressureValue = (PV_CHART_PRESSURE_DOMAIN[1] * 0.4) + (pressureFactor * PV_CHART_PRESSURE_DOMAIN[1] * 0.5) + (temperatureFactor * PV_CHART_PRESSURE_DOMAIN[1] * 0.1);
     }
-     setPvData([{ volume: Math.max(0.1, conceptualVolume * 10), pressure: Math.max(0.1, conceptualPressure) }]);
+     
+    // Clamp values to chart domain to ensure point is always visible
+    conceptualVolumeValue = Math.max(PV_CHART_VOLUME_DOMAIN[0], Math.min(conceptualVolumeValue, PV_CHART_VOLUME_DOMAIN[1]));
+    conceptualPressureValue = Math.max(PV_CHART_PRESSURE_DOMAIN[0], Math.min(conceptualPressureValue, PV_CHART_PRESSURE_DOMAIN[1]));
 
+    setPvData([{ volume: conceptualVolumeValue, pressure: conceptualPressureValue }]);
 
   }, [temperatureFactor, pressureFactor, getPredictedState, matterState]);
   
@@ -355,14 +374,14 @@ export default function StatesOfMatterPage() {
                 <Button variant="outline" size="icon"><HelpCircle className="h-5 w-5"/></Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 text-sm">
-                <p>Select a primary state, then adjust Temperature and Pressure to observe changes. The "Predicted State" indicates likely phase based on T & P. The P-V diagram is most relevant for gases.</p>
+                <p>Select a primary state model, then adjust Temperature and Pressure to observe changes. The "Predicted State" indicates a likely phase. The P-V diagram shows conceptual pressure-volume relationships (most dynamic for gases).</p>
               </PopoverContent>
             </Popover>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6 items-start">
-            <div className="md:col-span-1 space-y-4"> {/* Controls Column */}
+            <div className="md:col-span-1 space-y-4">
               <Card>
                 <CardHeader><CardTitle className="text-xl">Controls</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -395,36 +414,46 @@ export default function StatesOfMatterPage() {
                     {triplePointHint && <p className="text-xs text-primary italic">{triplePointHint}</p>}
                     <div className="pt-2 text-xs text-muted-foreground">
                         {matterState === "solid" && "Particles vibrate in fixed positions. High T increases vibration. High P constrains structure."}
-                        {matterState === "liquid" && "Particles are close but mobile. High T increases fluidity/energy. High P increases agitation."}
+                        {matterState === "liquid" && "Particles are close but mobile. High T increases fluidity/energy. High P increases agitation and confinement."}
                         {matterState === "gas" && "Particles are far apart, move freely. High T increases speed. High P reduces volume, increases collisions."}
                     </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="md:col-span-2 space-y-4"> {/* Visualization & Graph Column */}
+            <div className="md:col-span-2 space-y-4"> 
               <Card className="h-full">
                 <CardHeader><CardTitle className="text-lg">Particle Visualization</CardTitle></CardHeader>
                 <CardContent className="flex items-center justify-center p-0">
-                  <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="rounded-md border border-input"></canvas>
+                  <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="rounded-md border border-input bg-background shadow-inner"></canvas>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader><CardTitle className="text-lg flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-green-500" />Conceptual P-V Diagram</CardTitle></CardHeader>
                 <CardContent>
-                  {matterState === "gas" ? (
-                    <ChartContainer config={pvChartConfig} className="h-[200px] w-full">
-                      <ScatterChart margin={{ top: 5, right: 20, bottom: 20, left: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="volume" name="Volume" unit=" (arb.)" domain={['dataMin - 1', 'dataMax + 1']} label={{ value: "Conceptual Volume", position: "insideBottom", offset: -10, fontSize: 10 }}/>
-                        <YAxis type="number" dataKey="pressure" name="Pressure" unit=" (arb.)" domain={['dataMin - 0.5', 'dataMax + 0.5']} label={{ value: "Conceptual Pressure", angle: -90, position: "insideLeft", offset: 0, fontSize: 10 }}/>
-                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent />} />
-                        <Scatter name="Current State" data={pvData} fill="hsl(var(--primary))" />
-                      </ScatterChart>
-                    </ChartContainer>
-                  ) : (
-                    <p className="text-sm text-muted-foreground p-4 text-center">P-V diagram is most illustrative for the 'Gas' state model. Volume changes for solids and liquids are not significantly modeled here.</p>
-                  )}
+                  <ChartContainer config={pvChartConfig} className="h-[200px] w-full">
+                    <ScatterChart margin={{ top: 5, right: 20, bottom: 20, left: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        type="number" 
+                        dataKey="volume" 
+                        name="Volume" 
+                        unit=" (vol)" 
+                        domain={PV_CHART_VOLUME_DOMAIN}
+                        label={{ value: "Conceptual Volume", position: "insideBottom", offset: -10, fontSize: 10 }}
+                       />
+                      <YAxis 
+                        type="number" 
+                        dataKey="pressure" 
+                        name="Pressure" 
+                        unit=" (pres)" 
+                        domain={PV_CHART_PRESSURE_DOMAIN}
+                        label={{ value: "Conceptual Pressure", angle: -90, position: "insideLeft", offset: 0, fontSize: 10 }}
+                       />
+                      <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent />} />
+                      <Scatter name="Current State" data={pvData} fill="hsl(var(--primary))" />
+                    </ScatterChart>
+                  </ChartContainer>
                 </CardContent>
               </Card>
             </div>
@@ -437,3 +466,5 @@ export default function StatesOfMatterPage() {
     </div>
   );
 }
+
+    

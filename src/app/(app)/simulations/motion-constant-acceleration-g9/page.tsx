@@ -47,27 +47,26 @@ export default function MotionConstantAccelerationPage() {
     const initialData = calculateMotion(0);
     setHistory([initialData]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialVelocity, acceleration]); // Recalculate initial state if params change
+  }, [initialVelocity, acceleration]); 
 
   const animate = useCallback((timestamp: number) => {
     if (!lastFrameTimeRef.current) {
       lastFrameTimeRef.current = timestamp;
     }
-    const deltaTime = (timestamp - lastFrameTimeRef.current) / 1000; // seconds
+    const deltaTime = (timestamp - lastFrameTimeRef.current) / 1000; 
     lastFrameTimeRef.current = timestamp;
 
     setSimulationTime(prevTime => {
       let newTime = prevTime + deltaTime;
       if (newTime >= MAX_SIMULATION_TIME) {
         newTime = MAX_SIMULATION_TIME;
-        setIsRunning(false); // Auto-stop
+        setIsRunning(false); 
       }
       
       const motionData = calculateMotion(newTime);
       
       setHistory(prevHistory => {
         const newHistory = [...prevHistory, motionData];
-        // Keep history within a reasonable size for performance if needed
         return newHistory.filter(p => p.time <= MAX_SIMULATION_TIME);
       });
 
@@ -103,18 +102,34 @@ export default function MotionConstantAccelerationPage() {
     if (ctx) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, 50);
       ctx.fillStyle = "hsl(var(--primary))";
-      // Scale position for drawing. Let's say CANVAS_WIDTH represents 50m for example.
-      const maxDisplayDisplacement = Math.max(10, initialVelocity * MAX_SIMULATION_TIME + 0.5 * acceleration * MAX_SIMULATION_TIME * MAX_SIMULATION_TIME, displacement*1.1);
-      const drawX = (position / maxDisplayDisplacement) * (CANVAS_WIDTH - OBJECT_SIZE);
       
-      ctx.fillRect(Math.max(0, Math.min(drawX, CANVAS_WIDTH - OBJECT_SIZE)), 15, OBJECT_SIZE, OBJECT_SIZE);
+      const maxPossibleDisplacement = Math.max(
+        Math.abs(initialVelocity * MAX_SIMULATION_TIME + 0.5 * acceleration * MAX_SIMULATION_TIME * MAX_SIMULATION_TIME),
+        Math.abs(initialVelocity * MAX_SIMULATION_TIME), // Case for a=0
+        10 // Minimum display range to avoid division by zero or overly sensitive scaling
+      );
+      
+      let drawX;
+      if (acceleration >= 0 && initialVelocity >= 0) { // Moving right
+        drawX = (position / maxPossibleDisplacement) * (CANVAS_WIDTH - OBJECT_SIZE);
+      } else if (acceleration <= 0 && initialVelocity <= 0) { // Moving left
+        drawX = (CANVAS_WIDTH - OBJECT_SIZE) - (Math.abs(position) / maxPossibleDisplacement) * (CANVAS_WIDTH - OBJECT_SIZE);
+      } else { // Motion could be in either direction or change direction
+        // Center the "zero" point and scale from there
+        const neutralPoint = CANVAS_WIDTH / 2;
+        const scaleFactor = (CANVAS_WIDTH / 2 - OBJECT_SIZE / 2) / maxPossibleDisplacement;
+        drawX = neutralPoint + position * scaleFactor - OBJECT_SIZE / 2;
+      }
+      
+      drawX = Math.max(0, Math.min(drawX, CANVAS_WIDTH - OBJECT_SIZE)); // Clamp within canvas
+      ctx.fillRect(drawX, 15, OBJECT_SIZE, OBJECT_SIZE);
     }
-  }, [position, initialVelocity, acceleration, displacement]);
+  }, [position, initialVelocity, acceleration]);
 
 
   const handleToggleRun = () => {
     if (!isRunning && simulationTime >= MAX_SIMULATION_TIME - 0.01) {
-      handleReset(); // Reset if at end and trying to play again
+      handleReset(); 
     }
     setIsRunning(!isRunning);
   };
@@ -203,14 +218,14 @@ export default function MotionConstantAccelerationPage() {
                 <CardHeader><CardTitle className="text-lg">Graphs</CardTitle></CardHeader>
                 <CardContent>
                   <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                    <LineChart data={history} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                    <LineChart data={history} margin={{ top: 5, right: 20, left: -20, bottom: 5 }} isAnimationActive={false}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="time" type="number" domain={[0, MAX_SIMULATION_TIME]} tickFormatter={(val) => val.toFixed(1) + 's'} />
-                      <YAxis yAxisId="left" tickFormatter={(val) => val.toFixed(1)} />
-                      <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => val.toFixed(1)} />
+                      <YAxis yAxisId="left" tickFormatter={(val) => val.toFixed(1)} allowDataOverflow={true} />
+                      <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => val.toFixed(1)} allowDataOverflow={true} />
                       <RechartsTooltip content={<ChartTooltipContent />} />
-                      <Line yAxisId="left" type="monotone" dataKey="velocity" stroke={chartConfig.velocity.color} strokeWidth={2} dot={false} name="Velocity" />
-                      <Line yAxisId="right" type="monotone" dataKey="displacement" stroke={chartConfig.displacement.color} strokeWidth={2} dot={false} name="Displacement"/>
+                      <Line yAxisId="left" type="monotone" dataKey="velocity" stroke={chartConfig.velocity.color} strokeWidth={2} dot={false} name="Velocity" isAnimationActive={false} />
+                      <Line yAxisId="right" type="monotone" dataKey="displacement" stroke={chartConfig.displacement.color} strokeWidth={2} dot={false} name="Displacement" isAnimationActive={false}/>
                     </LineChart>
                   </ChartContainer>
                 </CardContent>
@@ -222,3 +237,5 @@ export default function MotionConstantAccelerationPage() {
     </div>
   );
 }
+
+    

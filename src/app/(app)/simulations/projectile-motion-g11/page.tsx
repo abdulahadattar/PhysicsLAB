@@ -43,58 +43,53 @@ export default function ProjectileMotionG11Page() {
 
     let tof, currentMaxHeightVal, currentRangeVal;
 
-    if (initialHeight < 0) { // Not physically realistic for this sim, treat as 0
-        setInitialHeight(0); // Correct state if needed, then recalc will happen
-        return;
-    }
+    // Ensure initialHeight is not negative from input
+    const nonNegativeInitialHeight = Math.max(0, initialHeight);
 
     if (initialVelocity === 0) {
-        if (initialHeight === 0) {
+        if (nonNegativeInitialHeight === 0) {
             tof = 0;
             currentMaxHeightVal = 0;
             currentRangeVal = 0;
-        } else { // Free fall from initialHeight
-            tof = Math.sqrt((2 * initialHeight) / G);
-            currentMaxHeightVal = initialHeight;
+        } else { 
+            tof = Math.sqrt((2 * nonNegativeInitialHeight) / G);
+            currentMaxHeightVal = nonNegativeInitialHeight;
             currentRangeVal = 0;
         }
     } else {
-        // Time to reach y=0 (ground)
-        // initialHeight + v0y * t - 0.5 * G * t^2 = 0
-        // 0.5 * G * t^2 - v0y * t - initialHeight = 0
         const a_quad = 0.5 * G;
         const b_quad = -v0y;
-        const c_quad = -initialHeight;
+        const c_quad = -nonNegativeInitialHeight;
         const discriminant = b_quad * b_quad - 4 * a_quad * c_quad;
 
-        if (discriminant < 0 && Math.abs(discriminant) < 1e-9) { // Effectively zero discriminant
+        if (discriminant < 0 && Math.abs(discriminant) < 1e-9) { 
              tof = -b_quad / (2 * a_quad);
              if (tof < 0) tof = 0;
         } else if (discriminant < 0) {
-            // Should not happen if initialHeight >= 0. Indicates an issue or projectile never returns to y=0 from above.
-            // For visualization, if it's fired upwards from a height, it will come down.
-            // This implies it would always be above y=0 if starting at y=0 and fired down (tof=0).
-            tof = 0; // Default if calculation suggests no return to y=0
+            tof = 0; 
         } else {
             const t1 = (-b_quad + Math.sqrt(discriminant)) / (2 * a_quad);
             const t2 = (-b_quad - Math.sqrt(discriminant)) / (2 * a_quad);
-            tof = Math.max(0, t1, t2); // Ensure positive time
+            tof = Math.max(0, t1, t2); 
         }
-         if (initialHeight === 0 && v0y < 0 && Math.abs(v0x) < 1e-9) { // Fired straight down from ground
+         if (nonNegativeInitialHeight === 0 && v0y < 0 && Math.abs(v0x) < 1e-9) {
             tof = 0;
         }
-
+        
+        // Ensure TOF is non-negative
+        tof = Math.max(0, tof);
 
         currentRangeVal = v0x * tof;
 
-        // Max height calculation:
-        // Time to reach peak vertical velocity = 0: t_peak_vy = v0y / G (if v0y > 0)
-        // Height reached from initialHeight at t_peak_vy: y_peak = initialHeight + v0y*t_peak_vy - 0.5*G*t_peak_vy^2
-        // y_peak = initialHeight + v0y*(v0y/G) - 0.5*G*(v0y/G)^2 = initialHeight + v0y^2/G - 0.5*v0y^2/G = initialHeight + v0y^2/(2G)
         if (v0y > 0) {
-            currentMaxHeightVal = initialHeight + (v0y * v0y) / (2 * G);
+            const timeToPeakVy = v0y / G;
+            if (timeToPeakVy <= tof) { // Peak is reached within flight time
+                currentMaxHeightVal = nonNegativeInitialHeight + (v0y * v0y) / (2 * G);
+            } else { // Projectile is already coming down or fired downwards from a height
+                currentMaxHeightVal = nonNegativeInitialHeight;
+            }
         } else {
-            currentMaxHeightVal = initialHeight; // If fired downwards or horizontally, max height is initial height
+            currentMaxHeightVal = nonNegativeInitialHeight; 
         }
     }
 
@@ -104,22 +99,22 @@ export default function ProjectileMotionG11Page() {
 
     const newTrajectory: TrajectoryPoint[] = [];
     const numPoints = 100;
-    if (tof > 1e-3) { // Only generate trajectory if time of flight is meaningful
+    if (tof > 0.001) { 
         const timeStep = tof / numPoints;
         for (let i = 0; i <= numPoints; i++) {
             const t = i * timeStep;
             const x = v0x * t;
-            const y = initialHeight + v0y * t - 0.5 * G * t * t;
-            newTrajectory.push({ x, y: Math.max(0, y) }); // Don't let y go below ground visually
+            const y = nonNegativeInitialHeight + v0y * t - 0.5 * G * t * t;
+            newTrajectory.push({ x, y: Math.max(0, y) }); 
         }
     } else {
-        newTrajectory.push({ x: 0, y: initialHeight }); // Start point
-        if (initialHeight > 0 || (initialVelocity === 0 && initialHeight === 0)) {
-             newTrajectory.push({ x: 0, y: 0 }); // End point at ground if it started above or at origin with no motion
+        newTrajectory.push({ x: 0, y: nonNegativeInitialHeight });
+        if (nonNegativeInitialHeight > 0 || (initialVelocity === 0 && nonNegativeInitialHeight === 0)) {
+             newTrajectory.push({ x: 0, y: 0 });
         }
     }
-     if (newTrajectory.length === 1 && initialHeight > 0) { // If it's just a drop from rest, ensure start and end points
-        newTrajectory.unshift({ x: 0, y: initialHeight }); // Ensure start point is there
+     if (newTrajectory.length === 1 && nonNegativeInitialHeight > 0) { 
+        newTrajectory.unshift({ x: 0, y: nonNegativeInitialHeight });
         newTrajectory.push({ x: 0, y: 0 });
     }
     if (newTrajectory.length === 0 ) newTrajectory.push({x:0, y:0});
@@ -127,25 +122,26 @@ export default function ProjectileMotionG11Page() {
 
     setTrajectory(newTrajectory);
 
-    // Dynamic scaling for SVG view
-    const effectiveRange = Math.max(currentRangeVal, 0.1); // Avoid zero for scaling
-    const effectiveMaxHeight = Math.max(currentMaxHeightVal, initialHeight, 0.1); // Consider initial height for y-scale
+    const effectiveRange = Math.max(Math.abs(currentRangeVal), 0.1);
+    const effectiveMaxHeight = Math.max(currentMaxHeightVal, nonNegativeInitialHeight, 0.1); 
 
-    const newScaleX = (canvasWidth - 2 * originX) / effectiveRange;
-    const newScaleY = (originY - 30) / effectiveMaxHeight; // 30 is top padding for SVG
+    const drawingWidth = canvasWidth - 2 * originX;
+    const drawingHeight = originY - 30; // 30 is top padding
 
-    setScaleX(Math.max(1, newScaleX)); // Avoid excessively large scales for tiny trajectories
-    setScaleY(Math.max(1, newScaleY));
+    const newScaleX = drawingWidth / effectiveRange;
+    const newScaleY = drawingHeight / effectiveMaxHeight;
+
+    setScaleX(Math.max(0.1, newScaleX)); 
+    setScaleY(Math.max(0.1, newScaleY));
 
 
   }, [initialVelocity, launchAngle, initialHeight, canvasWidth, canvasHeight, originX, originY]);
 
   useEffect(() => {
     calculateProjectileMotion();
-  }, [calculateProjectileMotion]); 
+  }, [calculateProjectileMotion, initialVelocity, launchAngle, initialHeight]); 
   
   useEffect(() => {
-    // Adjust origin and effective drawing area if canvas size changes (e.g. responsive)
     setOriginY(canvasHeight - 30);
   }, [canvasHeight]);
 
@@ -171,7 +167,17 @@ export default function ProjectileMotionG11Page() {
                     <Button variant="outline" size="icon"><HelpCircle className="h-5 w-5"/></Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
-                    {/* ... (popover content unchanged) ... */}
+                  <h4 className="font-medium leading-none mb-2">How to Use</h4>
+                  <p className="text-sm text-muted-foreground">
+                      - Adjust Initial Velocity, Launch Angle, and Initial Height.
+                      <br/>- The trajectory and calculated values (Time of Flight, Max Height, Range) will update automatically.
+                  </p>
+                  <h4 className="font-medium leading-none mt-3 mb-1">Formulas (from y=0):</h4>
+                  <ul className="text-xs text-muted-foreground list-disc pl-4">
+                      <li>Time of Flight (T): (2 * v₀ * sin(θ)) / g</li>
+                      <li>Max Height (H): (v₀² * sin²(θ)) / (2 * g)</li>
+                      <li>Range (R): (v₀² * sin(2θ)) / g</li>
+                  </ul>
                 </PopoverContent>
             </Popover>
           </div>
@@ -217,10 +223,10 @@ export default function ProjectileMotionG11Page() {
                         id="initialHeight"
                         min={0} max={50} step={0.5}
                         value={[initialHeight]}
-                        onValueChange={(value) => setInitialHeight(value[0])}
+                        onValueChange={(value) => setInitialHeight(value[0])} // No Math.max needed here, calculation handles it
                         className="flex-grow"
                         />
-                        <Input type="number" value={initialHeight} onChange={(e) => setInitialHeight(Math.max(0, parseFloat(e.target.value) || 0))} className="w-20 h-8"/>
+                        <Input type="number" value={initialHeight} onChange={(e) => setInitialHeight(parseFloat(e.target.value) || 0)} className="w-20 h-8"/>
                     </div>
                   </div>
                 </CardContent>
@@ -248,6 +254,18 @@ export default function ProjectileMotionG11Page() {
                     <line x1="0" y1={originY} x2={canvasWidth} y2={originY} stroke="hsl(var(--foreground))" strokeWidth="1" />
                     {/* Y axis (Height) */}
                     <line x1={originX} y1="0" x2={originX} y2={canvasHeight} stroke="hsl(var(--foreground))" strokeWidth="1" />
+                    {/* X axis labels - simple placeholder */}
+                    {trajectory.length > 1 && range > 0.1 && [0.25, 0.5, 0.75, 1].map(factor => (
+                        <text key={factor} x={originX + range * factor * scaleX} y={originY + 15} fontSize="10" fill="hsl(var(--muted-foreground))" textAnchor="middle">
+                           {(range * factor).toFixed(1)}m
+                        </text>
+                    ))}
+                    {/* Y axis labels - simple placeholder */}
+                     {maxHeight > 0.1 && [0.25, 0.5, 0.75, 1].map(factor => (
+                        <text key={factor} x={originX - 5} y={originY - maxHeight * factor * scaleY} fontSize="10" fill="hsl(var(--muted-foreground))" textAnchor="end" alignmentBaseline="middle">
+                           {(maxHeight * factor).toFixed(1)}m
+                        </text>
+                    ))}
 
                     {/* Trajectory path */}
                     {trajectory.length > 1 && (
@@ -266,7 +284,7 @@ export default function ProjectileMotionG11Page() {
                          <circle 
                             cx={originX + trajectory[0].x * scaleX}
                             cy={originY - trajectory[0].y * scaleY}
-                            r="3"
+                            r="4"
                             fill="hsl(var(--accent))"
                         />
                     )}
@@ -283,3 +301,5 @@ export default function ProjectileMotionG11Page() {
     </div>
   );
 }
+
+    
