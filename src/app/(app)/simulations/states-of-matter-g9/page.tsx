@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
 
 
 const CANVAS_WIDTH = 400;
@@ -26,8 +26,8 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-  initialX: number; // For solids
-  initialY: number; // For solids
+  initialX: number; 
+  initialY: number; 
   colorStops: { offset: number; color: string }[];
 }
 
@@ -43,32 +43,41 @@ const PV_CHART_VOLUME_DOMAIN: [number, number] = [5, 25];
 const PV_CHART_PRESSURE_DOMAIN: [number, number] = [0.5, 5];
 
 
-// Helper function to resolve 2D elastic collisions
 function resolveElasticCollision(p1: Particle, p2: Particle) {
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;
   let distance = Math.sqrt(dx * dx + dy * dy);
 
-  if (distance === 0) distance = 0.001;
+  if (distance === 0) distance = 0.001; // prevent division by zero
 
   if (distance < PARTICLE_DIAMETER) {
+    // Normal vector
     const nx = dx / distance;
     const ny = dy / distance;
+
+    // Tangential vector
     const tx = -ny;
     const ty = nx;
+
+    // Dot products (velocities along normal and tangential vectors)
     const dpTan1 = p1.vx * tx + p1.vy * ty;
     const dpTan2 = p2.vx * tx + p2.vy * ty;
     const dpNorm1 = p1.vx * nx + p1.vy * ny;
     const dpNorm2 = p2.vx * nx + p2.vy * ny;
+
+    // Conservation of momentum in 1D (normal direction)
+    // Assuming equal mass for simplicity in this model
     const v1PrimeNorm = dpNorm2;
     const v2PrimeNorm = dpNorm1;
 
+    // Update velocities
     p1.vx = tx * dpTan1 + nx * v1PrimeNorm;
     p1.vy = ty * dpTan1 + ny * v1PrimeNorm;
     p2.vx = tx * dpTan2 + nx * v2PrimeNorm;
     p2.vy = ty * dpTan2 + ny * v2PrimeNorm;
     
-    const overlap = 0.5 * (PARTICLE_DIAMETER - distance + 0.01);
+    // Separation step to prevent sticking
+    const overlap = 0.5 * (PARTICLE_DIAMETER - distance + 0.01); // Added small epsilon
     p1.x -= overlap * nx;
     p1.y -= overlap * ny;
     p2.x += overlap * nx;
@@ -89,60 +98,64 @@ export default function StatesOfMatterPage() {
   const requestRef = useRef<number>();
 
   const getPredictedState = useCallback((temp: number, pres: number): PredictedState => {
+    // Simplified logic for predicted state
     if (temp > 0.28 && temp < 0.38 && pres > 0.33 && pres < 0.43) return "Near Triple Point";
-    if (temp < 0.15) return pres > 0.1 ? "Solid" : "Solid";
-    if (temp < 0.35) {
-        if (pres > 0.6) return "Solid";
-        if (pres < 0.15 && temp > 0.25) return "Gas";
-        return "Melting";
+    
+    if (temp < 0.15) return "Solid"; // Very cold = solid
+    if (temp < 0.35) { // Cool to mild
+        if (pres > 0.6) return "Solid"; // High pressure forces solid
+        if (pres < 0.15 && temp > 0.25) return "Gas"; // Low pressure, mild temp = gas
+        return "Melting"; // In between
     }
-    if (temp < 0.7) {
-        if (pres > 0.8) return "Liquid"; 
-        if (pres < 0.2) return "Gas";
-        if (pres > 0.3 && pres < 0.7) return "Boiling";
+    if (temp < 0.7) { // Warm
+        if (pres > 0.8) return "Liquid"; // Very high pressure keeps it liquid
+        if (pres < 0.2) return "Gas"; // Low pressure allows gas
+        if (pres > 0.3 && pres < 0.7) return "Boiling"; // Mid pressures can lead to boiling
         return "Liquid";
     }
-    if (pres > 0.65 && temp < 0.85) return "Supercritical Fluid";
+    // Hot
+    if (pres > 0.65 && temp < 0.85) return "Supercritical Fluid"; // High P, high T
     return "Gas";
   }, []);
   
-  const getParticleColorStops = useCallback((baseHue: number, tempFactor: number) => {
+  const getParticleColorStops = useCallback((currentMatterState: MatterState, currentTempFactor: number) => {
+    let baseHue: number;
     let saturation = 70;
     let lightness = 60;
     let alpha1 = 0.95;
     let alpha2 = 0.4;
 
-    if (matterState === 'gas') {
-        baseHue = 30 + Math.min(1, tempFactor * 1.8) * 30;
-        saturation = 80 + tempFactor * 15;
-        lightness = 55 + tempFactor * 10;
-        alpha1 = 0.8 + tempFactor * 0.15;
-        alpha2 = 0.2 + tempFactor * 0.2;
-    } else if (matterState === 'liquid') {
-        baseHue = 200;
-        saturation = 65 + tempFactor * 10;
-        lightness = 50 + tempFactor * 10;
-    } else {
-        baseHue = 270;
-        saturation = 60 + tempFactor * 10;
-        lightness = 45 + tempFactor * 10;
+    if (currentMatterState === 'gas') {
+        baseHue = 30 + Math.min(1, currentTempFactor * 1.8) * 30; // Orange to Red
+        saturation = 80 + currentTempFactor * 15;
+        lightness = 55 + currentTempFactor * 10;
+        alpha1 = 0.8 + currentTempFactor * 0.15;
+        alpha2 = 0.2 + currentTempFactor * 0.2;
+    } else if (currentMatterState === 'liquid') {
+        baseHue = 200; // Blue
+        saturation = 65 + currentTempFactor * 10;
+        lightness = 50 + currentTempFactor * 10;
+    } else { // solid
+        baseHue = 270; // Purple
+        saturation = 60 + currentTempFactor * 10;
+        lightness = 45 + currentTempFactor * 10;
     }
     
     return [
         { offset: 0, color: `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${alpha1})` },
         { offset: 1, color: `hsla(${baseHue}, ${saturation}%, ${Math.max(20, lightness - 25)}%, ${alpha2})` }
     ];
-  }, [matterState]);
+  }, []);
 
 
   const initializeParticles = useCallback(() => {
     const newParticles: Particle[] = [];
-    const baseHue = matterState === "solid" ? 270 : matterState === "liquid" ? 200 : 30;
+    const initialTempFactor = temperatureFactor; // Capture temp at time of initialization
 
     for (let i = 0; i < NUM_PARTICLES; i++) {
       let p: Partial<Particle> & {initialX?:number, initialY?:number} = { 
         id: i,
-        colorStops: getParticleColorStops(baseHue, temperatureFactor)
+        colorStops: getParticleColorStops(matterState, initialTempFactor) // Use initial temp for initial colors
       };
       if (matterState === "solid") {
         const numCols = Math.floor(Math.sqrt(NUM_PARTICLES * (CANVAS_WIDTH / (PARTICLE_DIAMETER * 1.2)) / (CANVAS_HEIGHT / (PARTICLE_DIAMETER*1.2)))) || 5;
@@ -157,22 +170,22 @@ export default function StatesOfMatterPage() {
         p.initialY = PARTICLE_DIAMETER + row * spacingY;
         p.x = p.initialX;
         p.y = p.initialY;
-        p.vx = (Math.random() - 0.5) * 0.05; 
+        p.vx = (Math.random() - 0.5) * 0.05; // Minimal initial vibration
         p.vy = (Math.random() - 0.5) * 0.05;
       } else if (matterState === "liquid") {
         p.x = PARTICLE_RADIUS + Math.random() * (CANVAS_WIDTH - PARTICLE_DIAMETER);
-        p.y = CANVAS_HEIGHT * 0.6 + Math.random() * (CANVAS_HEIGHT * 0.4 - PARTICLE_DIAMETER); 
+        p.y = CANVAS_HEIGHT * 0.6 + Math.random() * (CANVAS_HEIGHT * 0.4 - PARTICLE_DIAMETER); // Start lower
         const angle = Math.random() * 2 * Math.PI;
-        const speed = 0.05 + Math.random() * 0.1; 
+        const speed = 0.05 + Math.random() * 0.1; // Moderate initial speed
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed;
-        p.initialX = p.x;
+        p.initialX = p.x; // Not strictly used for lattice but can be reference
         p.initialY = p.y;
-      } else { 
+      } else { // gas
         p.x = PARTICLE_RADIUS + Math.random() * (CANVAS_WIDTH - PARTICLE_DIAMETER);
         p.y = PARTICLE_RADIUS + Math.random() * (CANVAS_HEIGHT - PARTICLE_DIAMETER);
         const angle = Math.random() * 2 * Math.PI;
-        const speedBase = 0.5 + temperatureFactor * 1.5;
+        const speedBase = 0.5; // Gas particles start with some energy
         const speed = speedBase + (Math.random() - 0.5) * speedBase * 0.5;
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed;
@@ -182,26 +195,31 @@ export default function StatesOfMatterPage() {
       newParticles.push(p as Particle);
     }
     setParticles(newParticles);
-  }, [matterState, temperatureFactor, getParticleColorStops]);
+  }, [matterState, getParticleColorStops, temperatureFactor]); // temperatureFactor is included for initial color setup
 
   useEffect(() => {
     initializeParticles();
-  }, [initializeParticles]);
+  }, [initializeParticles]); // This now correctly runs when matterState changes (due to getParticleColorStops being stable and initializeParticles depending on matterState)
+
 
   const updateParticles = useCallback(() => {
     const K_TEMP_EFFECT = 0.1 + temperatureFactor * 2.5; 
     const K_PRESSURE_CONFINEMENT = 0.5 + (1 - pressureFactor) * 1.5; 
+    
     const K_SOLID_LATTICE = 0.15 + pressureFactor * 0.3; 
-    const K_SOLID_VIBRATION = 0.01 * K_TEMP_EFFECT + temperatureFactor * 0.1;
-    const K_LIQUID_GRAVITY = 0.015 * K_TEMP_EFFECT;
+    const K_SOLID_VIBRATION_STRENGTH = 0.01 * K_TEMP_EFFECT + temperatureFactor * 0.1;
+    
+    const K_LIQUID_GRAVITY = 0.015; // Constant gravity
     const K_LIQUID_COHESION_STRENGTH = 0.005 * (1 - temperatureFactor * 0.7); 
     const K_LIQUID_REPULSION_STRENGTH = 0.1;
     const K_LIQUID_INTERACTION_RANGE = PARTICLE_DIAMETER * 2.5;
+    const K_LIQUID_DAMPING = 0.98;
 
 
     setParticles(prevParticles => {
       const newParticleArray = prevParticles.map(p => ({...p})); 
 
+      // Particle-particle interactions
       for (let i = 0; i < newParticleArray.length; i++) {
         for (let j = i + 1; j < newParticleArray.length; j++) {
           const p1 = newParticleArray[i];
@@ -215,48 +233,68 @@ export default function StatesOfMatterPage() {
             const distSq = dx * dx + dy * dy;
             const dist = Math.sqrt(distSq);
 
-            if (dist < PARTICLE_DIAMETER && dist > 0.01) { 
+            if (dist < PARTICLE_DIAMETER && dist > 0.01) { // Repulsion if overlapping
               const force = K_LIQUID_REPULSION_STRENGTH * (PARTICLE_DIAMETER - dist) / dist;
-              p1.vx -= force * (dx / dist) * 0.5; 
-              p1.vy -= force * (dy / dist) * 0.5;
-              p2.vx += force * (dx / dist) * 0.5;
-              p2.vy += force * (dy / dist) * 0.5;
-            } else if (dist < K_LIQUID_INTERACTION_RANGE && dist > PARTICLE_DIAMETER) { 
+              // Apply force scaled by a small factor to prevent explosion, consider this as impulse
+              const impulseFactor = 0.1; 
+              p1.vx -= force * (dx / dist) * impulseFactor; 
+              p1.vy -= force * (dy / dist) * impulseFactor;
+              p2.vx += force * (dx / dist) * impulseFactor;
+              p2.vy += force * (dy / dist) * impulseFactor;
+
+              // Separation step
+              const overlap = 0.5 * (PARTICLE_DIAMETER - dist + 0.01);
+              p1.x -= overlap * (dx / dist);
+              p1.y -= overlap * (dy / dist);
+              p2.x += overlap * (dx / dist);
+              p2.y += overlap * (dy / dist);
+
+            } else if (dist < K_LIQUID_INTERACTION_RANGE && dist > PARTICLE_DIAMETER) { // Cohesion if close
               const force = K_LIQUID_COHESION_STRENGTH * (dist - PARTICLE_DIAMETER) / dist;
-              p1.vx += force * (dx / dist) * 0.5;
-              p1.vy += force * (dy / dist) * 0.5;
-              p2.vx -= force * (dx / dist) * 0.5;
-              p2.vy -= force * (dy / dist) * 0.5;
+              const impulseFactor = 0.05;
+              p1.vx += force * (dx / dist) * impulseFactor;
+              p1.vy += force * (dy / dist) * impulseFactor;
+              p2.vx -= force * (dx / dist) * impulseFactor;
+              p2.vy -= force * (dy / dist) * impulseFactor;
             }
           }
+          // Solid particle-particle interaction is minimal, mainly lattice based
         }
       }
       
       return newParticleArray.map(p => {
         let { x, y, vx, vy, initialX, initialY } = p;
-        const newColorStops = getParticleColorStops(
-            matterState === "solid" ? 270 : matterState === "liquid" ? 200 : (30 + Math.min(1, temperatureFactor * 1.8) * 30), 
-            temperatureFactor
-        );
+        const newColorStops = getParticleColorStops(matterState, temperatureFactor);
 
         if (matterState === "solid") {
+          // Force towards lattice position
           vx += (initialX - x) * K_SOLID_LATTICE;
           vy += (initialY - y) * K_SOLID_LATTICE;
-          vx += (Math.random() - 0.5) * K_SOLID_VIBRATION;
-          vy += (Math.random() - 0.5) * K_SOLID_VIBRATION;
-          vx *= (0.9 - pressureFactor * 0.1); 
-          vy *= (0.9 - pressureFactor * 0.1);
+          // Random vibration based on temperature
+          vx += (Math.random() - 0.5) * K_SOLID_VIBRATION_STRENGTH;
+          vy += (Math.random() - 0.5) * K_SOLID_VIBRATION_STRENGTH;
+          // Damping (influenced by pressure - higher P, more damping/rigidity)
+          vx *= (0.9 - pressureFactor * 0.2); 
+          vy *= (0.9 - pressureFactor * 0.2);
         } else if (matterState === "liquid") {
-          vy += K_LIQUID_GRAVITY; 
-          vx *= 0.98; 
-          vy *= 0.98;
+          vy += K_LIQUID_GRAVITY; // Apply gravity
+          // Apply temperature based agitation
+          vx += (Math.random() - 0.5) * K_TEMP_EFFECT * 0.02;
+          vy += (Math.random() - 0.5) * K_TEMP_EFFECT * 0.02;
+          vx *= K_LIQUID_DAMPING; 
+          vy *= K_LIQUID_DAMPING;
+        } else { // Gas
+            // Speed is influenced by K_TEMP_EFFECT during collision and initial setup.
+            // No additional random agitation per frame like liquids/solids needed here
+            // as collisions and wall bounces handle energy distribution.
         }
 
-        x += vx * (matterState === 'gas' ? K_TEMP_EFFECT * 0.8 : 1); 
-        y += vy * (matterState === 'gas' ? K_TEMP_EFFECT * 0.8 : 1);
+        x += vx * (matterState === 'gas' ? K_TEMP_EFFECT * 0.3 : 1); // Gas moves faster visually
+        y += vy * (matterState === 'gas' ? K_TEMP_EFFECT * 0.3 : 1);
 
-        let restitution = matterState === 'gas' ? 0.85 : 0.3; 
+        let restitution = matterState === 'gas' ? 0.85 : (matterState === 'liquid' ? 0.2 : 0.1); 
 
+        // Wall collision logic
         let minX = PARTICLE_RADIUS;
         let maxX = CANVAS_WIDTH - PARTICLE_RADIUS;
         let minY = PARTICLE_RADIUS;
@@ -266,18 +304,19 @@ export default function StatesOfMatterPage() {
             const effectiveWidth = CANVAS_WIDTH / K_PRESSURE_CONFINEMENT;
             const effectiveHeight = CANVAS_HEIGHT / K_PRESSURE_CONFINEMENT;
             minX = (CANVAS_WIDTH - effectiveWidth) / 2 + PARTICLE_RADIUS;
-            maxX = minX + effectiveWidth - PARTICLE_DIAMETER;
+            maxX = minX + effectiveWidth - PARTICLE_DIAMETER; // Corrected to diameter
             minY = (CANVAS_HEIGHT - effectiveHeight) / 2 + PARTICLE_RADIUS;
-            maxY = minY + effectiveHeight - PARTICLE_DIAMETER;
+            maxY = minY + effectiveHeight - PARTICLE_DIAMETER; // Corrected to diameter
         }
 
-        if (x < minX) { vx *= -restitution; x = minX; }
-        if (x > maxX) { vx *= -restitution; x = maxX; }
-        if (y < minY) { vy *= -restitution; y = minY; if(matterState === 'liquid') vx *= 0.9; } 
-        if (y > maxY) { vy *= -restitution; y = maxY; }
+        if (x < minX) { vx *= -restitution; x = minX + (minX - x) * restitution * 0.1; } // Add slight pushback
+        if (x > maxX) { vx *= -restitution; x = maxX - (x - maxX) * restitution * 0.1; }
+        if (y < minY) { vy *= -restitution; y = minY + (minY - y) * restitution * 0.1; if(matterState === 'liquid') vx *= 0.9; } 
+        if (y > maxY) { vy *= -restitution; y = maxY - (y - maxY) * restitution * 0.1; }
         
+        // Speed cap for non-gases to prevent instability
         if (matterState !== 'gas') {
-            const MAX_SPEED_NON_GAS = 1.5 + K_TEMP_EFFECT * 2;
+            const MAX_SPEED_NON_GAS = 1.5 + K_TEMP_EFFECT * 0.5; // Reduced effect from temp
             const speedSq = vx*vx + vy*vy;
             if (speedSq > MAX_SPEED_NON_GAS * MAX_SPEED_NON_GAS) {
                 const speed = Math.sqrt(speedSq);
@@ -299,11 +338,17 @@ export default function StatesOfMatterPage() {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       
       const computedStyle = getComputedStyle(canvas);
-      const mutedColorHSL = computedStyle.getPropertyValue('--muted').trim(); // e.g., "190 40% 80%"
+      const mutedColorHSL = computedStyle.getPropertyValue('--muted').trim(); 
 
       const bgGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-      bgGradient.addColorStop(0, `hsla(${mutedColorHSL}, 0.6)`);
-      bgGradient.addColorStop(1, `hsla(${mutedColorHSL}, 0.3)`);
+      // Ensure mutedColorHSL is valid before using it
+      if (mutedColorHSL && mutedColorHSL.includes('%')) { // Basic check for HSL format
+        bgGradient.addColorStop(0, `hsla(${mutedColorHSL}, 0.6)`);
+        bgGradient.addColorStop(1, `hsla(${mutedColorHSL}, 0.3)`);
+      } else { // Fallback if CSS variable isn't as expected
+        bgGradient.addColorStop(0, "rgba(200, 200, 220, 0.6)");
+        bgGradient.addColorStop(1, "rgba(200, 200, 220, 0.3)");
+      }
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0,0,CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -315,15 +360,21 @@ export default function StatesOfMatterPage() {
         const offsetX = (CANVAS_WIDTH - effectiveWidth) / 2;
         const offsetY = (CANVAS_HEIGHT - effectiveHeight) / 2;
 
-        ctx.strokeStyle = "hsl(var(--border))"; // Use CSS variable for border
+        ctx.strokeStyle = "hsl(var(--border))"; 
         ctx.lineWidth = 2;
         ctx.strokeRect(offsetX, offsetY, effectiveWidth, effectiveHeight);
       }
 
       particles.forEach(p => {
         const gradient = ctx.createRadialGradient(p.x, p.y, PARTICLE_RADIUS * 0.1, p.x, p.y, PARTICLE_RADIUS);
-        gradient.addColorStop(p.colorStops[0].offset, p.colorStops[0].color);
-        gradient.addColorStop(p.colorStops[1].offset, p.colorStops[1].color);
+        // Gracefully handle if colorStops are undefined momentarily
+        if (p.colorStops && p.colorStops.length === 2) {
+            gradient.addColorStop(p.colorStops[0].offset, p.colorStops[0].color);
+            gradient.addColorStop(p.colorStops[1].offset, p.colorStops[1].color);
+        } else { // Fallback color
+            gradient.addColorStop(0, "rgba(100,100,100,0.95)");
+            gradient.addColorStop(1, "rgba(50,50,50,0.4)");
+        }
         
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -342,7 +393,7 @@ export default function StatesOfMatterPage() {
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [particles, updateParticles, matterState, pressureFactor]);
+  }, [particles, updateParticles, matterState, pressureFactor]); // Removed getParticleColorStops as it's stable
 
   useEffect(() => {
     const predState = getPredictedState(temperatureFactor, pressureFactor);
@@ -359,7 +410,7 @@ export default function StatesOfMatterPage() {
     } else if (matterState === "liquid") {
         conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[0] + (PV_CHART_VOLUME_DOMAIN[1] - PV_CHART_VOLUME_DOMAIN[0]) * 0.15 * (1 + temperatureFactor * 0.03); 
         conceptualPressureValue = PV_CHART_PRESSURE_DOMAIN[0] + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.5) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.2);
-    } else { 
+    } else { // solid
         conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[0] + (PV_CHART_VOLUME_DOMAIN[1] - PV_CHART_VOLUME_DOMAIN[0]) * 0.05 * (1 + temperatureFactor * 0.01); 
         conceptualPressureValue = PV_CHART_PRESSURE_DOMAIN[0] + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.4) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.1);
     }
@@ -496,4 +547,3 @@ export default function StatesOfMatterPage() {
   );
 }
     
-
