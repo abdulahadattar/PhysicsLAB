@@ -38,53 +38,33 @@ export default function ProjectileMotionG11Page() {
     const v0x = initialVelocity * Math.cos(angleRad);
     const v0y = initialVelocity * Math.sin(angleRad);
 
-    // Time to reach max height (from initialHeight)
-    // v_y = v0y - gt => 0 = v0y - gt_peak => t_peak = v0y / G
-    const t_peak_from_v0y = v0y / G;
-    
-    // Max height calculation from initial height
-    // H = y0 + v0y*t_peak_from_v0y - 0.5*G*t_peak_from_v0y^2
-    // OR simpler: H = y0 + (v0y^2) / (2*G) (if v0y > 0 or peak is above initial height)
     let currentMaxHeight = initialHeight;
     if (v0y > 0) {
       currentMaxHeight = initialHeight + (v0y * v0y) / (2 * G);
-    } else if (initialHeight > 0 && v0y <= 0){ // Fired downwards or horizontally from a height
+    } else if (initialHeight > 0 && v0y <= 0){ 
       currentMaxHeight = initialHeight;
     }
     setMaxHeight(currentMaxHeight);
 
-
-    // Time of flight: y(t) = initialHeight + v0y*t - 0.5*G*t^2 = 0
-    // Solve quadratic equation: 0.5*G*t^2 - v0y*t - initialHeight = 0
-    // a = 0.5*G, b = -v0y, c = -initialHeight
-    // t = (-b +/- sqrt(b^2 - 4ac)) / 2a
     const a = 0.5 * G;
-    const b = -v0y;
-    const c = -initialHeight;
-    const discriminant = b * b - 4 * a * c;
+    const b_quad = -v0y; // Renamed to avoid conflict with 'b' if used elsewhere
+    const c_quad = -initialHeight; // Renamed
+    const discriminant = b_quad * b_quad - 4 * a * c_quad;
 
     let tof = 0;
-    if (discriminant >= 0) {
-      const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
-      const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
-      tof = Math.max(t1, t2 > 0 ? t2 : 0); // Ensure t is positive
-      if (initialVelocity === 0 && initialHeight === 0) tof = 0;
-    }
-     // Special case: if initial velocity is 0 and initial height is 0, TOF is 0
     if (initialVelocity === 0 && initialHeight === 0) {
         tof = 0;
-    } else if (initialHeight > 0 && v0y <= 0 && discriminant < 0 && initialVelocity > 0) { 
-        // This edge case means it never hits y=0 if fired downwards from height without enough speed
-        // For simulation purposes, let's just calculate time until it would pass y=0 if it could
-        // Or handle it by saying it lands immediately at y=initialHeight if v0y <= 0 (simpler for now)
-        // For a trajectory visual, we might still want to show some path.
-        // This needs careful consideration based on desired simulation realism vs simplicity.
-        // For now, if discriminant is negative, means no real roots for y=0,
-        // if initialHeight > 0.
-        // Let's take tof for maximum range up to G.
-        // This part is tricky if we don't allow y < 0. For this simple viz, we'll stick to positive TOF.
-        // If it never reaches y=0 (e.g. fired downwards and doesn't reach origin) tof would be based on some other criteria
-        // Let's assume it always "lands" or calculation is for y=0 crossing
+    } else if (discriminant >= 0) {
+      const t1 = (-b_quad + Math.sqrt(discriminant)) / (2 * a);
+      const t2 = (-b_quad - Math.sqrt(discriminant)) / (2 * a);
+      tof = Math.max(t1, t2 > 0 ? t2 : 0); 
+    } else {
+      // If discriminant is negative (e.g. fired downwards from a height but never reaches y=0)
+      // For this simulation, we'll consider time until y is significantly negative or some max time.
+      // Simplified: if it won't hit y=0, perhaps limit to a few seconds or time to reach peak if y0 is high.
+      // For now, this scenario might result in tof = 0, leading to minimal trajectory.
+      // A more robust handling might involve calculating time to reach a certain negative y or a max simulation time.
+      tof = 0; // Fallback if discriminant is negative and not initial drop
     }
 
     setTimeOfFlight(tof);
@@ -93,53 +73,52 @@ export default function ProjectileMotionG11Page() {
     setRange(currentRange);
 
     const newTrajectory: TrajectoryPoint[] = [];
-    if (tof > 0) {
-      const timeStep = tof / 100; // 100 points for the trajectory
-      for (let t = 0; t <= tof; t += timeStep) {
+    if (tof > 0.001) { // Use a small threshold for time of flight
+      const timeStep = Math.max(tof / 100, 0.01); // Ensure timeStep is reasonable
+      for (let t = 0; t <= tof + timeStep / 2; t += timeStep) { // Iterate slightly past tof to ensure endpoint
         const x = v0x * t;
         const y = initialHeight + v0y * t - 0.5 * G * t * t;
-        newTrajectory.push({ x, y });
+        newTrajectory.push({ x, y: Math.max(0,y) }); // Ensure y doesn't go below ground visually
+        if (y < 0 && t > 0) break; // Stop if it goes below ground
       }
-      // Ensure the last point is exactly at landing
-      if (newTrajectory.length > 0 && newTrajectory[newTrajectory.length-1].y !== 0 && initialHeight === 0) {
-         newTrajectory.push({x: currentRange, y: 0});
-      } else if (newTrajectory.length > 0 && initialHeight > 0) {
-         const finalX = v0x * tof;
-         const finalY = initialHeight + v0y * tof - 0.5 * G * tof * tof;
-         newTrajectory.push({x: finalX, y: Math.max(0, finalY)}); // Ensure y doesn't go negative if it 'lands' above 0
+      // Ensure the last point is exactly at landing if it hits ground
+      if (newTrajectory.length > 0 && newTrajectory[newTrajectory.length -1].y <=0) {
+        newTrajectory[newTrajectory.length -1].y = 0;
+        newTrajectory[newTrajectory.length -1].x = v0x * tof; // Ensure x is also at landing point
       }
-    } else if (initialHeight > 0 && initialVelocity === 0) { // Just dropping
-        newTrajectory.push({x:0, y: initialHeight});
-        newTrajectory.push({x:0, y:0}); // Simplistic drop line
+
+    } else if (initialHeight > 0 && initialVelocity === 0) { 
+        const dropTime = Math.sqrt((2 * initialHeight) / G);
+        setTimeOfFlight(dropTime);
         setMaxHeight(initialHeight);
         setRange(0);
-        setTimeOfFlight(Math.sqrt((2 * initialHeight) / G)); // time to drop
+        newTrajectory.push({x:0, y: initialHeight});
+        newTrajectory.push({x:0, y:0}); 
     } else {
-         newTrajectory.push({x:0, y:0}); // Start at origin if no motion
+         newTrajectory.push({x:0, y:initialHeight}); // Start at initial height if no motion or very short motion
+         if(initialHeight === 0) newTrajectory.push({x:0,y:0}); // Add origin if starting at ground with no motion
     }
+    
+    if(newTrajectory.length === 0) newTrajectory.push({x:0, y:0});
+
 
     setTrajectory(newTrajectory);
 
-    // Auto-scaling for canvas
-    const maxTrajX = newTrajectory.reduce((max, p) => Math.max(max, p.x), 0);
-    const maxTrajY = newTrajectory.reduce((max, p) => Math.max(max, p.y), 0);
+    const maxTrajX = newTrajectory.reduce((max, p) => Math.max(max, p.x), 0.1); // Avoid 0 for scaling
+    const maxTrajY = newTrajectory.reduce((max, p) => Math.max(max, p.y), initialHeight > 0 ? initialHeight : 0.1); // Avoid 0
     
-    const newScaleX = maxTrajX > 0 ? (canvasWidth * 0.9) / maxTrajX : 1; // 90% width
-    const newScaleY = maxTrajY > 0 ? (canvasHeight * 0.9) / maxTrajY : 1; // 90% height
+    const newScaleX = (canvasWidth * 0.9) / Math.max(maxTrajX, 1); // Prevent scale from being too large
+    const newScaleY = (canvasHeight * 0.9) / Math.max(maxTrajY, 1);
     
     setScaleX(newScaleX);
     setScaleY(newScaleY);
-
 
   }, [initialVelocity, launchAngle, initialHeight, canvasWidth, canvasHeight]);
 
   useEffect(() => {
     calculateProjectileMotion();
-  }, [calculateProjectileMotion]);
+  }, [initialVelocity, launchAngle, initialHeight, calculateProjectileMotion]); // Added direct dependencies
   
-  // Handle canvas resize (optional, could be fixed size)
-  // For simplicity, let's use a fixed size defined by state.
-
   return (
     <div className="space-y-6">
       <Button variant="outline" asChild size="sm">
@@ -152,7 +131,7 @@ export default function ProjectileMotionG11Page() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-3xl">Projectile Motion Simulator (Grade 11)</CardTitle>
+              <CardTitle className="text-3xl">Projectile Motion Simulator</CardTitle>
               <CardDescription>
                 Adjust initial velocity, launch angle, and initial height to observe the projectile's trajectory.
                 (Assumes no air resistance, g = {G} m/s²)
@@ -256,25 +235,29 @@ export default function ProjectileMotionG11Page() {
                 <CardContent className="flex items-center justify-center h-[calc(100%-4rem)] p-2"> {/* Adjust height as needed */}
                   <svg width={canvasWidth} height={canvasHeight} className="bg-muted rounded-md border border-border">
                     {/* Ground line */}
-                    <line x1="0" y1={canvasHeight} x2={canvasWidth} y2={canvasHeight} stroke="hsl(var(--foreground))" strokeWidth="2" />
-                    
+                    <line x1="0" y1={canvasHeight} x2={canvasWidth} y2={canvasHeight} stroke="hsl(var(--foreground))" strokeWidth="1" />
+                     {/* Y axis (Height) */}
+                    <line x1="0" y1="0" x2="0" y2={canvasHeight} stroke="hsl(var(--foreground))" strokeWidth="1" />
+
                     {/* Trajectory path */}
-                    <path
-                      d={trajectory.map((p, i) => 
-                          `${i === 0 ? 'M' : 'L'} ${p.x * scaleX} ${canvasHeight - p.y * scaleY}`
-                        ).join(' ')
-                      }
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="2"
-                      fill="none"
-                    />
-                    {/* Optional: Mark max height point */}
-                    {maxHeight > 0 && trajectory.length > 0 && (
-                        <circle 
-                            cx={ (range / 2) * scaleX } // Approximate for symmetric trajectory from y0=0
-                            cy={canvasHeight - maxHeight * scaleY}
+                    {trajectory.length > 1 && (
+                        <path
+                        d={trajectory.map((p, i) => 
+                            `${i === 0 ? 'M' : 'L'} ${p.x * scaleX} ${canvasHeight - p.y * scaleY}`
+                            ).join(' ')
+                        }
+                        stroke="hsl(var(--primary))"
+                        strokeWidth="2"
+                        fill="none"
+                        />
+                    )}
+                    {/* Mark initial position */}
+                    {trajectory.length > 0 && (
+                         <circle 
+                            cx={ trajectory[0].x * scaleX}
+                            cy={canvasHeight - trajectory[0].y * scaleY}
                             r="3"
-                            fill="hsl(var(--destructive))"
+                            fill="hsl(var(--accent))"
                         />
                     )}
                   </svg>
