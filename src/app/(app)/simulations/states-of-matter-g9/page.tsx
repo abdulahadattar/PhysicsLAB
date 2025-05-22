@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, HelpCircle, Thermometer } from "lucide-react";
+import { ArrowLeft, HelpCircle, Thermometer, Wind } from "lucide-react"; // Added Wind for pressure
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -17,19 +17,21 @@ const NUM_PARTICLES = 50;
 const PARTICLE_RADIUS = 4;
 
 interface Particle {
+  id: number;
   x: number;
   y: number;
   vx: number;
   vy: number;
-  initialX?: number; // For solids
-  initialY?: number; // For solids
+  initialX?: number; 
+  initialY?: number; 
 }
 
 type MatterState = "solid" | "liquid" | "gas";
 
 export default function StatesOfMatterPage() {
   const [matterState, setMatterState] = useState<MatterState>("solid");
-  const [temperatureFactor, setTemperatureFactor] = useState(0.5); // 0 to 1
+  const [temperatureFactor, setTemperatureFactor] = useState(0.3); // 0 to 1, default lower
+  const [pressureFactor, setPressureFactor] = useState(0.3); // 0 to 1, conceptual
   const [particles, setParticles] = useState<Particle[]>([]);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -37,25 +39,35 @@ export default function StatesOfMatterPage() {
 
   const initializeParticles = useCallback(() => {
     const newParticles: Particle[] = [];
+    const particlePadding = PARTICLE_RADIUS * 2.5; // Ensure particles don't start on edge
+
     for (let i = 0; i < NUM_PARTICLES; i++) {
-      let p: Partial<Particle> = {};
+      let p: Partial<Particle> = { id: i };
       if (matterState === "solid") {
-        const cols = Math.floor(Math.sqrt(NUM_PARTICLES * CANVAS_WIDTH / CANVAS_HEIGHT));
+        const cols = Math.floor(Math.sqrt(NUM_PARTICLES * (CANVAS_WIDTH / particlePadding) / (CANVAS_HEIGHT / particlePadding)));
         const rows = Math.ceil(NUM_PARTICLES / cols);
-        const spacingX = CANVAS_WIDTH / (cols + 1);
-        const spacingY = CANVAS_HEIGHT / (rows + 1);
-        p.initialX = ((i % cols) + 1) * spacingX;
-        p.initialY = (Math.floor(i / cols) + 1) * spacingY;
+        const spacingX = (CANVAS_WIDTH - 2 * particlePadding) / Math.max(1, cols -1 );
+        const spacingY = (CANVAS_HEIGHT - 2 * particlePadding) / Math.max(1, rows -1);
+        
+        p.initialX = particlePadding + (i % cols) * spacingX;
+        p.initialY = particlePadding + Math.floor(i / cols) * spacingY;
         p.x = p.initialX;
         p.y = p.initialY;
         p.vx = 0;
         p.vy = 0;
-      } else {
+      } else if (matterState === "liquid") {
+        // Start liquids more clustered at the bottom
+        p.x = Math.random() * (CANVAS_WIDTH - PARTICLE_RADIUS * 4) + PARTICLE_RADIUS * 2;
+        p.y = CANVAS_HEIGHT * 0.6 + Math.random() * (CANVAS_HEIGHT * 0.4 - PARTICLE_RADIUS * 2);
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 0.3 + Math.random() * 0.2;
+        p.vx = Math.cos(angle) * speed;
+        p.vy = Math.sin(angle) * speed;
+      } else { // Gas
         p.x = Math.random() * (CANVAS_WIDTH - PARTICLE_RADIUS * 2) + PARTICLE_RADIUS;
         p.y = Math.random() * (CANVAS_HEIGHT - PARTICLE_RADIUS * 2) + PARTICLE_RADIUS;
         const angle = Math.random() * 2 * Math.PI;
-        let speed = 0.5; // Base speed for liquid/gas
-        if (matterState === "gas") speed = 1.5;
+        let speed = 0.5 + Math.random() * 0.5;
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed;
       }
@@ -69,51 +81,82 @@ export default function StatesOfMatterPage() {
   }, [initializeParticles]);
 
   const updateParticles = useCallback(() => {
+    const tempEffect = 0.1 + temperatureFactor * 1.5; // Increased range for temperature effect
+    const pressureEffect = 0.5 + pressureFactor * 1.5; // How "squished" or agitated they are by pressure
+
+    // For liquids, calculate center of mass to apply cohesive force
+    let centerX = 0, centerY = 0;
+    if (matterState === 'liquid' && particles.length > 0) {
+        particles.forEach(p => { centerX += p.x; centerY += p.y; });
+        centerX /= particles.length;
+        centerY /= particles.length;
+    }
+
     setParticles(prevParticles => 
       prevParticles.map(p => {
         let newX = p.x, newY = p.y, newVx = p.vx, newVy = p.vy;
-        const speedFactor = 0.2 + temperatureFactor * 2; // Base speed influenced by temp
 
         if (matterState === "solid") {
-          const vibStrength = 0.2 * speedFactor;
+          const vibStrength = 0.15 * tempEffect * (2 - pressureFactor); // Pressure dampens vibration
           newVx = (Math.random() - 0.5) * vibStrength;
           newVy = (Math.random() - 0.5) * vibStrength;
-          newX = p.initialX! + newVx; // Vibrate around initial position
+          newX = p.initialX! + newVx; 
           newY = p.initialY! + newVy;
-           // Keep within bounds loosely
-          if (newX < p.initialX! - PARTICLE_RADIUS*2) newX = p.initialX! - PARTICLE_RADIUS*2;
-          if (newX > p.initialX! + PARTICLE_RADIUS*2) newX = p.initialX! + PARTICLE_RADIUS*2;
-          if (newY < p.initialY! - PARTICLE_RADIUS*2) newY = p.initialY! - PARTICLE_RADIUS*2;
-          if (newY > p.initialY! + PARTICLE_RADIUS*2) newY = p.initialY! + PARTICLE_RADIUS*2;
+          
+          // Keep within small bounds of initial position
+          const maxDisplacement = PARTICLE_RADIUS * 0.5 * tempEffect;
+          newX = Math.max(p.initialX! - maxDisplacement, Math.min(newX, p.initialX! + maxDisplacement));
+          newY = Math.max(p.initialY! - maxDisplacement, Math.min(newY, p.initialY! + maxDisplacement));
 
-        } else { // Liquid or Gas
-          newX += newVx * speedFactor;
-          newY += newVy * speedFactor;
+        } else if (matterState === "liquid") {
+          // Gravity effect
+          newVy += 0.03 * tempEffect; 
+
+          // Cohesion: gentle pull towards center of mass of liquid particles
+          const cohesionForce = 0.002 * tempEffect;
+          newVx += (centerX - newX) * cohesionForce;
+          newVy += (centerY - newY) * cohesionForce;
+          
+          // Pressure: increases agitation/jostling
+          newVx += (Math.random() - 0.5) * 0.1 * pressureEffect * tempEffect;
+          newVy += (Math.random() - 0.5) * 0.1 * pressureEffect * tempEffect;
+
+          newX += newVx * tempEffect;
+          newY += newVy * tempEffect;
 
           // Wall collisions
-          if (newX < PARTICLE_RADIUS || newX > CANVAS_WIDTH - PARTICLE_RADIUS) {
-            newVx *= -1;
-            newX = Math.max(PARTICLE_RADIUS, Math.min(newX, CANVAS_WIDTH - PARTICLE_RADIUS));
-          }
-          if (newY < PARTICLE_RADIUS || newY > CANVAS_HEIGHT - PARTICLE_RADIUS) {
-            newVy *= -1;
-            newY = Math.max(PARTICLE_RADIUS, Math.min(newY, CANVAS_HEIGHT - PARTICLE_RADIUS));
-          }
+          if (newX < PARTICLE_RADIUS) { newVx *= -0.8; newX = PARTICLE_RADIUS; }
+          if (newX > CANVAS_WIDTH - PARTICLE_RADIUS) { newVx *= -0.8; newX = CANVAS_WIDTH - PARTICLE_RADIUS; }
+          if (newY < PARTICLE_RADIUS) { newVy *= -0.5; newY = PARTICLE_RADIUS; } // More damping on floor
+          if (newY > CANVAS_HEIGHT - PARTICLE_RADIUS) { newVy *= -0.8; newY = CANVAS_HEIGHT - PARTICLE_RADIUS; }
+          
+          // Dampen overall velocity to simulate viscosity
+          newVx *= 0.98; 
+          newVy *= 0.98;
 
-          if (matterState === "liquid") {
-             // Simple attraction to center for liquid feel (very basic)
-            const centerPull = 0.005 * speedFactor;
-            newVx += (CANVAS_WIDTH/2 - newX) * centerPull * 0.1;
-            newVy += (CANVAS_HEIGHT/2 - newY) * centerPull * 0.1;
-            // Dampen velocity
-            newVx *= 0.99; 
-            newVy *= 0.99;
+        } else { // Gas
+          let effectiveCanvasWidth = CANVAS_WIDTH / (pressureEffect * 0.5 + 0.5); // Pressure reduces effective volume
+          let effectiveCanvasHeight = CANVAS_HEIGHT / (pressureEffect * 0.5 + 0.5);
+          let offsetX = (CANVAS_WIDTH - effectiveCanvasWidth) / 2;
+          let offsetY = (CANVAS_HEIGHT - effectiveCanvasHeight) / 2;
+          
+          newX += newVx * tempEffect;
+          newY += newVy * tempEffect;
+
+          // Wall collisions with virtual container
+          if (newX < offsetX + PARTICLE_RADIUS || newX > offsetX + effectiveCanvasWidth - PARTICLE_RADIUS) {
+            newVx *= -1;
+            newX = Math.max(offsetX + PARTICLE_RADIUS, Math.min(newX, offsetX + effectiveCanvasWidth - PARTICLE_RADIUS));
+          }
+          if (newY < offsetY + PARTICLE_RADIUS || newY > offsetY + effectiveCanvasHeight - PARTICLE_RADIUS) {
+            newVy *= -1;
+            newY = Math.max(offsetY + PARTICLE_RADIUS, Math.min(newY, offsetY + effectiveCanvasHeight - PARTICLE_RADIUS));
           }
         }
         return { ...p, x: newX, y: newY, vx: newVx, vy: newVy };
       })
     );
-  }, [matterState, temperatureFactor]);
+  }, [matterState, temperatureFactor, pressureFactor, particles]); // particles dependency for liquid CoM
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -122,10 +165,27 @@ export default function StatesOfMatterPage() {
 
     const draw = () => {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // Draw virtual container for gas under pressure
+      if (matterState === "gas") {
+        const pressureEffect = 0.5 + pressureFactor * 1.5;
+        let effectiveCanvasWidth = CANVAS_WIDTH / (pressureEffect * 0.5 + 0.5);
+        let effectiveCanvasHeight = CANVAS_HEIGHT / (pressureEffect * 0.5 + 0.5);
+        let offsetX = (CANVAS_WIDTH - effectiveCanvasWidth) / 2;
+        let offsetY = (CANVAS_HEIGHT - effectiveCanvasHeight) / 2;
+
+        ctx.strokeStyle = "hsl(var(--border))";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(offsetX, offsetY, effectiveCanvasWidth, effectiveCanvasHeight);
+      }
+      
       particles.forEach(p => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, PARTICLE_RADIUS, 0, 2 * Math.PI);
         ctx.fillStyle = matterState === "solid" ? "hsl(var(--primary))" : matterState === "liquid" ? "hsl(var(--chart-2))" : "hsl(var(--chart-3))";
+        if (matterState === "liquid" && p.y < PARTICLE_RADIUS + 2) { // Darker if near bottom for liquid
+            ctx.fillStyle = "hsl(var(--chart-2) / 0.7)";
+        }
         ctx.fill();
       });
     };
@@ -140,7 +200,7 @@ export default function StatesOfMatterPage() {
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [particles, updateParticles, matterState]);
+  }, [particles, updateParticles, matterState, pressureFactor]); // Added pressureFactor for gas container drawing
 
   return (
     <div className="space-y-6">
@@ -155,18 +215,18 @@ export default function StatesOfMatterPage() {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-3xl">States of Matter - Particle Model</CardTitle>
-              <CardDescription>Grade 9 - Visualize particle behavior in solids, liquids, and gases.</CardDescription>
+              <CardDescription>Grade 9 - Visualize particle behavior in solids, liquids, and gases. Adjust temperature and conceptual pressure.</CardDescription>
             </div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="icon"><HelpCircle className="h-5 w-5"/></Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 text-sm">
-                <p>Select a state of matter and adjust the temperature to see how particles behave.</p>
+                <p>Select a state of matter, adjust temperature, and conceptual pressure to see how particles behave.</p>
                 <ul className="list-disc pl-5 mt-2">
                   <li><b>Solid:</b> Particles vibrate in fixed positions.</li>
-                  <li><b>Liquid:</b> Particles move around but stay close.</li>
-                  <li><b>Gas:</b> Particles move freely and fill the container.</li>
+                  <li><b>Liquid:</b> Particles move around, stay close, and take container shape.</li>
+                  <li><b>Gas:</b> Particles move freely and fill the container. Pressure affects their available volume.</li>
                 </ul>
               </PopoverContent>
             </Popover>
@@ -196,18 +256,31 @@ export default function StatesOfMatterPage() {
                     </RadioGroup>
                   </div>
                   <div>
-                    <Label htmlFor="temperature" className="flex items-center"><Thermometer className="mr-1 h-4 w-4"/>Temperature (Conceptual): {(temperatureFactor * 100).toFixed(0)}%</Label>
+                    <Label htmlFor="temperature" className="flex items-center"><Thermometer className="mr-1 h-4 w-4"/>Temperature: {(temperatureFactor * 100).toFixed(0)}%</Label>
                     <Slider id="temperature" min={0} max={1} step={0.05} value={[temperatureFactor]} onValueChange={(v) => setTemperatureFactor(v[0])} />
+                  </div>
+                  <div>
+                    <Label htmlFor="pressure" className="flex items-center"><Wind className="mr-1 h-4 w-4"/>Pressure (Conceptual): {(pressureFactor * 100).toFixed(0)}%</Label>
+                    <Slider id="pressure" min={0} max={1} step={0.05} value={[pressureFactor]} onValueChange={(v) => setPressureFactor(v[0])} />
                   </div>
                 </CardContent>
               </Card>
                  <Card>
                     <CardHeader><CardTitle className="text-xl">Description</CardTitle></CardHeader>
-                    <CardContent className="text-sm">
-                        {matterState === "solid" && "Particles in a solid are tightly packed in a regular pattern and vibrate about fixed positions. They have strong forces of attraction."}
-                        {matterState === "liquid" && "Particles in a liquid are close together but can move past each other. They take the shape of their container. Forces of attraction are weaker than solids."}
-                        {matterState === "gas" && "Particles in a gas are far apart and move randomly at high speeds. They fill their container completely. Forces of attraction are very weak."}
-                        <p className="mt-2">Increasing temperature generally increases the kinetic energy and speed of particles.</p>
+                    <CardContent className="text-sm space-y-1">
+                        {matterState === "solid" && <>
+                            <p>Particles in a solid are tightly packed, often in a regular pattern, and vibrate about fixed positions. They have strong forces of attraction.</p>
+                            <p>Higher temperature increases vibration. Higher pressure slightly constrains vibrations.</p>
+                        </>}
+                        {matterState === "liquid" && <>
+                            <p>Particles in a liquid are close together but can move past each other, allowing liquids to flow and take the shape of their container (bottom part). Forces of attraction are weaker than solids but keep particles together.</p>
+                            <p>Higher temperature increases particle speed. Higher pressure increases agitation in the confined space.</p>
+                        </>}
+                        {matterState === "gas" && <>
+                            <p>Particles in a gas are far apart and move randomly at high speeds. They fill their container completely. Forces of attraction are very weak.</p>
+                            <p>Higher temperature increases particle speed. Higher pressure reduces the effective volume particles occupy, increasing collision frequency.</p>
+                        </>}
+                        
                     </CardContent>
                 </Card>
             </div>
@@ -226,3 +299,5 @@ export default function StatesOfMatterPage() {
   );
 }
 
+
+    
