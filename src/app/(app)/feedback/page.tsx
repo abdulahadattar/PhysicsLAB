@@ -1,13 +1,15 @@
+
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, Phone, Mail } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 export default function FeedbackPage() {
   const { toast } = useToast();
@@ -92,6 +94,23 @@ export default function FeedbackPage() {
             </Button>
           </form>
         </CardContent>
+        <Separator className="my-6" />
+        <CardFooter className="flex flex-col items-start gap-4">
+            <div>
+                <h3 className="text-lg font-semibold mb-2">Direct Contact Information</h3>
+                <p className="text-sm text-muted-foreground">
+                    Alternatively, you can reach out directly via:
+                </p>
+            </div>
+            <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-primary" />
+                <a href="tel:03451301907" className="text-sm hover:underline">0345-1301907</a>
+            </div>
+            <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-primary" />
+                <a href="mailto:abdul7762ahad@gmail.com" className="text-sm hover:underline">abdul7762ahad@gmail.com</a>
+            </div>
+        </CardFooter>
       </Card>
     </div>
   );
