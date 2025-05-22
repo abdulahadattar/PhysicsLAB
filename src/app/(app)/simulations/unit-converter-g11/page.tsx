@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, HelpCircle, Ruler, Scale, ClockIcon } from "lucide-react";
@@ -44,22 +44,22 @@ const unitCategories: UnitCategory[] = ["Length", "Mass", "Time"];
 
 export default function UnitConverterG11Page() {
   const [selectedCategory, setSelectedCategory] = useState<UnitCategory>("Length");
-  const [fromUnit, setFromUnit] = useState<string>(units.find(u => u.category === "Length")?.value || "m");
-  const [toUnit, setToUnit] = useState<string>(units.find(u => u.category === "Length" && u.value !== fromUnit)?.value || "ft");
+  
+  // Initialize fromUnit based on the initial selectedCategory
+  const initialFromUnit = useMemo(() => units.find(u => u.category === selectedCategory)?.value || "m", [selectedCategory]);
+  const [fromUnit, setFromUnit] = useState<string>(initialFromUnit);
+
+  // Initialize toUnit based on the initial selectedCategory and making sure it's different from fromUnit
+  const initialToUnit = useMemo(() => {
+    return units.find(u => u.category === selectedCategory && u.value !== initialFromUnit)?.value || 
+           (units.find(u => u.category === selectedCategory)?.value || "ft"); // Fallback if only one unit or initialFromUnit is the only one
+  }, [selectedCategory, initialFromUnit]);
+  const [toUnit, setToUnit] = useState<string>(initialToUnit);
+  
   const [inputValue, setInputValue] = useState<string>("1");
   const [outputValue, setOutputValue] = useState<string>("");
 
   const availableUnits = useMemo(() => units.filter(u => u.category === selectedCategory), [selectedCategory]);
-
-  const handleCategoryChange = (category: UnitCategory) => {
-    setSelectedCategory(category);
-    const defaultFromUnit = units.find(u => u.category === category)?.value || "";
-    const defaultToUnit = units.find(u => u.category === category && u.value !== defaultFromUnit)?.value || "";
-    setFromUnit(defaultFromUnit);
-    setToUnit(defaultToUnit);
-    setInputValue("1"); // Reset input value
-    performConversion("1", defaultFromUnit, defaultToUnit);
-  };
 
   const performConversion = (currentInput: string, currentFrom: string, currentTo: string) => {
     const val = parseFloat(currentInput);
@@ -79,38 +79,58 @@ export default function UnitConverterG11Page() {
       setOutputValue("N/A");
     }
   };
+  
+  useEffect(() => {
+    // Recalculate initialFromUnit and initialToUnit when selectedCategory changes
+    const newInitialFromUnit = units.find(u => u.category === selectedCategory)?.value || "m";
+    setFromUnit(newInitialFromUnit);
+    const newInitialToUnit = units.find(u => u.category === selectedCategory && u.value !== newInitialFromUnit)?.value || 
+                             (units.find(u => u.category === selectedCategory)?.value || "ft");
+    setToUnit(newInitialToUnit);
+    performConversion(inputValue, newInitialFromUnit, newInitialToUnit); // Use inputValue here as it should persist or be "1"
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]); // This effect runs when category changes
+
+  useEffect(() => {
+    // This effect handles the very first load based on initial states.
+    // And also recalculates if inputValue, fromUnit, or toUnit change for other reasons.
+    performConversion(inputValue, fromUnit, toUnit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, fromUnit, toUnit]);
+
+
+  const handleCategoryChange = (category: UnitCategory) => {
+    setSelectedCategory(category);
+    setInputValue("1"); // Reset input value when category changes, leading to re-conversion via useEffect
+  };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
-    performConversion(e.target.value, fromUnit, toUnit);
+    // performConversion(e.target.value, fromUnit, toUnit); // Handled by useEffect on inputValue change
   };
 
   const handleFromUnitChange = (value: string) => {
     setFromUnit(value);
-    if (value === toUnit) { // Prevent from and to being the same, pick next available
+    if (value === toUnit) { 
       const nextUnit = availableUnits.find(u => u.value !== value)?.value || availableUnits[0]?.value;
       if (nextUnit) setToUnit(nextUnit);
-      performConversion(inputValue, value, nextUnit || toUnit);
+      // performConversion(inputValue, value, nextUnit || toUnit); // Handled by useEffect
     } else {
-      performConversion(inputValue, value, toUnit);
+      // performConversion(inputValue, value, toUnit); // Handled by useEffect
     }
   };
   
   const handleToUnitChange = (value: string) => {
     setToUnit(value);
-     if (value === fromUnit) { // Prevent from and to being the same
+     if (value === fromUnit) { 
       const nextUnit = availableUnits.find(u => u.value !== value)?.value || availableUnits[0]?.value;
       if (nextUnit) setFromUnit(nextUnit);
-      performConversion(inputValue, nextUnit || fromUnit, value);
+      // performConversion(inputValue, nextUnit || fromUnit, value); // Handled by useEffect
     } else {
-      performConversion(inputValue, fromUnit, value);
+      // performConversion(inputValue, fromUnit, value); // Handled by useEffect
     }
   };
-
-  // Initial conversion on load
-  useState(() => {
-    performConversion(inputValue, fromUnit, toUnit);
-  });
 
   const getCategoryIcon = (category: UnitCategory) => {
     switch(category) {
@@ -133,9 +153,9 @@ export default function UnitConverterG11Page() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-3xl">Unit Converter (Grade 11)</CardTitle>
+              <CardTitle className="text-3xl">Unit Converter</CardTitle>
               <CardDescription>
-                Convert between common physics units.
+                Convert between common physics units for Grade 11.
               </CardDescription>
             </div>
             <Popover>
@@ -228,3 +248,4 @@ export default function UnitConverterG11Page() {
     </div>
   );
 }
+
