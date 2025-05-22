@@ -1,4 +1,6 @@
+
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/generate-fun-fact.ts';
+// Ensure the flow is registered with Genkit by importing it
+import '@/ai/flows/generate-fun-fact';
