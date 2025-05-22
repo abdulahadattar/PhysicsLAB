@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -40,6 +40,8 @@ export const SIMULATION_TOPICS = [
   { id: "ohm-law", name: "Ohm's Law", grade: 10, description: "Understand the relationship between voltage, current, and resistance in circuits." },
   { id: "wave-properties", name: "Wave Properties", grade: 12, description: "Visualize wavelength, frequency, amplitude, and speed of waves." },
   { id: "projectile-motion-g11", name: "Projectile Motion", grade: 11, description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight." },
+  { id: "unit-converter-g11", name: "Unit Converter", grade: 11, description: "Convert between common physics units for length, mass, time, etc." },
+  { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: 11, description: "Simulate a spring-mass system and observe Simple Harmonic Motion." },
 ];
 
 // STUDY_GRADES is now fetched from /api/study-materials
