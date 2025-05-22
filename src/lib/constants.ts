@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -36,15 +36,22 @@ export const APP_AUTHOR = "Sir Abdul Ahad";
 export const APP_NOTES_AUTHOR = "Abdul Ahad Attar";
 
 export const SIMULATION_TOPICS = [
-  { id: "newtons-laws", name: "Newton's Laws", grade: 9, description: "Investigate force, mass, and acceleration with interactive examples." },
+  // Grade 9
+  { id: "vernier-caliper-g9", name: "Vernier Caliper Practice", grade: 9, description: "Learn to read Vernier calipers accurately.", icon: Ruler },
+  { id: "hookes-law-g9", name: "Hooke's Law Lab", grade: 9, description: "Investigate the relationship between force and extension for a spring.", icon: Sigma },
+  { id: "motion-constant-acceleration-g9", name: "Motion - Constant Acceleration", grade: 9, description: "Explore 1D motion with constant acceleration.", icon: TrendingUp },
+  { id: "states-of-matter-g9", name: "States of Matter - Particle Model", grade: 9, description: "Visualize particle behavior in solids, liquids, and gases.", icon: Atom },
+  // Grade 10
   { id: "ohm-law", name: "Ohm's Law", grade: 10, description: "Understand the relationship between voltage, current, and resistance in circuits." },
-  { id: "wave-properties", name: "Wave Properties", grade: 12, description: "Visualize wavelength, frequency, amplitude, and speed of waves." },
-  { id: "projectile-motion", name: "Projectile Motion", grade: 11, description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight." },
+  // Grade 11
+  { id: "projectile-motion-g11", name: "Projectile Motion", grade: 11, description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight." },
   { id: "unit-converter-g11", name: "Unit Converter", grade: 11, description: "Convert between common physics units for length, mass, time, etc." },
   { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: 11, description: "Simulate a spring-mass system and observe Simple Harmonic Motion." },
   { id: "sig-figs-practice-g11", name: "Significant Figures Practice", grade: 11, description: "Practice identifying and using significant figures.", icon: Sigma },
   { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: 11, description: "Visualize RC circuit charging and discharging.", icon: BatteryCharging },
   { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: 11, description: "Simulate a simple pendulum and observe SHM.", icon: MoveHorizontal },
+  // Grade 12
+  { id: "wave-properties", name: "Wave Properties", grade: 12, description: "Visualize wavelength, frequency, amplitude, and speed of waves." },
 ];
 
 // STUDY_GRADES is now fetched from /api/study-materials
