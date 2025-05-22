@@ -1,3 +1,4 @@
+
 "use client";
 import type { NavItem } from '@/lib/constants';
 import { NAV_ITEMS, APP_NAME, APP_AUTHOR } from '@/lib/constants';
@@ -24,7 +25,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, ChevronDown, ChevronUp }  from 'lucide-react';
+import { Atom, ChevronDown }  from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -54,14 +55,16 @@ export function AppShell({ children }: AppShellProps) {
                 className={`w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center ${isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
               >
                 <SidebarMenuButton
-                  asChild={false}
+                  asChild={true}
                   className="w-full"
-                  isActive={isActive && !isParentActive && !isSubMenu} // Only active if no sub-item is active
+                  isActive={isActive && !isParentActive && !isSubMenu} 
                   tooltip={item.label}
                 >
-                  <item.icon />
-                  <span>{item.label}</span>
-                  <ChevronDown className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-[collapsible=icon]:hidden" />
+                  {/* Wrap icon and label in a single element for asChild to work, and remove redundant ChevronDown */}
+                  <span className="flex items-center gap-2">
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </span>
                 </SidebarMenuButton>
               </AccordionTrigger>
               <AccordionContent className="pb-0 group-data-[collapsible=icon]:hidden">
