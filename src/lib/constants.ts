@@ -39,7 +39,7 @@ export const SIMULATION_TOPICS = [
   { id: "newtons-laws", name: "Newton's Laws", grade: 9, description: "Investigate force, mass, and acceleration with interactive examples." },
   { id: "ohm-law", name: "Ohm's Law", grade: 10, description: "Understand the relationship between voltage, current, and resistance in circuits." },
   { id: "wave-properties", name: "Wave Properties", grade: 12, description: "Visualize wavelength, frequency, amplitude, and speed of waves." },
-  { id: "projectile-motion-g11", name: "Projectile Motion (Grade 11 Focus)", grade: 11, description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight." },
+  { id: "projectile-motion-g11", name: "Projectile Motion", grade: 11, description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight." },
 ];
 
 // STUDY_GRADES is now fetched from /api/study-materials
@@ -49,3 +49,4 @@ export const QUIZ_TOPICS = [
   { id: "dynamics", name: "Dynamics Quiz" },
   { id: "electromagnetism", name: "Electromagnetism Quiz" },
 ];
+
