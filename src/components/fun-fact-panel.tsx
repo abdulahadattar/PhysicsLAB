@@ -8,6 +8,7 @@ import { Lightbulb, RefreshCw, WifiOff, X } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
 import { Skeleton } from './ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 const LOCAL_STORAGE_KEY_BATCH = 'physicsFunContentBatch';
 const LOCAL_STORAGE_KEY_CURRENT_INDEX = 'physicsFunContentBatch_currentIndex';
@@ -21,6 +22,8 @@ export function FunFactPanel() {
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const { isPanelVisible, togglePanelVisibility, isMounted } = useFunFactsSettings();
+  const isMobile = useIsMobile();
+  const [isExpanded, setIsExpanded] = useState<boolean>(!isMobile); // Expanded by default on desktop
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -36,11 +39,18 @@ export function FunFactPanel() {
     }
   }, []);
 
+  // Adjust initial expansion based on mobile status once mounted
+  useEffect(() => {
+    if (isMounted) {
+      setIsExpanded(!isMobile);
+    }
+  }, [isMobile, isMounted]);
+
+
   const fetchNewBatch = useCallback(async (topic: string = "general physics", gradeLevel: number = 10) => {
     if (isOffline) {
       setError("You are offline. Fun facts will load when you're back online.");
       setIsLoading(false);
-      // Do not clear existing batch if offline, user might want to cycle through what they have
       if (batch.length === 0) setCurrentFactToDisplay(null);
       return;
     }
@@ -103,7 +113,6 @@ export function FunFactPanel() {
     if (isPanelVisible && isMounted) {
       const dataLoaded = loadFromLocalStorage();
       if (!dataLoaded) {
-        // Only fetch new batch if online, or if forced by user action later
         if (!isOffline) {
           fetchNewBatch();
         } else {
@@ -123,8 +132,15 @@ export function FunFactPanel() {
       setCurrentFactToDisplay(batch[nextIndex]);
       localStorage.setItem(LOCAL_STORAGE_KEY_CURRENT_INDEX, JSON.stringify(nextIndex));
     } else {
-      // End of current batch, fetch a new one (will check for online status)
       fetchNewBatch();
+    }
+  };
+
+  const handleCloseOrCollapse = () => {
+    if (isMobile) {
+      setIsExpanded(false); // Collapse on mobile
+    } else {
+      togglePanelVisibility(); // Hide completely on desktop
     }
   };
 
@@ -132,14 +148,28 @@ export function FunFactPanel() {
     return null;
   }
 
+  if (isMobile && !isExpanded) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full p-2 fixed bottom-4 right-4 z-50 h-10 w-10 bg-secondary/70 hover:bg-secondary text-primary shadow-md hover:shadow-lg transition-all"
+        onClick={() => setIsExpanded(true)}
+        aria-label="Show fun fact"
+      >
+        <Lightbulb className="h-5 w-5 text-yellow-500" />
+      </Button>
+    );
+  }
+
   return (
-    <Card className="fixed bottom-4 right-4 w-80 max-w-[calc(100vw-2rem)] shadow-xl z-50 animate-in fade-in-0 slide-in-from-bottom-5 duration-500">
+    <Card className={`fixed bottom-4 right-4 z-50 shadow-xl animate-in fade-in-0 slide-in-from-bottom-5 duration-500 w-11/12 max-w-[280px] sm:max-w-[300px] md:w-80`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-yellow-400" />
           <CardTitle className="text-lg">Fun Physics Tidbit!</CardTitle>
         </div>
-        <Button variant="ghost" size="icon" onClick={togglePanelVisibility} aria-label="Close fun fact panel">
+        <Button variant="ghost" size="icon" onClick={handleCloseOrCollapse} aria-label="Close fun fact panel">
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>
