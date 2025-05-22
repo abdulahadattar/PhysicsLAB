@@ -1,6 +1,7 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, DownloadCloud, FileText, ListChecks } from "lucide-react";
+import { ArrowLeft, DownloadCloud, FileText, ListChecks, Star } from "lucide-react";
 import Link from "next/link";
 import { STUDY_GRADES } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,15 +46,16 @@ export default function ChapterPage({ params }: ChapterPageProps) {
           <CardDescription>{grade.name} - Sindh Textbook Board Syllabus. Notes by Abdul Ahad Attar.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="notes" className="w-full">
+          <Tabs defaultValue="notes-keypoints" className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:w-1/2">
-              <TabsTrigger value="notes"><FileText className="mr-2 h-4 w-4" />Notes</TabsTrigger>
+              <TabsTrigger value="notes-keypoints"><FileText className="mr-2 h-4 w-4" />Notes & Key Points</TabsTrigger>
               <TabsTrigger value="mcqs"><ListChecks className="mr-2 h-4 w-4" />Solved MCQs</TabsTrigger>
             </TabsList>
-            <TabsContent value="notes" className="mt-4">
+            
+            <TabsContent value="notes-keypoints" className="mt-4 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Chapter Notes</CardTitle>
+                  <CardTitle>Full Chapter Notes (PDF)</CardTitle>
                   <CardDescription>Read-only PDF notes. For offline access, ensure the app is used on a device with the PDF pre-loaded or viewable when online initially.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -70,7 +72,43 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400"/>Key Points & Summary</CardTitle>
+                  <CardDescription>Quickly review the most important concepts, definitions, and formulas from this chapter.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px] space-y-4">
+                    <div>
+                        <h3 className="font-semibold mb-2 text-primary">Important Definitions:</h3>
+                        <ul className="list-disc list-inside text-sm space-y-1 pl-4">
+                            <li><span className="font-medium">Term 1:</span> Explanation of the first key term related to {chapter.name}.</li>
+                            <li><span className="font-medium">Term 2:</span> Explanation of the second key term related to {chapter.name}.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-2 text-primary">Core Concepts:</h3>
+                        <ol className="list-decimal list-inside text-sm space-y-1 pl-4">
+                            <li>Brief overview of the first core concept in {chapter.name}.</li>
+                            <li>Brief overview of the second core concept in {chapter.name}.</li>
+                        </ol>
+                    </div>
+                     <div>
+                        <h3 className="font-semibold mb-2 text-primary">Key Formulas (if applicable):</h3>
+                        <ul className="list-none text-sm space-y-2 pl-4">
+                            <li><code className="bg-muted px-2 py-1 rounded text-sm">E = mc²</code> - Explanation of formula.</li>
+                            <li><code className="bg-muted px-2 py-1 rounded text-sm">F = ma</code> - Explanation of formula.</li>
+                        </ul>
+                    </div>
+                    <p className="text-xs text-muted-foreground pt-2">
+                        (More detailed key points, summaries, and essential formulas for {chapter.name} will be populated here.)
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
+
             <TabsContent value="mcqs" className="mt-4">
               <Card>
                 <CardHeader>
