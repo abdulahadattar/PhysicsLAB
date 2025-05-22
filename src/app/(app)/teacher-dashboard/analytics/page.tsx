@@ -1,8 +1,9 @@
+
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart3, TrendingDown, TrendingUp, UserCheck, Percent } from "lucide-react";
+import { ArrowLeft, BarChart3, TrendingDown, TrendingUp, UserCheck, Percent, AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer } from "recharts"
@@ -14,8 +15,11 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { STUDY_GRADES } from "@/lib/constants";
+} from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import type { StudyGrade } from "@/lib/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 
 const overallPerformanceData = [
   { name: 'Grade 9', avgScore: 75, color: "hsl(var(--chart-1))" },
@@ -42,6 +46,31 @@ const chartConfigTopics = {
 
 
 export default function TeacherAnalyticsPage() {
+  const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
+  const [isLoadingGrades, setIsLoadingGrades] = useState(true);
+  const [gradesError, setGradesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchGradesForFilter() {
+      setIsLoadingGrades(true);
+      setGradesError(null);
+      try {
+        const res = await fetch('/api/study-materials');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch study grades: ${res.status}`);
+        }
+        const data: StudyGrade[] = await res.json();
+        setStudyGrades(data);
+      } catch (error) {
+        console.error("Error fetching study grades for filter:", error);
+        setGradesError(error instanceof Error ? error.message : "An unknown error occurred");
+      } finally {
+        setIsLoadingGrades(false);
+      }
+    }
+    fetchGradesForFilter();
+  }, []);
+
   return (
     <div className="space-y-6">
       <Button variant="outline" asChild size="sm">
@@ -86,20 +115,38 @@ export default function TeacherAnalyticsPage() {
                 </Card>
             </div>
              <div className="mb-6">
-                <Select>
-                    <SelectTrigger className="w-full md:w-[280px]">
-                        <SelectValue placeholder="Filter by Grade (e.g., Grade 9)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                        <SelectLabel>Grades</SelectLabel>
-                        <SelectItem value="all">All Grades</SelectItem>
-                        {STUDY_GRADES.map(grade => (
-                            <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>
-                        ))}
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+                {isLoadingGrades && (
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading grade filters...</span>
+                  </div>
+                )}
+                {gradesError && !isLoadingGrades && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Grades</AlertTitle>
+                    <AlertDescription>{gradesError}. The grade filter might not be complete.</AlertDescription>
+                  </Alert>
+                )}
+                {!isLoadingGrades && (
+                  <Select>
+                      <SelectTrigger className="w-full md:w-[280px]">
+                          <SelectValue placeholder="Filter by Grade (e.g., Grade 9)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectGroup>
+                          <SelectLabel>Grades</SelectLabel>
+                          <SelectItem value="all">All Grades</SelectItem>
+                          {studyGrades.map(grade => (
+                              <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>
+                          ))}
+                          {studyGrades.length === 0 && !gradesError && (
+                            <SelectItem value="no-grades" disabled>No grades found</SelectItem>
+                          )}
+                          </SelectGroup>
+                      </SelectContent>
+                  </Select>
+                )}
             </div>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
@@ -147,3 +194,4 @@ export default function TeacherAnalyticsPage() {
     </div>
   );
 }
+
