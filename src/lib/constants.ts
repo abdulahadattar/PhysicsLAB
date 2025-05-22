@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -16,6 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/study-material', label: 'Study Material', icon: BookOpen },
   { href: '/quizzes', label: 'Quizzes', icon: ListChecks },
   { href: '/learn-with-ai', label: 'Learn with AI', icon: Brain },
+  { href: '/mind-maps', label: 'Mind Maps', icon: Map },
   {
     href: '/teacher-dashboard',
     label: 'Teacher Panel',
