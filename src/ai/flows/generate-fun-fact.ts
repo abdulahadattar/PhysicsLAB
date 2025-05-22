@@ -12,16 +12,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { StudyGrade } from '@/lib/types'; // Assuming types.ts is in src/lib
-import path from 'path';
-import fs from 'fs/promises';
+// Removed StudyGrade import as getStudyMaterialTool is being removed.
+// Removed path and fs/promises imports as they were for getStudyMaterialTool.
 
 
 // Input and Output Schemas
 const GenerateFunContentInputSchema = z.object({
   topic: z.string().describe('The current physics topic or simulation being interacted with.'),
   gradeLevel: z.number().min(9).max(12).describe('The grade level of the student (9-12).'),
-  chapterId: z.string().optional().describe('Optional specific chapter ID from study materials to narrow down the context.'),
+  // chapterId is removed as per user request to undo chapter-specific fun facts.
 });
 export type GenerateFunContentInput = z.infer<typeof GenerateFunContentInputSchema>;
 
@@ -32,67 +31,13 @@ const FunContentItemSchema = z.object({
 export type FunContentItem = z.infer<typeof FunContentItemSchema>;
 
 const GenerateFunContentOutputSchema = z.object({
-  items: z.array(FunContentItemSchema).min(3).max(20) // Changed min to 3 as per prompt, max 20 for more variety
+  items: z.array(FunContentItemSchema).min(3).max(20)
     .describe('An array of 3 to 5 diverse physics content items (facts, quotes, history, experiments), each with a main statement and an explanation.'),
 });
 export type GenerateFunContentOutput = z.infer<typeof GenerateFunContentOutputSchema>;
 
 
-// Tool to get study material context
-const GetStudyMaterialToolInputSchema = z.object({
-  gradeLevel: z.number().min(9).max(12).describe('The grade level of the student (9-12).'),
-  chapterId: z.string().optional().describe('Optional specific chapter ID to get material for.'),
-});
-
-async function getStudyGradesData(): Promise<StudyGrade[]> {
-  try {
-    const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'study-materials.json');
-    const jsonData = await fs.readFile(jsonFilePath, 'utf-8');
-    return JSON.parse(jsonData);
-  } catch (error) {
-    console.error("Error reading study-materials.json for Genkit tool:", error);
-    return []; // Return empty array on error
-  }
-}
-
-const getStudyMaterialTool = ai.defineTool(
-  {
-    name: 'getStudyMaterialTool',
-    description: 'Fetches relevant study material topics for a given grade level and optional chapter ID. This helps in generating contextually appropriate fun content.',
-    inputSchema: GetStudyMaterialToolInputSchema,
-    outputSchema: z.string().describe('A string containing a summary of relevant study material topics. For example, "Key topics for Grade 9, Chapter Physical Quantities and Measurement include: Physical Quantities and Measurement." or "General topics for Grade 9 include: Physical Quantities and Measurement, Kinematics."'),
-  },
-  async ({ gradeLevel, chapterId }) => {
-    const STUDY_GRADES = await getStudyGradesData();
-    if (STUDY_GRADES.length === 0) {
-      return `Study material data could not be loaded. Proceed with general physics knowledge for Grade ${gradeLevel}.`;
-    }
-
-    const gradeId = gradeLevel.toString();
-    const grade = STUDY_GRADES.find(g => g.id === gradeId);
-
-    if (!grade) {
-      return `No specific study material context found for Grade ${gradeLevel}.`;
-    }
-
-    let materialContext = `Key concepts for Grade ${gradeLevel}`;
-    if (chapterId) {
-      const chapter = grade.chapters.find(c => c.id === chapterId);
-      if (chapter) {
-        materialContext += `, specifically for chapter "${chapter.name}", typically cover topics related to ${chapter.name}.`;
-      } else {
-        materialContext += ` (Chapter ID ${chapterId} not found). General topics include: ${grade.chapters.map(c => c.name).join(', ')}.`;
-      }
-    } else {
-      if (grade.chapters.length > 0) {
-        materialContext += `. General topics include: ${grade.chapters.map(c => c.name).join(', ')}.`;
-      } else {
-        materialContext += ` include a variety of foundational physics concepts.`;
-      }
-    }
-    return materialContext;
-  }
-);
+// Tool to get study material context and related functions (getStudyGradesData, getStudyMaterialTool) are removed.
 
 export async function generateFunContentBatch(input: GenerateFunContentInput): Promise<GenerateFunContentOutput> {
   return generateFunContentFlow(input);
@@ -102,8 +47,8 @@ const prompt = ai.definePrompt({
   name: 'generateFunContentPrompt',
   input: {schema: GenerateFunContentInputSchema},
   output: {schema: GenerateFunContentOutputSchema},
-  tools: [getStudyMaterialTool],
-  prompt: `You are a physics content generator. Your goal is to provide a diverse list of 3 to 5 engaging items suitable for the specified grade level.
+  // tools array is removed as getStudyMaterialTool is removed.
+  prompt: `You are a physics content generator. Your goal is to provide a diverse list of 3 to 5 engaging items suitable for the specified grade level and general topic.
 These items can be:
 - Fun physics facts.
 - Interesting quotes from notable physicists (please include who said it).
@@ -116,14 +61,10 @@ Ensure variety in the types of items you generate in the list.
 Context:
 Topic: {{{topic}}}
 Grade Level: {{{gradeLevel}}}
-{{#if chapterId}}Chapter ID: {{{chapterId}}}{{/if}}
 
 Instructions:
-1. Use the 'getStudyMaterialTool' to fetch relevant study material for the provided 'Grade Level'{{#if chapterId}} and 'Chapter ID'{{/if}}. The tool will return key topics or chapter names.
-2. **Prioritize** generating content that is directly related to the concepts mentioned in the study material provided by the tool.
-3. Ensure the content and its explanation are suitable for a student at the specified 'Grade Level'.
-4. If the 'topic' input is specific and aligns with the study material, use that. If the study material context from the tool is very general, try to find content relevant to the input 'topic' that would typically be covered within those general areas for the grade level.
-5. If the tool returns "No specific study material context found", "Study material data could not be loaded", or if the material is too sparse, generate general physics content related to the input 'topic' that is appropriate for the 'Grade Level'.
+1. Generate content that is relevant to the input 'topic' and appropriate for the 'Grade Level'.
+2. Ensure the content and its explanation are suitable for a student at the specified 'Grade Level'.
 
 Output Format:
 Respond using JSON format, adhering to the output schema (an object with an 'items' array, where each item has 'content' and 'explanation').
@@ -153,3 +94,4 @@ const generateFunContentFlow = ai.defineFlow(
     return output;
   }
 );
+
