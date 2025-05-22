@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare, Phone, Mail, WifiOff, Save } from "lucide-react";
+import { Send, MessageSquare, Phone, Mail, WifiOff, Save, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -91,12 +91,10 @@ export default function FeedbackPage() {
     if (!isOnline) {
       saveFeedbackLocally(feedbackData);
       toast({
-        title: "Offline: Feedback Saved Locally",
-        description: "Your feedback has been saved and will be sent when you're back online.",
-        variant: "default", // Use default or a custom "info" variant
+        title: "Offline: Submission Saved Locally",
+        description: "Your submission has been saved and will be sent when you're back online.",
+        variant: "default", 
       });
-      // Optionally clear form or keep data for user to see it's "pending"
-      // For now, let's clear it as if it was submitted
       setName(""); setEmail(""); setSubject(""); setMessage("");
       setIsSubmitting(false);
       return;
@@ -107,8 +105,8 @@ export default function FeedbackPage() {
     console.log("Online submission:", feedbackData);
 
     toast({
-      title: "Feedback Submitted!",
-      description: "Thank you for your feedback. We will review it shortly.",
+      title: "Submission Sent!",
+      description: "Thank you! Your message has been sent and will be reviewed shortly.",
     });
 
     setName(""); setEmail(""); setSubject(""); setMessage("");
@@ -122,7 +120,7 @@ export default function FeedbackPage() {
           <WifiOff className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
           <AlertTitle>You are currently offline</AlertTitle>
           <AlertDescription>
-            Feedback you submit will be saved locally and sent when you reconnect to the internet.
+            Submissions will be saved locally and sent when you reconnect.
             {pendingFeedbackCount > 0 && ` You have ${pendingFeedbackCount} pending message(s).`}
           </AlertDescription>
         </Alert>
@@ -130,11 +128,11 @@ export default function FeedbackPage() {
       <Card className="shadow-xl">
         <CardHeader className="text-center">
           <div className="inline-block mx-auto bg-primary/10 p-3 rounded-full mb-2">
-             <MessageSquare className="h-10 w-10 text-primary" />
+             <HelpCircle className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-3xl">Submit Feedback or Query</CardTitle>
+          <CardTitle className="text-3xl">Ask a Question or Submit Feedback</CardTitle>
           <CardDescription>
-            Have questions, suggestions, or encountered an issue? Let us know!
+            Have academic questions, doubts about a topic, suggestions, or encountered an issue? Let us know!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,15 +149,15 @@ export default function FeedbackPage() {
             </div>
             <div>
               <Label htmlFor="subject">Subject <span className="text-destructive">*</span></Label>
-              <Input id="subject" placeholder="E.g., Issue with Simulation X, Suggestion for Topic Y" value={subject} onChange={e => setSubject(e.target.value)} required />
+              <Input id="subject" placeholder="E.g., Question about Newton's Laws, Doubt in Simulation X, Feedback on Notes" value={subject} onChange={e => setSubject(e.target.value)} required />
             </div>
             <div>
-              <Label htmlFor="message">Message <span className="text-destructive">*</span></Label>
-              <Textarea id="message" placeholder="Describe your feedback or query in detail..." rows={6} value={message} onChange={e => setMessage(e.target.value)} required />
+              <Label htmlFor="message">Message / Question Details <span className="text-destructive">*</span></Label>
+              <Textarea id="message" placeholder="Describe your feedback, question, or doubt in detail here..." rows={6} value={message} onChange={e => setMessage(e.target.value)} required />
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isOnline ? <Send className={`mr-2 h-4 w-4 ${isSubmitting ? 'animate-spin' : ''}`} /> : <Save className="mr-2 h-4 w-4" />}
-              {isSubmitting ? (isOnline ? "Submitting..." : "Saving...") : (isOnline ? "Send Feedback" : "Save Feedback Offline")}
+              {isSubmitting ? (isOnline ? "Submitting..." : "Saving...") : (isOnline ? "Send Message" : "Save Message Offline")}
             </Button>
           </form>
         </CardContent>
