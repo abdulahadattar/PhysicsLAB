@@ -291,9 +291,3 @@ export default function ProjectileMotionG11Page() {
   );
 }
 
-// Helper function to generate static params if needed in future
-export async function generateStaticParams() {
-  // If you had multiple G11 specific simulations, you could list their IDs here.
-  // For now, this page is specific enough.
-  return [{ topicId: "projectile-motion-g11" }]; 
-}
