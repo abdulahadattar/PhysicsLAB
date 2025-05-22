@@ -36,10 +36,11 @@ export const APP_AUTHOR = "Sir Abdul Ahad";
 export const APP_NOTES_AUTHOR = "Abdul Ahad Attar";
 
 export const SIMULATION_TOPICS = [
-  { id: "projectile-motion", name: "Projectile Motion", grade: 11, description: "Explore the path of a projectile launched at various angles and velocities." },
+  { id: "projectile-motion", name: "Projectile Motion (General)", grade: 11, description: "Explore the path of a projectile launched at various angles and velocities." },
   { id: "newtons-laws", name: "Newton's Laws", grade: 9, description: "Investigate force, mass, and acceleration with interactive examples." },
   { id: "ohm-law", name: "Ohm's Law", grade: 10, description: "Understand the relationship between voltage, current, and resistance in circuits." },
   { id: "wave-properties", name: "Wave Properties", grade: 12, description: "Visualize wavelength, frequency, amplitude, and speed of waves." },
+  { id: "projectile-motion-g11", name: "Projectile Motion (Grade 11 Focus)", grade: 11, description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight." },
 ];
 
 // STUDY_GRADES is now fetched from /api/study-materials
@@ -49,3 +50,4 @@ export const QUIZ_TOPICS = [
   { id: "dynamics", name: "Dynamics Quiz" },
   { id: "electromagnetism", name: "Electromagnetism Quiz" },
 ];
+
