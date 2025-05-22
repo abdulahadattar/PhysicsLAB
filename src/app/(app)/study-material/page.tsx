@@ -11,62 +11,81 @@ import type { StudyGrade } from '@/lib/types';
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-async function fetchStudyGrades(): Promise<StudyGrade[]> {
-  const res = await fetch('/api/study-materials');
-  if (!res.ok) {
-    throw new Error('Failed to fetch study materials');
+async function fetchStudyGrades(): Promise<{ data: StudyGrade[] | null, error?: string }> {
+  try {
+    const res = await fetch('/api/study-materials');
+    if (!res.ok) {
+      return { data: null, error: `Failed to fetch study materials: ${res.status} ${res.statusText}` };
+    }
+    const jsonData = await res.json();
+    return { data: jsonData };
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : 'Network error while fetching study materials.';
+    return { data: null, error: errorMessage };
   }
-  return res.json();
 }
 
 export default function StudyMaterialPage() {
   const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [apiFetchAttempted, setApiFetchAttempted] = useState(false);
 
   useEffect(() => {
     async function loadData() {
-      try {
-        setIsLoading(true);
-        const data = await fetchStudyGrades();
-        // Try to load from localStorage first
-        const cachedData = localStorage.getItem('studyGrades');
-        if (cachedData) {
-          setStudyGrades(JSON.parse(cachedData));
+      setIsLoading(true);
+      setApiFetchAttempted(false);
+      let freshDataFetched = false;
+
+      if (navigator.onLine) {
+        const result = await fetchStudyGrades();
+        setApiFetchAttempted(true);
+        if (result.data) {
+          setStudyGrades(result.data);
+          localStorage.setItem('studyGrades', JSON.stringify(result.data));
+          setError(null); // Clear any previous error
+          freshDataFetched = true;
         } else {
-          setStudyGrades(data);
-          localStorage.setItem('studyGrades', JSON.stringify(data));
+          // API fetch failed, log warning. Error state will be handled after checking cache.
+          console.warn(`API fetch for study materials failed: ${result.error}`);
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        const cachedData = localStorage.getItem('studyGrades');
-        if (cachedData) {
-          setStudyGrades(JSON.parse(cachedData));
-          setError(null); // if cache exists, don't show API error, just use cache
-        }
-      } finally {
-        setIsLoading(false);
       }
+
+      if (!freshDataFetched) {
+        // Try to load from localStorage if API fetch didn't happen or failed
+        const cachedDataString = localStorage.getItem('studyGrades');
+        if (cachedDataString) {
+          try {
+            setStudyGrades(JSON.parse(cachedDataString));
+            setError(null); // Using cache, so clear error for UI
+            // If API was attempted and failed, but we have cache, show a mild warning
+            if (apiFetchAttempted && navigator.onLine) {
+                 setError("Could not refresh study materials from the server. Displaying locally cached version. Some content might be outdated.");
+            }
+          } catch (e) {
+            console.error("Failed to parse cached study materials:", e);
+            localStorage.removeItem('studyGrades'); // Clear corrupted cache
+            if (!navigator.onLine) {
+              setError("You are offline and cached study materials could not be loaded.");
+            } else {
+              setError("Failed to load study materials. Cache might be corrupted.");
+            }
+          }
+        } else {
+          // No fresh data and no cache
+          if (!navigator.onLine) {
+            setError("You are offline and no study materials are cached. Please connect to the internet to load them.");
+          } else if (apiFetchAttempted) { // API was tried and failed, and no cache
+            setError("Failed to fetch study materials from the server, and no cached data is available.");
+          } else { // Should not happen if navigator.onLine was true and apiFetchAttempted is false, but as a fallback
+             setError("Study materials could not be loaded. Please check your connection or try again later.");
+          }
+        }
+      }
+      setIsLoading(false);
     }
     loadData();
-  }, []);
-
-  // Attempt to refresh data from API if online, otherwise use cache.
-  useEffect(() => {
-    const refreshDataIfNeeded = async () => {
-      if (navigator.onLine) {
-        try {
-          const data = await fetchStudyGrades();
-          setStudyGrades(data);
-          localStorage.setItem('studyGrades', JSON.stringify(data));
-        } catch (err) {
-          // If refresh fails, we rely on existing state (potentially from cache)
-          console.error("Failed to refresh study materials, using cached version if available:", err);
-        }
-      }
-    };
-    refreshDataIfNeeded();
-  }, []);
+  }, []); // Runs once on mount
 
 
   if (isLoading) {
@@ -85,8 +104,13 @@ export default function StudyMaterialPage() {
       </div>
     );
   }
+  
+  // Error display logic:
+  // If error is the specific cache refresh warning, show it as default/yellow.
+  // Otherwise, show it as destructive.
+  const isCacheWarning = error && error.startsWith("Could not refresh study materials");
 
-  if (error && studyGrades.length === 0) { // Only show error if no cached data
+  if (error && !isCacheWarning && studyGrades.length === 0) { 
     return (
       <div className="space-y-8">
         <Card>
@@ -97,14 +121,14 @@ export default function StudyMaterialPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load study materials: {error}. Please check your internet connection and try again.
+            {error} Please check your internet connection or try again later.
           </AlertDescription>
         </Alert>
       </div>
     );
   }
   
-  if (!studyGrades || studyGrades.length === 0) {
+  if (!isLoading && !error && studyGrades.length === 0) {
      return (
       <div className="space-y-8">
         <Card>
@@ -128,11 +152,11 @@ export default function StudyMaterialPage() {
         </CardHeader>
       </Card>
       
-      {error && ( // Show non-blocking error if API failed but cache was used
+      {error && isCacheWarning && (
         <Alert variant="default" className="bg-yellow-50 border-yellow-300 text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300">
             <AlertTriangle className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
             <AlertDescription>
-                Could not refresh study materials from the server. Displaying locally cached version. Some content might be outdated.
+                {error}
             </AlertDescription>
         </Alert>
       )}
