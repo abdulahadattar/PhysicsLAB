@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -44,18 +45,21 @@ export default function QuizzesPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {quizSections.map((section) => (
           <Card key={section.title} className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-             <div className="relative h-48 w-full">
-                <Image 
-                    src={section.image} 
-                    alt={section.title} 
-                    layout="fill" 
-                    objectFit="cover"
-                    data-ai-hint={section.aiHint}
-                />
+             <div className="relative h-48 w-full bg-secondary/30 flex items-center justify-center" data-ai-hint={section.aiHint}>
+                {section.image.startsWith("https://placehold.co") ? (
+                  <section.icon className="h-20 w-20 text-primary/70" strokeWidth={1.5}/>
+                ) : (
+                  <Image
+                      src={section.image}
+                      alt={section.title}
+                      layout="fill"
+                      objectFit="cover"
+                  />
+                )}
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <section.icon className="h-6 w-6 text-primary" /> 
+                <section.icon className="h-6 w-6 text-primary" />
                 {section.title}
               </CardTitle>
             </CardHeader>

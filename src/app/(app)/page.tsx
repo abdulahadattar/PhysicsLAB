@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -12,7 +13,7 @@ export default function DashboardPage() {
       description: "Visualize physics concepts with dynamic simulations.",
       href: "/simulations",
       icon: FlaskConical,
-      image: "https://placehold.co/600x400.png",
+      image: "https://placehold.co/600x400.png", // Placeholder
       aiHint: "physics simulation"
     },
     {
@@ -20,7 +21,7 @@ export default function DashboardPage() {
       description: "Access chapter-wise notes and MCQs for grades 9-12.",
       href: "/study-material",
       icon: BookOpen,
-      image: "https://placehold.co/600x400.png",
+      image: "https://placehold.co/600x400.png", // Placeholder
       aiHint: "textbooks study"
     },
     {
@@ -28,7 +29,7 @@ export default function DashboardPage() {
       description: "Test your knowledge with daily and topic-wise quizzes.",
       href: "/quizzes",
       icon: ListChecks,
-      image: "https://placehold.co/600x400.png",
+      image: "https://placehold.co/600x400.png", // Placeholder
       aiHint: "quiz test"
     },
   ];
@@ -42,7 +43,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <p>
-            Explore simulations, dive into study materials, test your knowledge with quizzes, and discover fun facts about the world of physics. 
+            Explore simulations, dive into study materials, test your knowledge with quizzes, and discover fun facts about the world of physics.
             This platform is designed to help students from grades 9 to 12 align with the Sindh Textbook Board curriculum.
           </p>
         </CardContent>
@@ -51,14 +52,17 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {features.map((feature) => (
           <Card key={feature.title} className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
-            <div className="relative h-48 w-full">
-              <Image 
-                src={feature.image} 
-                alt={feature.title} 
-                layout="fill" 
-                objectFit="cover"
-                data-ai-hint={feature.aiHint}
-              />
+            <div className="relative h-48 w-full bg-secondary/30 flex items-center justify-center" data-ai-hint={feature.aiHint}>
+              {feature.image.startsWith("https://placehold.co") ? (
+                <feature.icon className="h-20 w-20 text-primary/70" strokeWidth={1.5}/>
+              ) : (
+                <Image
+                  src={feature.image}
+                  alt={feature.title}
+                  layout="fill"
+                  objectFit="cover"
+                />
+              )}
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
