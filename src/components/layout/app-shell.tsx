@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React from 'react';
+import React, { useState } from 'react'; // Added useState
 import {
   SidebarProvider,
   Sidebar,
@@ -23,7 +23,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff }  from 'lucide-react';
+import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserPlus } from 'lucide-react'; // Added UserPlus
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/accordion"
 import { useUserSession } from '@/contexts/user-session-context'; 
 import { cn } from "@/lib/utils"; 
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -60,6 +61,8 @@ SidebarInset.displayName = "SidebarInset"
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const { isLoggedIn, userRole, viewAsStudent, login, logout, toggleViewAsStudent, isLoading } = useUserSession();
+  const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
+  const { toast } = useToast();
 
   const renderNavItems = (items: NavItem[], isSubMenu = false) => {
     return items.map((item) => {
@@ -79,17 +82,17 @@ export function AppShell({ children }: AppShellProps) {
                 className={`w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center ${isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
                 asChild
               >
-                <SidebarMenuButton
-                  asChild={true} 
-                  className="w-full"
-                  isActive={isActive && !isParentActive && !isSubMenu} 
-                  tooltip={item.label}
-                >
-                  <span className="flex items-center gap-2">
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </span>
-                </SidebarMenuButton>
+                 <SidebarMenuButton
+                    asChild={true} 
+                    className="w-full"
+                    isActive={isActive && !isParentActive && !isSubMenu} 
+                    tooltip={item.label}
+                  >
+                    <span className="flex items-center gap-2">
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </span>
+                  </SidebarMenuButton>
               </AccordionTrigger>
               <AccordionContent className="pb-0 group-data-[collapsible=icon]:hidden">
                  <SidebarMenuSub>
@@ -98,7 +101,7 @@ export function AppShell({ children }: AppShellProps) {
                       <Link href={subItem.href} passHref legacyBehavior>
                         <SidebarMenuSubButton
                           asChild={false}
-                          isActive={pathname === subItem.href}
+                          isActive={pathname.startsWith(subItem.href)} // Use startsWith for sub-items too
                         >
                           <subItem.icon />
                           <span>{subItem.label}</span>
@@ -159,7 +162,7 @@ export function AppShell({ children }: AppShellProps) {
             </Avatar>
             <div>
               <p className="text-sm font-medium">{isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR : 'Student User') : 'Guest'}</p>
-              <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? 'Teacher' : 'Student') : 'Not Logged In'}</p>
+              <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}</p>
             </div>
           </div>
            <div className="group-data-[collapsible=icon]:hidden text-center text-xs text-muted-foreground mt-2">
@@ -177,19 +180,30 @@ export function AppShell({ children }: AppShellProps) {
             {isLoading ? (
               <p className="text-sm text-muted-foreground">Loading user...</p>
             ) : !isLoggedIn ? (
-              <>
-                <Button variant="outline" size="sm" onClick={() => login('student')}>
-                  <UserCircle className="mr-2 h-4 w-4" /> Login as Student
+              isLoginFlowActive ? (
+                <>
+                  <Button variant="default" size="sm" onClick={() => { 
+                    login('student'); 
+                    setIsLoginFlowActive(false);
+                    toast({ title: "Logged In as Student", description: "New student accounts require teacher approval for full features."});
+                  }}>
+                    <UserCircle className="mr-2 h-4 w-4" /> Proceed as Student
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { login('teacher'); setIsLoginFlowActive(false); }}>
+                    <UserCog className="mr-2 h-4 w-4" /> Proceed as Teacher
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setIsLoginFlowActive(false)}>Cancel</Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setIsLoginFlowActive(true)}>
+                  <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => login('teacher')}>
-                  <UserCircle className="mr-2 h-4 w-4" /> Login as Teacher
-                </Button>
-              </>
+              )
             ) : (
               <>
                 <span className="text-sm text-muted-foreground">
                   Logged in as: <span className="font-semibold capitalize">{userRole}</span>
-                  {userRole === 'teacher' && viewAsStudent && " (Viewing as Student)"}
+                  {userRole === 'teacher' && viewAsStudent && " (Student View)"}
                 </span>
                 {userRole === 'teacher' && (
                   <Button variant="outline" size="sm" onClick={toggleViewAsStudent}>
@@ -197,7 +211,7 @@ export function AppShell({ children }: AppShellProps) {
                     {viewAsStudent ? "Teacher View" : "Student View"}
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" onClick={logout}>
+                <Button variant="ghost" size="sm" onClick={() => { logout(); setIsLoginFlowActive(false);}}>
                   <LogOut className="mr-2 h-4 w-4" /> Logout
                 </Button>
               </>
