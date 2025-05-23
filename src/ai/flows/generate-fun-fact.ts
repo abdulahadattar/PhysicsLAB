@@ -49,6 +49,7 @@ These items can be:
 
 Each item must have a primary statement (the 'content') and a short 'explanation' providing context or further detail.
 Ensure variety in the types of items you generate in the list. Tailor the variety and specificity of the items to the provided \`gradeLevel\` and \`topic\` to make them maximally engaging.
+Rely on your internal knowledge base; do not perform external web searches.
 
 Context:
 Topic: {{{topic}}}
