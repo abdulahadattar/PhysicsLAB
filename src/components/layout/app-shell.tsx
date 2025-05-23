@@ -1,7 +1,7 @@
 
 "use client";
-import type { NavItem } from '@/lib/constants';
 import { NAV_ITEMS, APP_NAME, APP_AUTHOR, SIMULATION_TOPICS, QUIZ_TOPICS, SETTINGS_SEARCHABLE_KEYWORDS } from '@/lib/constants';
+import { NavItem } from '@/lib/types';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -21,6 +21,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton
+
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserCog, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen, ListChecks, Settings as SettingsIcon } from 'lucide-react'; // Removed ChevronDown, it's part of Accordion
@@ -31,6 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserSession } from '@/contexts/user-session-context'; 
 import { cn } from "@/lib/utils"; 
 import { useToast } from '@/hooks/use-toast';
@@ -85,7 +87,7 @@ interface SearchResult {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, isLoading: isSessionLoading, isFirebaseConfigured } = useUserSession();
+  const { currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, isLoading: isSessionLoading, isFirebaseConfigured, updateSession } = useUserSession();
   const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(true);
@@ -151,8 +153,8 @@ export function AppShell({ children }: AppShellProps) {
       if (item.label.toLowerCase().includes(lowerQuery)) {
         results.push({ id: item.href, label: item.label, href: item.href, category: 'Navigation', icon: item.icon });
       }
-      item.subItems?.forEach(subItem => {
-        if (subItem.label.toLowerCase().includes(lowerQuery)) {
+      item.subItems?.forEach((subItem: NavItem) => {
+        if ((subItem as NavItem).label.toLowerCase().includes(lowerQuery)) {
           results.push({ id: subItem.href, label: `${item.label} > ${subItem.label}`, href: subItem.href, category: 'Navigation', icon: subItem.icon });
         }
       });
@@ -335,7 +337,7 @@ export function AppShell({ children }: AppShellProps) {
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
-      );
+      )
     });
   };
 
@@ -392,7 +394,10 @@ export function AppShell({ children }: AppShellProps) {
                         className="pl-10 w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        onFocus={() => { if(searchTerm) setIsSearchOpen(true); }}
+                        onFocus={() => setIsSearchOpen(true)}
+                        onKeyDown={(e) => {
+ if (e.key === 'Enter') { e.preventDefault(); /* Prevent form submission or other default Enter behavior */ }
+ }}
                         />
                         {searchTerm && (
                             <Button
@@ -408,7 +413,7 @@ export function AppShell({ children }: AppShellProps) {
                     </div>
                 </PopoverAnchor>
                 {isSearchOpen && searchResults.length > 0 && (
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-y-auto p-1" align="start">
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-y-auto p-1" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <div className="flex flex-col gap-0.5">
                         {searchResults.map(result => {
                             const Icon = result.icon || FileText; // Default icon
@@ -419,8 +424,9 @@ export function AppShell({ children }: AppShellProps) {
                                 className="w-full justify-start h-auto py-2 px-3 text-left"
                                 onClick={() => {
                                 router.push(result.href);
-                                setIsSearchOpen(false);
                                 setSearchTerm('');
+                                setSearchResults([]);
+                                setIsSearchOpen(false);
                                 }}
                             >
                                 <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -435,7 +441,7 @@ export function AppShell({ children }: AppShellProps) {
                     </PopoverContent>
                 )}
                  {isSearchOpen && searchTerm && searchResults.length === 0 && !isLoadingSearchData && (
-                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-4 text-center" align="start">
+                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-4 text-center" align="start" onOpenAutoFocus={(e) => e.preventDefault()} forceMount>
                          <p className="text-sm text-muted-foreground">No results found for "{searchTerm}".</p>
                      </PopoverContent>
                  )}
@@ -487,10 +493,10 @@ export function AppShell({ children }: AppShellProps) {
                   {currentUser?.displayName || currentUser?.email || "User"} (<span className="font-semibold capitalize">{userRole}</span>
                   {userRole === 'teacher' && viewAsStudent && " (Student View)"})
                 </span>
-                {userRole === 'teacher' && (
-                  <Button variant="outline" size="sm" onClick={toggleViewAsStudent}>
+                {userRole === 'teacher' && updateSession && (
+                  <Button variant="outline" size="sm" onClick={() => updateSession({ viewAsStudent: !viewAsStudent })}>
                     {viewAsStudent ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                    {viewAsStudent ? "Teacher View" : "Student View"}
+                    {viewAsStudent ? "Teacher View" : "Student View"} 
                   </Button>
                 )}
                 <Button variant="ghost" size="sm" onClick={async () => { await signOutFirebase(); setIsLoginFlowActive(false);}}>

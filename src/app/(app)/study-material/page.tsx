@@ -10,7 +10,7 @@ import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade, TeacherGradeOverride } from '@/lib/types';
 import { useEffect, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge"; // Added Badge import
+import { Badge } from "@/components/ui/badge";
 
 interface FullTextbookLinkConfig {
   key: keyof Pick<StudyGrade, 'completeTextbookPdfLink' | 'ziauddinBoardFullPdfLink' | 'punjabBoardFullPdfLink' | 'nationalSyllabusFullPdfLink'>;
@@ -99,7 +99,7 @@ export default function StudyMaterialPage() {
           const cachedData = JSON.parse(cachedDataString);
           gradesToDisplay = applyGradeOverrides(cachedData, teacherOverrides);
           setStudyGrades(gradesToDisplay);
-          setInfoMessage("Displaying cached content. Checking for updates if online...");
+          // Don't set info message here yet, wait for online check
         } catch (e) {
           console.warn("Failed to parse cached study materials:", e);
           localStorage.removeItem(STUDY_GRADES_CACHE_KEY); 
@@ -108,6 +108,7 @@ export default function StudyMaterialPage() {
     }
 
     if (isOnline) {
+      setInfoMessage(gradesToDisplay.length > 0 ? "Checking for content updates..." : "Fetching content...");
       const result = await fetchStudyGradesAPI();
       if (result.data) {
         gradesToDisplay = applyGradeOverrides(result.data, teacherOverrides);
@@ -118,14 +119,14 @@ export default function StudyMaterialPage() {
           localStorage.setItem(STUDY_GRADES_CACHE_KEY, JSON.stringify(result.data)); 
         }
       } else {
-        if (gradesToDisplay.length > 0) {
+        if (gradesToDisplay.length > 0) { // API failed but cache exists
           setError(`Could not refresh study materials: ${result.error || 'Unknown API error'}. Displaying last available version.`);
           setInfoMessage(null);
-        } else {
+        } else { // API failed and no cache
           setError(`Failed to load study materials: ${result.error || 'Unknown API error'}. Please check your connection or try again later.`);
         }
       }
-    } else {
+    } else { // Offline
       if (gradesToDisplay.length === 0) {
         setError("You are offline and no study materials are cached. Please connect to the internet to load them.");
       } else {
@@ -227,7 +228,7 @@ export default function StudyMaterialPage() {
             className="overflow-hidden shadow-md animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
             style={{ animationDelay: `${gradeIndex * 100}ms` }}
           >
-            <AccordionItem value={`grade-${grade.id}`} className="border-none">
+            <AccordionItem value={`grade-${grade.id}`} className="border-none" key={grade.id}>
               <AccordionTrigger className="bg-secondary/30 hover:bg-secondary/50 px-6 py-4 text-xl font-semibold hover:no-underline">
                 <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">

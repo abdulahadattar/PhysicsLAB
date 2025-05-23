@@ -4,8 +4,7 @@
  * This includes navigation structures, lists of topics for simulations and quizzes,
  * application metadata, searchable keywords for settings, and curriculum board information.
  */
-
-import type { NavItem as NavItemType, SimulationTopic as SimTopicType } from '@/lib/types';
+import type { SimulationTopic as SimTopicType, NavItem } from '@/lib/types';
 import {
   LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon,
   UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, ClockIcon, Waves, Heater, Sigma,
@@ -28,12 +27,7 @@ import {
   UserPlus, BarChart3, Percent, CheckCircle, History, Smartphone, Laptop, Signal,
   DownloadCloud, Notebook as NotebookIcon, Share2,
   LocateIcon, ZoomInIcon, ZoomOutIcon,
-} from 'lucide-react';
-
-/**
- * Defines the structure for a navigation item in the sidebar.
- */
-export type NavItem = NavItemType;
+} from 'lucide-react'; // Assuming all icons are imported from lucide-react
 
 /**
  * Defines the structure for a simulation topic.

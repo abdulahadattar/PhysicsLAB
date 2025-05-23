@@ -1,20 +1,44 @@
 
 "use client";
 
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Telescope, Link as LinkIcon } from "lucide-react";
+import { Telescope, Link as LinkIcon, Loader2, AlertTriangle } from "lucide-react";
+import type { ResearchCenter } from '@/lib/types';
 
-const researchCenters = [
-  { name: "CERN", description: "The European Organization for Nuclear Research, one of the world's largest and most respected centres for scientific research.", link: "https://home.cern" },
-  { name: "LIGO Scientific Collaboration", description: "A group of international physicists focused on the direct detection of gravitational waves.", link: "https://www.ligo.org" },
-  { name: "NASA (National Aeronautics and Space Administration)", description: "Leads an innovative program of space exploration, scientific discovery, and aeronautics research.", link: "https://www.nasa.gov" },
-  { name: "Fermilab", description: "America's particle physics and accelerator laboratory.", link: "https://www.fnal.gov" },
-  { name: "Max Planck Institute for Physics", description: "Focuses on particle physics, astroparticle physics, and cosmology.", link: "https://www.mpp.mpg.de/en/" },
-  // Add more centers as needed
-];
+// Directly import the JSON data for client-side rendering
+import researchCentersData from '@/data/research-centers.json';
+
 
 export default function ResearchCentersPage() {
+  const [centers, setCenters] = useState<ResearchCenter[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadResearchCenters = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Simulate async fetch, but use imported data
+      await new Promise(resolve => setTimeout(resolve, 100)); // Simulate small delay
+      const data: ResearchCenter[] = researchCentersData; 
+      if (!data || data.length === 0) {
+        setError("No research center data found. The data file might be empty.");
+      }
+      setCenters(data);
+    } catch (e) {
+      console.error("Error loading research centers:", e);
+      setError(e instanceof Error ? e.message : "Could not load research center data.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadResearchCenters();
+  }, [loadResearchCenters]);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-xl">
@@ -27,32 +51,50 @@ export default function ResearchCentersPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {researchCenters.map((center) => (
-          <Card key={center.name} className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-xl">{center.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-sm text-muted-foreground">{center.description}</p>
-            </CardContent>
-            <CardContent className="mt-auto">
-              <Button asChild className="w-full">
-                <a href={center.link} target="_blank" rel="noopener noreferrer">
-                  <LinkIcon className="mr-2 h-4 w-4" /> Visit Website
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {isLoading && (
+        <div className="flex justify-center items-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="ml-3">Loading research centers...</p>
+        </div>
+      )}
+      {error && !isLoading && (
+         <Card><CardContent className="pt-6"><Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert></CardContent></Card>
+      )}
+
+      {!isLoading && !error && centers.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {centers.map((center) => (
+            <Card key={center.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-xl">{center.name}</CardTitle>
+                <CardDescription>{center.location}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-2">
+                <p className="text-sm"><span className="font-semibold">Focus:</span> {center.primaryFocus}</p>
+                <p className="text-sm"><span className="font-semibold">Key Achievement:</span> {center.keyAchievement}</p>
+              </CardContent>
+              <CardContent className="mt-auto">
+                <Button asChild className="w-full">
+                  <a href={center.websiteUrl} target="_blank" rel="noopener noreferrer">
+                    <LinkIcon className="mr-2 h-4 w-4" /> Visit Website
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+       {!isLoading && !error && centers.length === 0 && (
+         <Card><CardContent className="pt-6 text-center text-muted-foreground">No research centers data available.</CardContent></Card>
+      )}
+
        <Card>
         <CardHeader>
           <CardTitle>More to Explore</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            This is just a small sample of the many incredible physics research centers and observatories around the globe. Students are encouraged to research further based on their interests! Topics like local university research departments or specific observatories (e.g., Mauna Kea Observatories, European Southern Observatory) can also be explored.
+            This is just a sample of the many incredible physics research centers and observatories around the globe. Students are encouraged to research further based on their interests! Topics like local university research departments or specific observatories can also be explored.
           </p>
         </CardContent>
       </Card>

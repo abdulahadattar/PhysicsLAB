@@ -196,3 +196,15 @@ export interface SimulationTopic {
   image?: string;
   aiHint?: string;
 }
+
+/**
+ * Defines the structure for a navigation item in the sidebar.
+ */
+export interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  matchExact?: boolean;
+  subItems?: NavItem[];
+}
+

@@ -38,7 +38,7 @@ export default function ManageModelPapersPage() {
   const [newPaperDescription, setNewPaperDescription] = useState("");
   const [newPaperUrl, setNewPaperUrl] = useState("");
   const [newPaperGradeId, setNewPaperGradeId] = useState<string>("");
-  const [newPaperYear, setNewPaperYear] = useState<string>(new Date().getFullYear().toString()); // Default to current year
+  const [newPaperYear, setNewPaperYear] = useState<string>(new Date().getFullYear().toString()); 
 
   const fetchGrades = useCallback(async () => {
     setIsLoadingGrades(true);
@@ -74,14 +74,14 @@ export default function ManageModelPapersPage() {
       }
       grouped[paper.gradeId].years[paper.year].push(paper);
     });
-    // Sort years in descending order
+    
     for (const gradeId in grouped) {
         const sortedYears: { [year: number]: ModelPaper[] } = {};
         Object.keys(grouped[gradeId].years)
             .map(Number)
-            .sort((a, b) => b - a) // Sort years descending
+            .sort((a, b) => b - a) 
             .forEach(year => {
-                // Sort papers by title within each year
+                
                 sortedYears[year] = grouped[gradeId].years[year].sort((a, b) => a.title.localeCompare(b.title));
             });
         grouped[gradeId].years = sortedYears;
@@ -109,29 +109,10 @@ export default function ManageModelPapersPage() {
   }, [toast, studyGrades, groupPapers]);
 
   useEffect(() => {
-    loadModelPapers();
-  }, [loadModelPapers, studyGrades]); // Reload/regroup if studyGrades changes
-
-   useEffect(() => {
-    if (modelPapers.length > 0 && studyGrades.length > 0) {
-      setGroupedPapers(groupPapers(modelPapers, studyGrades));
-    } else if (studyGrades.length === 0 && modelPapers.length > 0) {
-      // Grades haven't loaded yet, but papers have. Create a temporary grouping.
-      const tempGrouped: GroupedModelPapers = {};
-      modelPapers.forEach(paper => {
-        if (!tempGrouped[paper.gradeId]) {
-          tempGrouped[paper.gradeId] = { gradeName: `Grade ID: ${paper.gradeId}`, years: {} };
-        }
-        if (!tempGrouped[paper.gradeId].years[paper.year]) {
-          tempGrouped[paper.gradeId].years[paper.year] = [];
-        }
-        tempGrouped[paper.gradeId].years[paper.year].push(paper);
-      });
-      setGroupedPapers(tempGrouped);
-    } else {
-        setGroupedPapers({});
+    if (studyGrades.length > 0) { // Only load/group papers if grades are available for names
+        loadModelPapers();
     }
-  }, [modelPapers, studyGrades, groupPapers]);
+  }, [loadModelPapers, studyGrades]); 
 
 
   const handleSaveModelPapers = useCallback(() => {
@@ -139,7 +120,9 @@ export default function ManageModelPapersPage() {
     try {
       localStorage.setItem(MODEL_PAPERS_STORAGE_KEY, JSON.stringify(modelPapers));
       toast({ title: "Model Papers Saved", description: "Your changes have been saved locally." });
-      setGroupedPapers(groupPapers(modelPapers, studyGrades)); // Re-group after save
+      if (studyGrades.length > 0) { // Re-group only if grades are loaded
+        setGroupedPapers(groupPapers(modelPapers, studyGrades)); 
+      }
     } catch (e) {
       console.error("Error saving model papers:", e);
       toast({ title: "Save Failed", description: "Could not save model papers.", variant: "destructive" });
@@ -168,7 +151,9 @@ export default function ManageModelPapersPage() {
     };
     const updatedPapers = [...modelPapers, newPaper];
     setModelPapers(updatedPapers);
-    setGroupedPapers(groupPapers(updatedPapers, studyGrades)); // Update grouped view
+    if (studyGrades.length > 0) { // Update grouped view only if grades are loaded
+        setGroupedPapers(groupPapers(updatedPapers, studyGrades)); 
+    }
     setNewPaperTitle("");
     setNewPaperDescription("");
     setNewPaperUrl("");
@@ -180,7 +165,9 @@ export default function ManageModelPapersPage() {
   const handleDeleteModelPaper = (id: string) => {
     const updatedPapers = modelPapers.filter(paper => paper.id !== id);
     setModelPapers(updatedPapers);
-    setGroupedPapers(groupPapers(updatedPapers, studyGrades)); // Update grouped view
+    if (studyGrades.length > 0) { // Update grouped view only if grades are loaded
+        setGroupedPapers(groupPapers(updatedPapers, studyGrades)); 
+    }
     toast({ title: "Model Paper Removed", description: "The paper has been removed from the list. Save changes to make it permanent." });
   };
 

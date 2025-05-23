@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save, BookCopy, Landmark, Globe, Notebook } from "lucide-react";
+import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save, BookCopy, Landmark, Globe, Notebook, NotebookText } from "lucide-react"; // Added NotebookText
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { StudyGrade, Chapter, TeacherChapterOverrides, ChapterContent, MCQ, QuestionAnswer, TeacherGradeOverrides, TeacherGradeOverride } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +24,7 @@ interface ChapterPdfConfigItem {
   key: ChapterPdfTypeKey;
   label: string;
   placeholder: string;
+  icon: React.ElementType;
 }
 
 type GradePdfTypeKey = keyof Pick<StudyGrade, 'completeTextbookPdfLink' | 'ziauddinBoardFullPdfLink' | 'punjabBoardFullPdfLink' | 'nationalSyllabusFullPdfLink'>;
@@ -31,6 +32,7 @@ interface GradePdfConfigItem {
     key: GradePdfTypeKey;
     label: string;
     placeholder: string;
+    icon: React.ElementType;
 }
 
 
@@ -48,16 +50,16 @@ export default function TeacherContentManagementPage() {
   const [isGeneratingAiContent, setIsGeneratingAiContent] = useState(false);
 
   const chapterPdfConfig: ChapterPdfConfigItem[] = [
-    { key: 'stbbChapterPdfLink', label: 'STBB Chapter PDF Link', placeholder: 'Sindh Board Chapter Google Drive PDF link' },
-    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link", placeholder: "Teacher's Notes Google Drive PDF link" },
-    { key: 'alternativeChapterPdfLink', label: 'Other Alternative Chapter PDF Link', placeholder: 'Alternative Chapter Google Drive PDF link' },
+    { key: 'stbbChapterPdfLink', label: 'STBB Chapter PDF Link', placeholder: 'Sindh Board Chapter Google Drive PDF link', icon: BookCopy },
+    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link", placeholder: "Teacher's Notes Google Drive PDF link", icon: NotebookText },
+    { key: 'alternativeChapterPdfLink', label: 'Other Alternative Chapter PDF Link', placeholder: 'Alternative Chapter Google Drive PDF link', icon: BookOpen },
   ];
 
   const gradePdfConfig: GradePdfConfigItem[] = [
-    { key: 'completeTextbookPdfLink', label: 'STBB Full Textbook PDF Link', placeholder: 'Sindh Board Full Google Drive PDF link' },
-    { key: 'ziauddinBoardFullPdfLink', label: 'Ziauddin Board Full PDF Link', placeholder: 'Ziauddin Board Full Google Drive PDF link' },
-    { key: 'punjabBoardFullPdfLink', label: 'Punjab Board Full PDF Link', placeholder: 'Punjab Board Full Google Drive PDF link' },
-    { key: 'nationalSyllabusFullPdfLink', label: 'National Syllabus Full PDF Link', placeholder: 'National Syllabus Full Google Drive PDF link' },
+    { key: 'completeTextbookPdfLink', label: 'STBB Full Textbook PDF Link', placeholder: 'Sindh Board Full Google Drive PDF link', icon: BookCopy },
+    { key: 'ziauddinBoardFullPdfLink', label: 'Ziauddin Board Full PDF Link', placeholder: 'Ziauddin Board Full Google Drive PDF link', icon: Landmark },
+    { key: 'punjabBoardFullPdfLink', label: 'Punjab Board Full PDF Link', placeholder: 'Punjab Board Full Google Drive PDF link', icon: BookCopy },
+    { key: 'nationalSyllabusFullPdfLink', label: 'National Syllabus Full PDF Link', placeholder: 'National Syllabus Full Google Drive PDF link', icon: Globe },
   ];
 
 
@@ -69,7 +71,6 @@ export default function TeacherContentManagementPage() {
       if (!res.ok) throw new Error(`Failed to fetch grades: ${res.statusText}`);
       let data: StudyGrade[] = await res.json();
       
-      // Apply grade-level overrides from localStorage
       const gradeOverridesRaw = localStorage.getItem(TEACHER_GRADE_OVERRIDES_STORAGE_KEY);
       if (gradeOverridesRaw) {
         const allGradeOverrides: TeacherGradeOverrides = JSON.parse(gradeOverridesRaw);
@@ -153,7 +154,7 @@ export default function TeacherContentManagementPage() {
   useEffect(() => {
     if (selectedGradeId) {
         loadGradeOverridesForEditing();
-        setSelectedChapterId(null); // Reset chapter selection when grade changes
+        setSelectedChapterId(null); 
         setEditableChapterContent({});
     } else {
         setEditableGradeOverrides({});
@@ -189,13 +190,10 @@ export default function TeacherContentManagementPage() {
 
 
   const handleAiGenerate = async () => {
-    const potentialPdfSources: (ChapterPdfTypeKey)[] = [
-        'teacherNotesPdfName', 
-        'stbbChapterPdfLink',
-        'alternativeChapterPdfLink'
-    ];
     let primaryPdfForAi: string | undefined;
-    for (const key of potentialPdfSources) {
+    const potentialPdfKeys: ChapterPdfTypeKey[] = ['teacherNotesPdfName', 'stbbChapterPdfLink', 'alternativeChapterPdfLink'];
+    
+    for (const key of potentialPdfKeys) {
         if (editableChapterContent[key]?.trim()) {
             primaryPdfForAi = editableChapterContent[key];
             break;
@@ -203,7 +201,7 @@ export default function TeacherContentManagementPage() {
     }
 
     if (!primaryPdfForAi || !primaryPdfForAi.startsWith('http')) {
-      toast({ title: "No PDF Link for AI", description: "Please provide at least one valid Google Drive PDF link for the selected chapter (e.g., Teacher Notes or STBB Chapter PDF) to generate content from.", variant: "destructive" });
+      toast({ title: "No PDF Link for AI", description: "Please provide at least one valid Google Drive PDF link for the selected chapter to generate content from.", variant: "destructive" });
       return;
     }
     setIsGeneratingAiContent(true);
@@ -344,7 +342,6 @@ export default function TeacherContentManagementPage() {
         localStorage.setItem(TEACHER_GRADE_OVERRIDES_STORAGE_KEY, JSON.stringify(allGradeOverrides));
         toast({ title: "Grade PDF Links Saved!", description: `Full textbook links for ${studyGrades.find(g => g.id === selectedGradeId)?.name} saved locally.` });
         
-        // Optimistically update the studyGrades state
         setStudyGrades(prevGrades => prevGrades.map(g => {
             if (g.id === selectedGradeId) {
                 return { ...g, ...gradeContentToSave };
@@ -358,8 +355,10 @@ export default function TeacherContentManagementPage() {
     }
   };
   
-  const selectedGradeName = studyGrades.find(g => g.id === selectedGradeId)?.name;
-  const selectedChapterName = studyGrades.find(g => g.id === selectedChapterId)?.chapters.find(c => c.id === selectedChapterId)?.name;
+  const selectedGradeObject = studyGrades.find(g => g.id === selectedGradeId);
+  const selectedGradeName = selectedGradeObject?.name;
+  const selectedChapterName = selectedGradeObject?.chapters.find(c => c.id === selectedChapterId)?.name;
+
 
   if (isLoadingGrades) return <div className="flex justify-center items-center p-10"><Loader2 className="h-10 w-10 animate-spin"/></div>;
   if (gradesError) return <Alert variant="destructive"><AlertTriangle className="h-4 w-4"/><AlertDescription>{gradesError}</AlertDescription></Alert>;
@@ -395,17 +394,17 @@ export default function TeacherContentManagementPage() {
                 <CardContent className="space-y-4">
                     {gradePdfConfig.map(pdf => (
                         <div key={pdf.key} className="space-y-1">
-                            <Label htmlFor={`${pdf.key}-gradeinput`} className="font-medium text-sm">{pdf.label}</Label>
+                            <Label htmlFor={`${pdf.key}-gradeinput`} className="font-medium text-sm flex items-center gap-1"><pdf.icon className="h-4 w-4"/>{pdf.label}</Label>
                             <div className="flex gap-2 items-center">
                                 <Input 
                                     id={`${pdf.key}-gradeinput`} 
                                     type="url" 
                                     placeholder={pdf.placeholder} 
-                                    value={editableGradeOverrides[pdf.key] || ""}
+                                    value={(editableGradeOverrides as any)[pdf.key] || ""}
                                     onChange={(e) => handleGradePdfLinkChange(pdf.key, e.target.value)}
                                     className="flex-grow"
                                 />
-                                {editableGradeOverrides[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveGradePdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
+                                {(editableGradeOverrides as any)[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveGradePdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
                             </div>
                         </div>
                     ))}
@@ -421,29 +420,29 @@ export default function TeacherContentManagementPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-xl">Chapters for {selectedGradeName}</CardTitle>
-                    <CardDescription>Select a chapter below to edit its specific content.</CardDescription>
+                    <CardDescription>Select a chapter below to edit its specific content (PDF links, key points, exercises).</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Accordion type="single" collapsible onValueChange={setSelectedChapterId} value={selectedChapterId || undefined}>
-                        {(studyGrades.find(g => g.id === selectedGradeId)?.chapters || []).map(chapter => (
+                        {(selectedGradeObject?.chapters || []).map(chapter => (
                             <AccordionItem value={chapter.id} key={chapter.id}>
                                 <AccordionTrigger className="text-base">{chapter.name}</AccordionTrigger>
                                 <AccordionContent className="pt-4 space-y-6 bg-muted/30 p-4 rounded-md">
                                   <div className="space-y-4 p-4 border rounded-md bg-background">
-                                    <h3 className="font-semibold text-lg">Chapter-Specific PDF Links</h3>
+                                    <h3 className="font-semibold text-lg">Chapter-Specific PDF Links for "{chapter.name}"</h3>
                                     {chapterPdfConfig.map(pdf => (
                                       <div key={pdf.key} className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
-                                        <Label htmlFor={`${pdf.key}-chapterinput`} className="font-medium">{pdf.label}</Label>
+                                        <Label htmlFor={`${pdf.key}-chapterinput`} className="font-medium flex items-center gap-1"><pdf.icon className="h-4 w-4"/>{pdf.label}</Label>
                                         <div className="flex gap-2 items-center">
                                           <Input 
                                             id={`${pdf.key}-chapterinput`} 
                                             type="url" 
                                             placeholder={pdf.placeholder} 
-                                            value={editableChapterContent[pdf.key] || ""}
+                                            value={(editableChapterContent as any)[pdf.key] || ""}
                                             onChange={(e) => handleChapterPdfLinkChange(pdf.key, e.target.value)}
                                             className="flex-grow"
                                           />
-                                          {editableChapterContent[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveChapterPdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
+                                          {(editableChapterContent as any)[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveChapterPdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
                                         </div>
                                       </div>
                                     ))}
@@ -451,7 +450,7 @@ export default function TeacherContentManagementPage() {
 
                                   <Button 
                                     onClick={handleAiGenerate} 
-                                    disabled={isGeneratingAiContent || !chapterPdfConfig.some(pdf => !!editableChapterContent[pdf.key]?.trim())} 
+                                    disabled={isGeneratingAiContent || !chapterPdfConfig.some(pdf => !!(editableChapterContent as any)[pdf.key]?.trim())} 
                                     className="w-full"
                                     variant="outline"
                                     >
@@ -530,7 +529,7 @@ export default function TeacherContentManagementPage() {
                                 </AccordionContent>
                             </AccordionItem>
                         ))}
-                         {(studyGrades.find(g => g.id === selectedGradeId)?.chapters.length === 0) && <p className="text-muted-foreground p-4 text-center">No chapters found for this grade.</p>}
+                         {(selectedGradeObject?.chapters.length === 0) && <p className="text-muted-foreground p-4 text-center">No chapters found for this grade.</p>}
                     </Accordion>
                 </CardContent>
             </Card>
