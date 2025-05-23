@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Sigma, BatteryCharging, Waves, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText, SearchIcon, Timer, Weight, Replace, HelpCircle, MoveVertical } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, ClockIcon, Waves, Sigma, BatteryCharging, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText, SearchIcon, Timer, Weight, Replace, HelpCircle, MoveVertical, Speaker, Projector, Zap, Network, Binary, Pipette, Magnet } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -46,23 +46,31 @@ export const NAV_ITEMS: NavItem[] = [
 export const APP_NAME = "PhysicsLab";
 export const APP_AUTHOR = "Sir Abdul Ahad";
 
-// Define a type for SimulationTopic to include optional image and aiHint
 export interface SimulationTopic {
   id: string;
   name: string;
   grade: string;
   description: string;
   icon: LucideIcon;
-  image?: string; // Optional image URL
-  aiHint?: string; // Optional AI hint for image generation
+  image?: string;
+  aiHint?: string;
 }
 
 export const SIMULATION_TOPICS: SimulationTopic[] = [
   // Grade 9
-  { id: "vernier-caliper-g9", name: "Vernier Caliper Practice", grade: "9", description: "Learn to read Vernier calipers accurately.", icon: Ruler, image: "https://placehold.co/400x200.png", aiHint: "vernier caliper measurement" },
-  { id: "hookes-law-g9", name: "Hooke's Law Lab", grade: "9", description: "Investigate the relationship between force and extension for a spring.", icon: Weight, image: "https://placehold.co/400x200.png", aiHint: "spring force experiment" },
-  { id: "motion-constant-acceleration-g9", name: "Motion - Constant Acceleration", grade: "9", description: "Explore 1D motion with constant acceleration.", icon: TrendingUp, image: "https://placehold.co/400x200.png", aiHint: "motion graph acceleration" },
-  { id: "states-of-matter-g9", name: "States of Matter - Particle Model", grade: "9", description: "Visualize particle behavior in solids, liquids, and gases.", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "particles solid liquid gas" },
+  { id: "vernier-caliper-g9", name: "Vernier Caliper Practice", grade: "9", description: "Learn to read Vernier calipers accurately, identify zero error, and apply corrections.", icon: Ruler, image: "https://placehold.co/400x200.png", aiHint: "vernier caliper measure" },
+  { id: "hookes-law-g9", name: "Hooke's Law Lab", grade: "9", description: "Investigate force-extension for springs, determine spring constant, and understand the limit of proportionality.", icon: Weight, image: "https://placehold.co/400x200.png", aiHint: "spring force experiment" },
+  { id: "motion-constant-acceleration-g9", name: "Motion - Constant Acceleration", grade: "9", description: "Explore 1D motion, interpret motion graphs, and apply equations of motion.", icon: TrendingUp, image: "https://placehold.co/400x200.png", aiHint: "motion graph acceleration" },
+  { id: "states-of-matter-g9", name: "States of Matter - Particle Model", grade: "9", description: "Visualize particle behavior in solids, liquids, and gases, and how temperature/pressure affect them.", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "particles solid liquid gas" },
+  // Grade 10
+  { id: "ripple-tank-g10", name: "Ripple Tank Simulation", grade: "10", description: "Observe wave reflection, refraction, and diffraction using a simulated ripple tank. Adjust wave parameters.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "ripple tank waves" },
+  { id: "sound-wave-g10", name: "Sound Wave Viewer & Echo", grade: "10", description: "Visualize longitudinal sound waves, compressions/rarefactions, and simulate the echo method for speed of sound.", icon: Speaker, image: "https://placehold.co/400x200.png", aiHint: "sound waves audio" },
+  { id: "dispersion-prism-g10", name: "Dispersion of Light (Prism)", grade: "10", description: "Simulate white light passing through a prism to observe dispersion and rainbow formation.", icon: Pipette, image: "https://placehold.co/400x200.png", aiHint: "prism light spectrum" },
+  { id: "ray-diagrams-g10", name: "Lens & Mirror Ray Diagram", grade: "10", description: "Interactively draw ray diagrams for spherical mirrors and lenses. Adjust object position and focal length.", icon: Projector, image: "https://placehold.co/400x200.png", aiHint: "optics lens mirror" },
+  { id: "electric-field-g10", name: "Electric Field Visualizer", grade: "10", description: "Visualize electric field lines around point charges and understand electrostatic induction.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "electric field charge" },
+  { id: "simple-circuits-g10", name: "Simple Circuit Builder", grade: "10", description: "Build and test simple series/parallel circuits with virtual resistors, batteries, and meters to verify Ohm's law.", icon: Network, image: "https://placehold.co/400x200.png", aiHint: "electric circuit build" },
+  { id: "magnetic-fields-forces-g10", name: "Magnetic Fields & Motor Principle", grade: "10", description: "Visualize magnetic fields and simulate the force on a current-carrying wire in a magnetic field.", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "magnetism force motor" },
+  { id: "logic-gates-g10", name: "Logic Gate Simulator", grade: "10", description: "Simulate basic logic gates (AND, OR, NOT, NAND, NOR) and verify their truth tables.", icon: Binary, image: "https://placehold.co/400x200.png", aiHint: "logic gates circuit" },
   // Grade 11
   { id: "projectile-motion-g11", name: "Projectile Motion", grade: "11", description: "Detailed simulation of projectile motion with calculations for range, height, and time of flight.", icon: Orbit, image: "https://placehold.co/400x200.png", aiHint: "projectile trajectory physics" },
   { id: "unit-converter-g11", name: "Unit Converter", grade: "11", description: "Convert between common physics units for length, mass, time, etc.", icon: Replace, image: "https://placehold.co/400x200.png", aiHint: "units conversion tool" },
@@ -77,6 +85,9 @@ export const QUIZ_TOPICS = [
   { id: "kinematics", name: "Kinematics Quiz", description: "Test your knowledge on motion, speed, velocity, and acceleration." },
   { id: "dynamics", name: "Dynamics Quiz", description: "Explore forces, Newton's laws, momentum, and energy." },
   { id: "electromagnetism", name: "Electromagnetism Quiz", description: "Questions on electric and magnetic fields, circuits, and waves." },
+  { id: "optics", name: "Optics Quiz", description: "Challenge yourself with questions on light, reflection, refraction, lenses, and mirrors." },
+  { id: "waves-sound", name: "Waves & Sound Quiz", description: "Test your understanding of wave properties, sound phenomena, and simple harmonic motion." },
+  { id: "heat-thermo", name: "Heat & Thermodynamics Quiz", description: "Questions on temperature, heat transfer, states of matter, and laws of thermodynamics." },
 ];
 
 export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: string}[] = [
@@ -87,8 +98,6 @@ export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: s
     {term: "tidbits", label: "Fun Physics Tidbits Panel Setting", href: "/settings"},
     {term: "notifications", label: "Notification Settings (Coming Soon)", href: "/settings"},
     {term: "offline", label: "Offline Data & Sync Settings", href: "/settings"},
-    {term: "sync", label: "Online MCQ Sync Settings", href: "/settings"},
-    // {term: "update", label: "Check for App Updates Setting", href: "/settings"}, // Removed as update is more of an action
     {term: "login", label: "Login/Account Settings", href: "/settings"},
     {term: "account", label: "Login/Account Settings", href: "/settings"},
 ];
