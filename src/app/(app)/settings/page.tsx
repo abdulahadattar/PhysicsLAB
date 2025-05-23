@@ -1,15 +1,18 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Settings as SettingsIcon, Palette, Bell, Download } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Bell, Download, UserCog } from "lucide-react";
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
-import { ThemeToggle } from '@/components/theme-toggle'; // Re-using the theme toggle here
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useTeacherMode } from "@/contexts/teacher-mode-context"; // Import teacher mode hook
 
 export default function SettingsPage() {
-  const { isPanelVisible, togglePanelVisibility, isMounted } = useFunFactsSettings();
+  const { isPanelVisible, togglePanelVisibility, isMounted: isFunFactsMounted } = useFunFactsSettings();
+  const { isTeacherMode, toggleTeacherMode, isLoading: isTeacherModeLoading } = useTeacherMode();
 
   // Optional: Handle online sync toggle
   // const [onlineSyncEnabled, setOnlineSyncEnabled] = useState(false);
@@ -38,7 +41,7 @@ export default function SettingsPage() {
             </Label>
             <ThemeToggle />
           </div>
-          {isMounted && ( // Only render switch when client-side mounted to avoid hydration mismatch
+          {isFunFactsMounted && ( // Only render switch when client-side mounted to avoid hydration mismatch
             <div className="flex items-center justify-between p-4 border rounded-lg">
                 <Label htmlFor="fun-facts-toggle" className="flex flex-col gap-1">
                 <span className="font-semibold">Fun Physics Facts Panel</span>
@@ -92,6 +95,33 @@ export default function SettingsPage() {
           <p className="text-xs text-muted-foreground">
             Note: The app is designed to be fully offline-capable. Syncing is optional and only enhances the question bank when initiated.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2"><UserCog className="h-5 w-5 text-primary"/>Access Mode</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!isTeacherModeLoading && (
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+                <Label htmlFor="teacher-mode-toggle" className="flex flex-col gap-1">
+                <span className="font-semibold">Enable Teacher Mode</span>
+                <span className="text-sm text-muted-foreground">Access teacher-specific tools and analytics.</span>
+                </Label>
+                <Switch
+                id="teacher-mode-toggle"
+                checked={isTeacherMode}
+                onCheckedChange={toggleTeacherMode}
+                aria-label="Toggle Teacher Mode"
+                />
+            </div>
+          )}
+           {isTeacherMode && (
+            <p className="text-sm text-green-600 dark:text-green-400 p-2 bg-green-50 dark:bg-green-900/30 rounded-md">
+              Teacher Mode is currently ACTIVE. You can see the Teacher Panel in the sidebar.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

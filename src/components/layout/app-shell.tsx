@@ -16,7 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset,
+  // SidebarInset, // This was causing the SlotClone error, AppShell will now directly render SidebarInset
   SidebarTrigger,
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,7 +25,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, ChevronDown }  from 'lucide-react';
+import { Atom }  from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -33,20 +33,48 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { useTeacherMode } from '@/contexts/teacher-mode-context'; // Import the hook
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
+// Re-define SidebarInset here as it was removed from ui/sidebar to avoid SlotClone error
+// This is a simplified version for direct use in AppShell.
+const SidebarInset = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"main">
+>(({ className, ...props }, ref) => {
+  return (
+    <main
+      ref={ref}
+      className={cn(
+        "relative flex min-h-svh flex-1 flex-col bg-background",
+        // These classes are specific to how sidebar variant="inset" interacts
+        "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
+        className
+      )}
+      {...props}
+    />
+  )
+})
+SidebarInset.displayName = "SidebarInset"
+
+
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const { isTeacherMode, isLoading: isTeacherModeLoading } = useTeacherMode(); // Use the hook
 
   const renderNavItems = (items: NavItem[], isSubMenu = false) => {
     return items.map((item) => {
+      // Conditionally render Teacher Panel based on isTeacherMode
+      if (item.href === '/teacher-dashboard' && !isTeacherMode) {
+        return null;
+      }
+
       const isActive = item.matchExact ? pathname === item.href : pathname.startsWith(item.href);
       
       if (item.subItems && item.subItems.length > 0) {
-        // Determine if any sub-item is active to keep the accordion open
         const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
         return (
           <Accordion type="single" collapsible className="w-full" key={item.href} defaultValue={isParentActive ? item.href : undefined}>
@@ -55,12 +83,12 @@ export function AppShell({ children }: AppShellProps) {
                 className={`w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center ${isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
               >
                 <SidebarMenuButton
-                  asChild={true}
+                  asChild={true} // Keep asChild true here for AccordionTrigger
                   className="w-full"
                   isActive={isActive && !isParentActive && !isSubMenu} 
                   tooltip={item.label}
                 >
-                  {/* Wrap icon and label in a single element for asChild to work, and remove redundant ChevronDown */}
+                  {/* Wrap icon and label in a single element for asChild to work */}
                   <span className="flex items-center gap-2">
                     <item.icon />
                     <span>{item.label}</span>
@@ -106,6 +134,9 @@ export function AppShell({ children }: AppShellProps) {
     });
   };
 
+  if (isTeacherModeLoading) {
+    return <div>Loading application state...</div>; // Or a proper loading skeleton for the shell
+  }
 
   return (
     <SidebarProvider defaultOpen>
