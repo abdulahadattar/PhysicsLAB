@@ -16,10 +16,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  // SidebarInset, // This was causing the SlotClone error, AppShell will now directly render SidebarInset
   SidebarTrigger,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton
@@ -34,6 +32,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { useTeacherMode } from '@/contexts/teacher-mode-context'; // Import the hook
+import { cn } from "@/lib/utils"; // <-- ADDED THIS IMPORT
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -83,12 +82,11 @@ export function AppShell({ children }: AppShellProps) {
                 className={`w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center ${isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
               >
                 <SidebarMenuButton
-                  asChild={true} // Keep asChild true here for AccordionTrigger
+                  asChild={true}
                   className="w-full"
                   isActive={isActive && !isParentActive && !isSubMenu} 
                   tooltip={item.label}
                 >
-                  {/* Wrap icon and label in a single element for asChild to work */}
                   <span className="flex items-center gap-2">
                     <item.icon />
                     <span>{item.label}</span>
