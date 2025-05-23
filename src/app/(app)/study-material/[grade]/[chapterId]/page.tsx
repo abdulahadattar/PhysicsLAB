@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, DownloadCloud, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
@@ -69,14 +69,15 @@ export default function ChapterPage({ params }: ChapterPageProps) {
       let finalChapterData = { ...result.chapter };
       // Try to load teacher overrides from localStorage
       try {
-        const overridesRaw = localStorage.getItem(TEACHER_OVERRIDES_STORAGE_KEY);
-        if (overridesRaw) {
-          const allOverrides = JSON.parse(overridesRaw);
-          const chapterOverride = allOverrides[finalChapterData.id];
-          if (chapterOverride) {
-            finalChapterData.content = { ...finalChapterData.content, ...chapterOverride };
-            console.log(`Loaded overrides for chapter ${finalChapterData.id}`, chapterOverride);
-          }
+        if (typeof window !== 'undefined') {
+            const overridesRaw = localStorage.getItem(TEACHER_OVERRIDES_STORAGE_KEY);
+            if (overridesRaw) {
+            const allOverrides = JSON.parse(overridesRaw);
+            const chapterOverride = allOverrides[finalChapterData.id];
+            if (chapterOverride) {
+                finalChapterData.content = { ...finalChapterData.content, ...chapterOverride };
+            }
+            }
         }
       } catch (e) {
         console.error("Failed to load or parse teacher overrides:", e);
@@ -111,7 +112,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
         title: correct ? "Correct!" : "Incorrect",
         description: correct ? "Well done!" : `The correct answer was option ${mcq.options[mcq.correctAnswerIndex]}. Check the explanation.`,
         variant: correct ? "default" : "destructive",
-        className: correct ? "bg-green-500 text-white" : "",
+        className: correct ? "bg-green-500 text-white dark:text-white" : "",
       });
     } else {
       toast({ title: "No Option Selected", description: "Please select an option before checking.", variant: "destructive" });
@@ -159,6 +160,8 @@ export default function ChapterPage({ params }: ChapterPageProps) {
   }
   
   const content: ChapterContent = chapterData.content || {};
+  const lastUpdatedByTeacher = content.lastUpdated ? new Date(content.lastUpdated).toLocaleDateString() : null;
+
 
   return (
     <div className="space-y-6">
@@ -171,7 +174,10 @@ export default function ChapterPage({ params }: ChapterPageProps) {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl">{chapterData.name}</CardTitle>
-          <CardDescription>{gradeData.name} - Sindh Textbook Board Syllabus. App by {APP_AUTHOR}. {content.lastUpdated && <span className="text-xs text-muted-foreground italic">(Content last updated by teacher: {new Date(content.lastUpdated).toLocaleDateString()})</span>}</CardDescription>
+          <CardDescription>
+            {gradeData.name} - Sindh Textbook Board Syllabus. App by {APP_AUTHOR}. 
+            {lastUpdatedByTeacher && <span className="text-xs text-muted-foreground italic"> (Content last updated by teacher: {lastUpdatedByTeacher})</span>}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="notes-keypoints" className="w-full">
@@ -183,22 +189,18 @@ export default function ChapterPage({ params }: ChapterPageProps) {
             <TabsContent value="notes-keypoints" className="mt-4 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Full Chapter Notes (PDF)</CardTitle>
+                  <CardTitle>Chapter Notes</CardTitle>
                   <CardDescription>
-                    {content.pdfName ? `Current PDF: ${content.pdfName}. ` : "No PDF uploaded for this chapter yet. "}
-                    Read-only PDF notes.
+                    {content.pdfName ? `Reference: ${content.pdfName}. ` : "Notes for this chapter will appear here. "}
+                    Scroll to view the material.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4">
-                     <Image src="https://placehold.co/800x600.png" alt="PDF Notes Preview" width={800} height={600} data-ai-hint="document textbook" className="max-w-full max-h-full object-contain"/>
+                     <Image src="https://placehold.co/800x600.png" alt={`${chapterData.name} Notes Preview`} width={800} height={600} data-ai-hint="document textbook" className="max-w-full max-h-full object-contain"/>
                     <p className="mt-4 text-sm text-muted-foreground">
-                      Embedded PDF viewer placeholder. (Actual PDF viewing functionality to be implemented)
+                      Interactive notes viewer placeholder.
                     </p>
-                    <Button variant="outline" className="mt-2" disabled>
-                      <DownloadCloud className="mr-2 h-4 w-4" /> Download PDF (Disabled)
-                    </Button>
-                     <p className="text-xs text-muted-foreground mt-1">PDFs are read-only and not downloadable as per requirements.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -230,7 +232,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                 <CardContent className="space-y-6">
                   {content.mcqs && content.mcqs.length > 0 ? (
                     content.mcqs.map((mcq, index) => (
-                      <div key={mcq.id} className="p-4 border rounded-md bg-card shadow-sm">
+                      <div key={mcq.id || `mcq-${index}`} className="p-4 border rounded-md bg-card shadow-sm">
                         <p className="font-semibold mb-2">Question {index + 1}: {mcq.question}</p>
                         <RadioGroup
                           value={mcqAttempts[mcq.id]?.selectedOptionIndex !== null && mcqAttempts[mcq.id]?.selectedOptionIndex !== undefined ? mcq.options[mcqAttempts[mcq.id]?.selectedOptionIndex!] : undefined}
@@ -261,12 +263,12 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                         {mcqAttempts[mcq.id]?.revealed && (
                           <div className={`mt-3 p-2 rounded-md text-sm ${mcqAttempts[mcq.id]?.isCorrect ? 'bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300'}`}>
                             <p className="font-semibold">{mcqAttempts[mcq.id]?.isCorrect ? 'Correct!' : 'Incorrect.'}</p>
-                            <p><strong>Explanation:</strong> {mcq.explanation}</p>
+                            {mcq.explanation && <p><strong>Explanation:</strong> {mcq.explanation}</p>}
                           </div>
                         )}
                         <div className="mt-3">
                           {!mcqAttempts[mcq.id]?.revealed ? (
-                            <Button onClick={() => checkMcqAnswer(mcq)} size="sm">
+                            <Button onClick={() => checkMcqAnswer(mcq)} size="sm" disabled={mcqAttempts[mcq.id]?.selectedOptionIndex === null || mcqAttempts[mcq.id]?.selectedOptionIndex === undefined}>
                               <CheckCircle className="mr-2 h-4 w-4"/> Check Answer
                             </Button>
                           ) : (
@@ -291,7 +293,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                   {content.shortAnswers && content.shortAnswers.length > 0 ? (
                     <Accordion type="multiple" className="w-full">
                       {content.shortAnswers.map((qa, index) => (
-                        <AccordionItem value={`crq-${qa.id}`} key={qa.id}>
+                        <AccordionItem value={`crq-${qa.id || index}`} key={qa.id || `crq-${index}`}>
                           <AccordionTrigger>Question {index + 1}: {qa.question}</AccordionTrigger>
                           <AccordionContent className="whitespace-pre-wrap text-sm text-muted-foreground">
                             <strong>Answer:</strong><br />{qa.answer}
@@ -313,7 +315,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                   {content.longAnswers && content.longAnswers.length > 0 ? (
                      <Accordion type="multiple" className="w-full">
                       {content.longAnswers.map((qa, index) => (
-                        <AccordionItem value={`erq-${qa.id}`} key={qa.id}>
+                        <AccordionItem value={`erq-${qa.id || index}`} key={qa.id || `erq-${index}`}>
                           <AccordionTrigger>Question {index + 1}: {qa.question}</AccordionTrigger>
                           <AccordionContent className="whitespace-pre-wrap text-sm text-muted-foreground">
                             <strong>Answer:</strong><br />{qa.answer}
@@ -339,7 +341,11 @@ export default function ChapterPage({ params }: ChapterPageProps) {
 export async function generateStaticParams() {
   try {
     // In a real app, ensure this URL is correct for your build environment
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/api/study-materials`);
+    const appUrl = typeof window === 'undefined' 
+        ? (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002') 
+        : ''; // Don't use relative path during client-side navigation if possible
+    const res = await fetch(`${appUrl}/api/study-materials`);
+    
     if (!res.ok) {
       console.error("Static Gen: Failed to fetch study grades for static generation:", await res.text());
       return []; 
@@ -357,3 +363,5 @@ export async function generateStaticParams() {
     return []; 
   }
 }
+
+    
