@@ -5,6 +5,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
 import { TeacherModeProvider } from '@/contexts/teacher-mode-context';
+import Script from 'next/script'; // Import Script
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -44,6 +45,21 @@ export default function RootLayout({
             <Toaster />
           </ThemeProvider>
         </TeacherModeProvider>
+        <Script id="service-worker-registration" strategy="lazyOnload">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                  })
+                  .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                  });
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
