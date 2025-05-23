@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookText, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
-import { APP_NOTES_AUTHOR } from "@/lib/constants";
+import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade } from '@/lib/types';
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -134,7 +134,7 @@ export default function StudyMaterialPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-3xl">Study Materials</CardTitle>
-            <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. Materials by {APP_NOTES_AUTHOR}.</CardDescription>
+            <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. App by {APP_AUTHOR}.</CardDescription>
           </CardHeader>
         </Card>
         <p className="text-center text-muted-foreground py-10">No study materials available at the moment. Please try again later.</p>
@@ -148,7 +148,7 @@ export default function StudyMaterialPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Study Materials</CardTitle>
-          <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. Materials by {APP_NOTES_AUTHOR}.</CardDescription>
+          <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. App by {APP_AUTHOR}.</CardDescription>
         </CardHeader>
       </Card>
       

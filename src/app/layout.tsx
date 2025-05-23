@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
-import { UserSessionProvider } from '@/contexts/user-session-context'; // Updated import
+import { UserSessionProvider } from '@/contexts/user-session-context';
 import Script from 'next/script';
 
 const geistSans = Geist({
@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'PhysicsLab by Sir Abdul Ahad',
-  description: 'Interactive Physics Demonstrations and Study Material for Grades 9-12, Sindh Textbook Board. Notes by Abdul Ahad Attar.',
+  description: 'Interactive Physics Demonstrations and Study Material for Grades 9-12, Sindh Textbook Board.',
   manifest: '/manifest.json',
 };
 
@@ -33,7 +33,7 @@ export default function RootLayout({
       <head>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <UserSessionProvider> {/* Updated Provider */}
+        <UserSessionProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

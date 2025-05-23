@@ -33,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const APP_NAME = "PhysicsLab";
 export const APP_AUTHOR = "Sir Abdul Ahad";
-export const APP_NOTES_AUTHOR = "Abdul Ahad Attar";
+
 
 export const SIMULATION_TOPICS = [
   // Grade 9

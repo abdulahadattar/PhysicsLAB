@@ -80,7 +80,7 @@ export function AppShell({ children }: AppShellProps) {
                 asChild
               >
                 <SidebarMenuButton
-                  asChild={false} // Let trigger be the button
+                  asChild={true} 
                   className="w-full"
                   isActive={isActive && !isParentActive && !isSubMenu} 
                   tooltip={item.label}
@@ -209,7 +209,7 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
         <footer className="border-t p-4 text-center text-sm text-muted-foreground">
-          PhysicsLab by {APP_AUTHOR}. Notes by Abdul Ahad Attar.
+          {APP_NAME} by {APP_AUTHOR}.
         </footer>
       </SidebarInset>
     </SidebarProvider>

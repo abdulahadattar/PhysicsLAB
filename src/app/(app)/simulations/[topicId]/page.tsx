@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Maximize, Zap, SlidersHorizontal } from "lucide-react";
@@ -105,7 +106,7 @@ export default function SimulationTopicPage({ params }: SimulationPageProps) {
                 </p>
               </CardContent>
                <CardFooter>
-                <p className="text-xs text-muted-foreground">Notes by Abdul Ahad Attar</p>
+                {/* <p className="text-xs text-muted-foreground">Notes by Abdul Ahad Attar</p> */}
               </CardFooter>
             </Card>
           </div>

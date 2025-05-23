@@ -5,7 +5,7 @@ import { ArrowLeft, DownloadCloud, FileText, ListChecks, Star, AlertTriangle } f
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import { APP_NOTES_AUTHOR } from "@/lib/constants";
+import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade, Chapter } from '@/lib/types';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -81,7 +81,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl">{chapter.name}</CardTitle>
-          <CardDescription>{gradeData.name} - Sindh Textbook Board Syllabus. Notes by {APP_NOTES_AUTHOR}.</CardDescription>
+          <CardDescription>{gradeData.name} - Sindh Textbook Board Syllabus. App by {APP_AUTHOR}.</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="notes-keypoints" className="w-full">
