@@ -23,7 +23,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserPlus } from 'lucide-react'; // Added UserPlus
+import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserPlus, UserCog } from 'lucide-react'; // Added UserCog
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -79,20 +79,23 @@ export function AppShell({ children }: AppShellProps) {
           <Accordion type="single" collapsible className="w-full" key={item.href} defaultValue={isParentActive ? item.href : undefined}>
             <AccordionItem value={item.href} className="border-none">
               <AccordionTrigger 
-                className={`w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center ${isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
+                className={cn(
+                  "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center",
+                  isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                )}
                 asChild
               >
-                 <SidebarMenuButton
-                    asChild={true} 
-                    className="w-full"
-                    isActive={isActive && !isParentActive && !isSubMenu} 
-                    tooltip={item.label}
-                  >
-                    <span className="flex items-center gap-2">
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </span>
-                  </SidebarMenuButton>
+                <SidebarMenuButton
+                  asChild={true}
+                  className="w-full"
+                  isActive={isActive && !isParentActive && !isSubMenu}
+                  tooltip={item.label}
+                >
+                  <span className="flex items-center gap-2">
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </span>
+                </SidebarMenuButton>
               </AccordionTrigger>
               <AccordionContent className="pb-0 group-data-[collapsible=icon]:hidden">
                  <SidebarMenuSub>
