@@ -17,9 +17,9 @@ export interface ChapterContent {
   stbbChapterPdfLink?: string;
   teacherNotesPdfName?: string;
   alternativeChapterPdfLink?: string;
-  punjabBoardPdfName?: string;
-  nationalSyllabusPdfName?: string;
-  ziauddinBoardPdfName?: string;
+  punjabBoardPdfName?: string; // This was chapter-level, now grade-level
+  nationalSyllabusPdfName?: string; // This was chapter-level, now grade-level
+  ziauddinBoardPdfName?: string; // This was chapter-level, now grade-level
   keyPoints?: string;
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[]; // CRQs
@@ -37,7 +37,7 @@ export interface StudyGrade {
   id: string;
   name: string;
   chapters: Chapter[];
-  completeTextbookPdfLink?: string;
+  completeTextbookPdfLink?: string; // STBB Full book
   ziauddinBoardFullPdfLink?: string;
   punjabBoardFullPdfLink?: string;
   nationalSyllabusFullPdfLink?: string;
@@ -66,4 +66,6 @@ export interface ModelPaper {
   title: string;
   description?: string;
   url: string;
+  gradeId: string; // Added
+  year: number;    // Added
 }
