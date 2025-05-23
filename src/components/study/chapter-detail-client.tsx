@@ -16,24 +16,23 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const TEACHER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides';
+const TEACHER_CHAPTER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides'; // For chapter-specific content
 const PDF_CACHE_KEY_PREFIX = 'physicsLabPdfCache_';
 
-type PdfSourceKey = keyof Pick<ChapterContent, 
-  'sindhTextbookPdfName' | 
-  'ziauddinBoardPdfName' |
-  'punjabBoardPdfName' |
-  'nationalSyllabusPdfName' |
-  'alternativeTextbookPdfName' | 
-  'teacherNotesPdfName'
+
+type ChapterPdfSourceKey = keyof Pick<ChapterContent, 
+  'stbbChapterPdfLink' | 
+  'teacherNotesPdfName' | 
+  'alternativeChapterPdfLink'
 >;
 
-interface PdfSourceInfo {
-  key: PdfSourceKey;
+interface ChapterPdfSourceInfo {
+  key: ChapterPdfSourceKey;
   displayName: string;
   icon: React.ElementType;
   link?: string | null;
 }
+
 
 interface ChapterDetailClientProps {
   initialGradeData: StudyGrade;
@@ -62,13 +61,13 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
 
   const [mcqAttempts, setMcqAttempts] = useState<Record<string, { selectedOptionIndex: number | null; isCorrect: boolean | null; revealed: boolean }>>({});
   
-  const [activePdfSourceKey, setActivePdfSourceKey] = useState<PdfSourceKey | null>(null);
+  const [activePdfSourceKey, setActivePdfSourceKey] = useState<ChapterPdfSourceKey | null>(null);
   const [activePdfGLink, setActivePdfGLink] = useState<string | null>(null);
   const [activePdfEmbedUrl, setActivePdfEmbedUrl] = useState<string | null>(null);
   const [currentCachedPdfDetails, setCurrentCachedPdfDetails] = useState<CachedPdf | null>(null);
   const [pdfCacheStatus, setPdfCacheStatus] = useState<'idle' | 'cached' | 'not_cached' | 'error_caching'>('idle');
 
-  const [availablePdfSources, setAvailablePdfSources] = useState<PdfSourceInfo[]>([]);
+  const [availableChapterPdfSources, setAvailableChapterPdfSources] = useState<ChapterPdfSourceInfo[]>([]);
 
 
   useEffect(() => {
@@ -121,7 +120,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
       const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) {
         const cached: { data: string; type: string; originalUrl: string; fileName: string, fileSize?: number, lastFetched?: string } = JSON.parse(cachedRaw);
-        if (cached.originalUrl !== sourceGLink) { // Ensure cache is for the correct URL
+        if (cached.originalUrl !== sourceGLink) { 
              localStorage.removeItem(cacheKey); return null;
         }
         const byteCharacters = atob(cached.data);
@@ -163,7 +162,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
       
       const blob = await response.blob();
       if (blob.type !== 'application/pdf') {
-        throw new Error("Downloaded file is not a PDF. It might be an HTML page (Google Drive viewer). Ensure the link is a direct PDF link or use sharing settings that allow direct download.");
+        throw new Error("Downloaded file is not a PDF. Ensure the link is a direct PDF link or allows direct download via sharing settings.");
       }
 
       const reader = new FileReader();
@@ -189,7 +188,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
 
     } catch (e) {
       console.error("Error caching PDF:", e);
-      toast({ title: "PDF Caching Failed", description: e instanceof Error ? e.message : "Could not download or cache the PDF. This often happens if the link is not a direct PDF link but a Google Drive viewer page.", variant: "destructive" });
+      toast({ title: "PDF Caching Failed", description: e instanceof Error ? e.message : "Could not download or cache the PDF. Check link and sharing settings.", variant: "destructive" });
       setPdfCacheStatus('error_caching');
     } finally {
       setIsCachingPdf(false);
@@ -217,7 +216,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
         const embedUrl = getGoogleDriveEmbedUrl(gLink);
         setActivePdfEmbedUrl(embedUrl);
         setPdfCacheStatus(embedUrl ? 'not_cached' : 'error_caching');
-         if(!embedUrl) toast({ title: "Online View Issue", description: "Could not generate an embeddable link. The PDF might not display directly. Try caching it if possible.", variant: "default" });
+         if(!embedUrl) toast({ title: "Online View Issue", description: "Could not generate an embeddable link for this PDF. Try caching it if possible.", variant: "default" });
       } else {
         setActivePdfEmbedUrl(null);
         setPdfCacheStatus('not_cached');
@@ -232,7 +231,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     let finalChapterData = { ...initialChapterData };
     try {
       if (typeof window !== 'undefined') {
-          const overridesRaw = localStorage.getItem(TEACHER_OVERRIDES_STORAGE_KEY);
+          const overridesRaw = localStorage.getItem(TEACHER_CHAPTER_OVERRIDES_STORAGE_KEY);
           if (overridesRaw) {
             const allOverrides: TeacherChapterOverrides = JSON.parse(overridesRaw);
             const chapterOverride = allOverrides[finalChapterData.id];
@@ -240,12 +239,9 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
                 const mergedContent: ChapterContent = { 
                   ...(finalChapterData.content || {}),
                   ...chapterOverride,
-                  sindhTextbookPdfName: chapterOverride.sindhTextbookPdfName || finalChapterData.content?.sindhTextbookPdfName,
-                  alternativeTextbookPdfName: chapterOverride.alternativeTextbookPdfName || finalChapterData.content?.alternativeTextbookPdfName,
+                  stbbChapterPdfLink: chapterOverride.stbbChapterPdfLink || finalChapterData.content?.stbbChapterPdfLink,
+                  alternativeChapterPdfLink: chapterOverride.alternativeChapterPdfLink || finalChapterData.content?.alternativeChapterPdfLink,
                   teacherNotesPdfName: chapterOverride.teacherNotesPdfName || finalChapterData.content?.teacherNotesPdfName,
-                  punjabBoardPdfName: chapterOverride.punjabBoardPdfName || finalChapterData.content?.punjabBoardPdfName,
-                  nationalSyllabusPdfName: chapterOverride.nationalSyllabusPdfName || finalChapterData.content?.nationalSyllabusPdfName,
-                  ziauddinBoardPdfName: chapterOverride.ziauddinBoardPdfName || finalChapterData.content?.ziauddinBoardPdfName,
                   keyPoints: chapterOverride.keyPoints || finalChapterData.content?.keyPoints,
                   mcqs: chapterOverride.mcqs || finalChapterData.content?.mcqs || [],
                   shortAnswers: chapterOverride.shortAnswers || finalChapterData.content?.shortAnswers || [],
@@ -257,7 +253,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
           }
       }
     } catch (e) {
-      console.error("Failed to load or parse teacher overrides:", e);
+      console.error("Failed to load or parse teacher chapter overrides:", e);
       toast({
         title: "Content Override Error",
         description: "Could not load teacher-modified content. Displaying default material.",
@@ -268,17 +264,14 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     setGradeData(initialGradeData); 
 
     const content = finalChapterData.content || {};
-    const pdfSourceCandidates: PdfSourceInfo[] = [
-        { key: 'sindhTextbookPdfName', displayName: "Sindh Textbook", link: content.sindhTextbookPdfName, icon: BookCopy },
+    const pdfSourceCandidates: ChapterPdfSourceInfo[] = [
+        { key: 'stbbChapterPdfLink', displayName: "STBB Chapter", link: content.stbbChapterPdfLink, icon: BookCopy },
         { key: 'teacherNotesPdfName', displayName: "Teacher's Notes", link: content.teacherNotesPdfName, icon: Notebook },
-        { key: 'ziauddinBoardPdfName', displayName: "Ziauddin Board", link: content.ziauddinBoardPdfName, icon: Landmark },
-        { key: 'punjabBoardPdfName', displayName: "Punjab Board", link: content.punjabBoardPdfName, icon: BookCopy },
-        { key: 'nationalSyllabusPdfName', displayName: "National Syllabus", link: content.nationalSyllabusPdfName, icon: Globe },
-        { key: 'alternativeTextbookPdfName', displayName: "Alternative Book", link: content.alternativeTextbookPdfName, icon: BookOpen },
+        { key: 'alternativeChapterPdfLink', displayName: "Alternative Notes", link: content.alternativeChapterPdfLink, icon: BookOpen },
     ];
     
     const validSources = pdfSourceCandidates.filter(s => s.link && s.link.trim() !== "");
-    setAvailablePdfSources(validSources);
+    setAvailableChapterPdfSources(validSources);
 
     if (validSources.length > 0) {
         setActivePdfSourceKey(validSources[0].key);
@@ -331,14 +324,14 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
 
   const handleForceCacheActivePdf = () => {
     if (activePdfGLink && activePdfSourceKey) {
-        const sourceInfo = availablePdfSources.find(s => s.key === activePdfSourceKey);
+        const sourceInfo = availableChapterPdfSources.find(s => s.key === activePdfSourceKey);
         if (sourceInfo) {
             cachePdf(activePdfGLink, sourceInfo.displayName);
         }
     }
   };
   
-  const handleSourceButtonClick = async (source: PdfSourceInfo) => {
+  const handleSourceButtonClick = async (source: ChapterPdfSourceInfo) => {
     setActivePdfSourceKey(source.key);
     await updateDisplayedPdf(source.link!, source.displayName);
   };
@@ -360,7 +353,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   const content: ChapterContent = chapterData.content || {};
   const lastUpdatedByTeacher = content.lastUpdated ? new Date(content.lastUpdated).toLocaleDateString() : null;
   
-  const currentActiveDisplayName = availablePdfSources.find(s => s.key === activePdfSourceKey)?.displayName || "Chapter Notes";
+  const currentActiveDisplayName = availableChapterPdfSources.find(s => s.key === activePdfSourceKey)?.displayName || "Chapter Notes";
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -381,7 +374,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
         <CardContent>
           <Tabs defaultValue="notes-keypoints" className="w-full">
             <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 md:max-w-md">
-              <TabsTrigger value="notes-keypoints"><FileText className="mr-2 h-4 w-4" />Notes & Key Points</TabsTrigger>
+              <TabsTrigger value="notes-keypoints"><FileText className="mr-2 h-4 w-4" />Notes &amp; Key Points</TabsTrigger>
               <TabsTrigger value="chapter-exercise"><ListChecks className="mr-2 h-4 w-4" />Chapter Exercise</TabsTrigger>
             </TabsList>
             
@@ -397,10 +390,10 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
                        </Button>
                     )}
                   </div>
-                   {availablePdfSources.length > 0 && (
+                   {availableChapterPdfSources.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2 border-b pb-2 mb-2">
                         <Label className="text-sm font-medium mr-2 self-center">View Source:</Label>
-                        {availablePdfSources.map(src => (
+                        {availableChapterPdfSources.map(src => (
                             <Button 
                                 key={src.key} 
                                 variant={activePdfSourceKey === src.key ? "default" : "outline"}
@@ -440,7 +433,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
                         src={activePdfEmbedUrl} 
                         className="w-full h-[70vh] min-h-[500px] md:min-h-[700px] border rounded-md bg-muted" 
                         title={`${currentActiveDisplayName} Document`}
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms" // More permissive for Google Drive embeds
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                     ></iframe>
                   ) : !activePdfGLink && (
                     <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4 text-center min-h-[300px]">
@@ -454,7 +447,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400"/>Key Points & Summary</CardTitle>
+                  <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400"/>Key Points &amp; Summary</CardTitle>
                   <CardDescription>Quickly review the most important concepts, definitions, and formulas from this chapter. {lastUpdatedByTeacher && "(Teacher Edited)"}</CardDescription>
                 </CardHeader>
                 <CardContent>

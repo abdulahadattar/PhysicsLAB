@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileQuestion, TestTubeDiagonal } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -17,6 +17,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/quizzes', label: 'Quizzes', icon: ListChecks },
   { href: '/learn-with-ai', label: 'Learn with AI', icon: Brain },
   { href: '/mind-maps', label: 'Mind Maps', icon: Map },
+  { href: '/model-papers', label: 'Model Papers', icon: FileQuestion },
+  { href: '/mdcat-preparation', label: 'MDCAT Prep', icon: TestTubeDiagonal },
   {
     href: '/teacher-dashboard',
     label: 'Teacher Panel',
@@ -62,4 +64,3 @@ export const QUIZ_TOPICS = [
   { id: "dynamics", name: "Dynamics Quiz" },
   { id: "electromagnetism", name: "Electromagnetism Quiz" },
 ];
-
