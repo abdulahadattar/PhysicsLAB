@@ -13,7 +13,7 @@ import {
   NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText,
   SearchIcon, Timer, Weight, Replace, HelpCircle, MoveVertical, Speaker, Projector, Zap,
   Network, Binary, Pipette, Magnet, LineChart, Move, Anchor, RefreshCw, GitCommitHorizontal, Sun,
-  Archive, Info, UsersRound, BookMarked, Telescope, GraduationCap
+  Info, UsersRound, BookMarked, Telescope, GraduationCap, FlaskConical, Archive // Added Archive here
 } from 'lucide-react';
 
 /**
@@ -29,7 +29,6 @@ export type NavItem = {
 
 /**
  * Main navigation items for the application sidebar.
- * Some items are conditional based on user role (e.g., Teacher Panel).
  */
 export const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, matchExact: true },
@@ -42,15 +41,17 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/model-papers', label: 'Model Papers', icon: FileArchive },
   { href: '/practicals', label: 'Practicals', icon: Beaker },
   { href: '/mdcat-preparation', label: 'MDCAT Prep', icon: TestTubeDiagonal },
-  { href: '/about-us', label: 'About Us', icon: Info },
+  { href: '/philosophical-physics', label: 'Philosophical Physics', icon: Brain },
   { href: '/research-centers', label: 'Physics Research', icon: Telescope },
-  { href: '/university-programs', label: 'University Programs', icon: GraduationCap },
+  { href: '/universities', label: 'University Programs', icon: GraduationCap },
+  { href: '/lab-equipment', label: 'Lab Equipment', icon: FlaskConical },
+  { href: '/about-us', label: 'About Us', icon: Info },
   {
     href: '/teacher-dashboard',
     label: 'Teacher Panel',
     icon: UserCog,
     subItems: [
-      { href: '/teacher-dashboard/accounts', label: 'Student Accounts', icon: Users },
+      { href: '/teacher-dashboard/accounts', label: 'Student Accounts', icon: UsersRound },
       { href: '/teacher-dashboard/analytics', label: 'Analytics', icon: LayoutDashboard },
       { href: '/teacher-dashboard/announcements', label: 'Announcements', icon: MessageSquare },
       { href: '/teacher-dashboard/assignments', label: 'Manage Assignments', icon: Edit },
@@ -101,30 +102,32 @@ export const SIMULATION_TOPICS: SimulationTopic[] = [
   { id: "newtons-laws-g9", name: "Newton's Laws (Force Vectors)", grade: "9", description: "Visualize forces, net force, and the application of Newton's laws of motion with interactive vectors.", icon: Move, image: "https://placehold.co/400x200.png", aiHint: "newton laws force" },
   { id: "density-measurement-g9", name: "Density Measurement (Interactive)", grade: "9", description: "Interactively determine density of objects using virtual measuring cylinders and balances.", icon: Archive, image: "https://placehold.co/400x200.png", aiHint: "density volume mass" },
   { id: "states-of-matter-g9", name: "States of Matter - Particle Model", grade: "9", description: "Visualize particle behavior in solids, liquids, and gases, and how temperature/pressure affect them. Includes a conceptual P-V diagram.", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "particles solid liquid gas" },
-  { id: "orbital-mechanics-g9", name: "Orbital Mechanics Explorer (Earth/Sun)", grade: "9/10", description: "Explore how Earth orbits the Sun. Adjust velocity and distance to see effects. (Conceptual)", icon: Orbit, image: "https://placehold.co/400x200.png", aiHint: "orbit planet sun" },
-  { id: "atomic-structure-explorer-g9", name: "Atomic Structure Explorer", grade: "9/10", description: "Visualize basic atomic structure. Observe changes with varying protons/neutrons/electrons. (Conceptual)", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "atom proton neutron electron" },
+  { id: "orbital-mechanics-g9", name: "Orbital Mechanics Explorer (Earth/Sun)", grade: "9/10", description: "Simulate a planet orbiting a star. Adjust velocity, distance, and mass to observe trajectory, vectors, and energy. Visualize gravitational interactions, energy conservation, and events like collision/escape. Includes presets.", icon: Orbit, image: "https://placehold.co/400x200.png", aiHint: "orbit planet sun gravity" },
+  { id: "atomic-structure-explorer-g9", name: "Atomic Structure Explorer", grade: "9/10", description: "Visualize atomic structure. Add/remove protons, neutrons, electrons to see changes in element, Z, A, ion charge. Simulate basic alpha/beta decay.", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "atom proton neutron electron decay" },
+
 
   // Grade 10
-  { id: "wave-generator-g10", name: "Wave Generator (Adjustable Params)", grade: "10", description: "Generate transverse and longitudinal waves. Adjust frequency, amplitude, and wavelength to observe wave characteristics.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "wave generator physics" },
+  { id: "wave-generator-g10", name: "Wave Generator (Adjustable Params)", grade: "10", description: "Generate transverse/longitudinal waves. Adjust frequency, amplitude, wavelength. Observe wave characteristics.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "wave generator physics" },
   { id: "ray-tracing-g10", name: "Ray Tracing (Mirrors & Lenses)", grade: "10", description: "Interactively trace rays for concave/convex mirrors and lenses. Observe image formation based on object position and focal length.", icon: Projector, image: "https://placehold.co/400x200.png", aiHint: "optics ray diagram" },
-  { id: "ohms-law-g10", name: "Ohm's Law (Circuit Building)", grade: "10", description: "Build simple series and parallel circuits. Adjust voltage and resistance to observe changes in current and verify Ohm's Law.", icon: Network, image: "https://placehold.co/400x200.png", aiHint: "ohms law circuit" },
-  { id: "electric-field-lines-g10", name: "Electric Field Lines (Basic)", grade: "10", description: "Place positive and negative point charges and visualize the resulting electric field lines and patterns.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "electric field charge" },
-  // Removed: "Sound Wave Viewer & Echo," "Dispersion of Light (Prism)," "Magnetic Fields & Motor Principle," "Logic Gate Simulator" (as per AI-Reduced suggestions)
+  { id: "ohms-law-g10", name: "Ohm's Law (Circuit Building)", grade: "10", description: "Build simple series/parallel circuits. Adjust V/R to see current changes and verify Ohm's Law.", icon: Network, image: "https://placehold.co/400x200.png", aiHint: "ohms law circuit" },
+  { id: "electric-field-lines-g10", name: "Electric Field Lines (Basic)", grade: "10", description: "Place positive/negative point charges and visualize resulting electric field lines and patterns.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "electric field charge" },
+  { id: "dispersion-prism-g10", name: "Dispersion of Light (Prism & Rainbow)", grade: "10", description: "Explore how white light disperses into a spectrum through a prism and understand rainbow formation.", icon: Pipette, image: "https://placehold.co/400x200.png", aiHint: "light prism spectrum rainbow" },
+  { id: "magnetic-fields-forces-g10", name: "Magnetic Fields & Motor Principle", grade: "10", description: "Visualize magnetic fields and simulate the force on a current-carrying wire in a magnetic field (motor principle).", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "magnetic field motor force" },
+  { id: "logic-gates-g10", name: "Logic Gate Simulator", grade: "10/12", description: "Simulate basic logic gates (AND, OR, NOT, NAND, NOR) and verify their truth tables.", icon: Binary, image: "https://placehold.co/400x200.png", aiHint: "logic gates circuit digital" },
 
   // Grade 11
-  { id: "circular-motion-g11", name: "Circular Motion (Centripetal Force)", grade: "11", description: "Explore uniform circular motion, vary speed and radius, and visualize centripetal force and acceleration vectors.", icon: RefreshCw, image: "https://placehold.co/400x200.png", aiHint: "circular motion physics" },
-  { id: "roller-coaster-energy-g11", name: "Roller Coaster Energy (PE/KE)", grade: "11", description: "Simulate a roller coaster car, observing the transformation between potential and kinetic energy at different points on a track.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "energy conservation roller coaster" },
-  { id: "archimedes-principle-g11", name: "Archimedes' Principle (Buoyancy)", grade: "11", description: "Investigate buoyancy by submerging objects of different densities and volumes in a fluid. Observe displaced fluid and buoyant force.", icon: Anchor, image: "https://placehold.co/400x200.png", aiHint: "buoyancy archimedes fluid" },
-  { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: "11", description: "Visualize RC circuit charging and discharging. Observe voltage/current graphs over time as R and C vary.", icon: BatteryCharging, image: "https://placehold.co/400x200.png", aiHint: "capacitor circuit graph" },
-  { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: "11", description: "Simulate a spring-mass system and observe Simple Harmonic Motion. Adjust mass, spring constant, and amplitude.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation" },
-  { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum. Adjust length and gravity to observe changes in period and Simple Harmonic Motion.", icon: MoveVertical, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
-  // Removed: "Projectile Motion," "Unit Converter," "Significant Figures Practice" (as per AI-Reduced strategy)
-
+  { id: "circular-motion-g11", name: "Circular Motion (Centripetal Force)", grade: "11", description: "Explore uniform circular motion, vary speed/radius, visualize centripetal force/acceleration vectors.", icon: RefreshCw, image: "https://placehold.co/400x200.png", aiHint: "circular motion physics force" },
+  { id: "roller-coaster-energy-g11", name: "Roller Coaster Energy (PE/KE)", grade: "11", description: "Simulate a roller coaster, observing PE/KE transformations at different points on a track.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "energy conservation roller coaster" },
+  { id: "archimedes-principle-g11", name: "Archimedes' Principle (Buoyancy)", grade: "11", description: "Investigate buoyancy by submerging objects in fluid. Observe displaced fluid and buoyant force.", icon: Anchor, image: "https://placehold.co/400x200.png", aiHint: "buoyancy archimedes fluid" },
+  { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: "11", description: "Visualize RC circuit charging/discharging. Observe voltage/current graphs as R and C vary.", icon: BatteryCharging, image: "https://placehold.co/400x200.png", aiHint: "capacitor circuit graph" },
+  { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass & Damping", grade: "11", description: "Simulate spring-mass SHM. Adjust mass, k, amplitude. Observe graphs, energy conversion, and toggle damping.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation shm" },
+  { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum. Adjust length/gravity to observe changes in period and SHM.", icon: MoveVertical, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion shm" },
+  
   // Grade 12
-  { id: "gas-laws-g12", name: "Gas Laws (P/V/T Relationships)", grade: "12", description: "Interactively explore Boyle's Law, Charles's Law, and Gay-Lussac's Law. Adjust P, V, T and observe relationships.", icon: Thermometer, image: "https://placehold.co/400x200.png", aiHint: "gas laws pressure volume temperature" },
-  { id: "em-induction-g12", name: "Electromagnetic Induction (Magnet/Coil)", grade: "12", description: "Simulate moving a magnet near a coil or changing current in a primary coil to observe induced EMF and current.", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "electromagnetic induction faraday" },
-  { id: "pn-junction-diode-g12", name: "PN Junction Diode (Basic Behavior)", grade: "12", description: "Visualize charge carriers and depletion region in a PN junction. Observe forward and reverse bias characteristics.", icon: GitCommitHorizontal, image: "https://placehold.co/400x200.png", aiHint: "diode semiconductor electronics" },
-  { id: "photoelectric-effect-g12", name: "Photoelectric Effect (Frequency/Intensity)", grade: "12", description: "Shine light of varying frequency and intensity on a metal surface and observe electron emission and kinetic energy.", icon: Sun, image: "https://placehold.co/400x200.png", aiHint: "photoelectric effect quantum" },
+  { id: "gas-laws-g12", name: "Ideal Gas Law & PVT Simulator", grade: "12", description: "Microscopic view of gas particles. Adjust V, T, Moles. See PVT readouts, trace processes on P-V diagram. Visualize heat transfer.", icon: Thermometer, image: "https://placehold.co/400x200.png", aiHint: "gas laws pressure volume temperature" },
+  { id: "em-induction-g12", name: "Faraday's Law & AC Circuits", grade: "12", description: "Simulate magnet/coil (Faraday's Law), visualize flux, induced EMF/current. Explore RLC circuits with AC source, oscilloscope, phasor diagrams, resonance.", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "electromagnetic induction faraday ac circuit" },
+  { id: "pn-junction-diode-g12", name: "PN Junction Diode (Basic Behavior)", grade: "12", description: "Visualize charge carriers, depletion region in a PN junction. Observe forward/reverse bias characteristics.", icon: GitCommitHorizontal, image: "https://placehold.co/400x200.png", aiHint: "diode semiconductor electronics" },
+  { id: "photoelectric-effect-g12", name: "Photoelectric Effect (Quantum)", grade: "12", description: "Adjust light frequency/intensity, metal work function. Observe emitted electrons and kinetic energy.", icon: Sun, image: "https://placehold.co/400x200.png", aiHint: "photoelectric effect quantum light" },
 ];
 
 /**
@@ -152,7 +155,19 @@ export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: s
     {term: "tidbits", label: "Fun Physics Tidbits Panel Setting", href: "/settings"},
     {term: "offline", label: "Offline Data & App Update Settings", href: "/settings"},
     {term: "sync", label: "Data Sync & App Update Settings", href: "/settings"},
-    {term: "login", label: "Login/Account (via Header)", href: "/settings"},
+    // {term: "updates", label: "Check for App Updates Setting", href: "/settings"}, // This is an action, not a setting page section
+    {term: "login", label: "Login/Account (via Header)", href: "/settings"}, // Points to settings as a general area, login is in header
     {term: "account", label: "Account Information (via Header)", href: "/settings"},
 ];
-    
+
+/**
+ * Defines curriculum boards for selection in features like Mind Maps.
+ */
+export const CURRICULUM_BOARDS = [
+  { id: 'stbb', name: 'Sindh Textbook Board (STBB)' },
+  { id: 'ptbb', name: 'Punjab Textbook Board (PTBB)' },
+  { id: 'national', name: 'National Curriculum (SNC)' },
+];
+
+// Removed APP_NOTES_AUTHOR as per previous request.
+// export const APP_NOTES_AUTHOR = "Abdul Ahad Attar";

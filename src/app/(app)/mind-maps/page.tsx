@@ -5,24 +5,35 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Loader2, Map, Brain, WifiOff, AlertTriangle, Share2, RefreshCw } from "lucide-react";
+import { Loader2, Map, Brain, WifiOff, AlertTriangle, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { StudyGrade, Chapter } from '@/lib/types';
-import { generateMindMapData, type GenerateMindMapInput, type GenerateMindMapOutput, type MindMapNode as AIMindMapNode } from '@/ai/flows/generate-mind-map-flow';
+import { CURRICULUM_BOARDS } from '@/lib/constants';
+import type { AIMindMapNode as AIMindMapNodeType } from '@/ai/flows/generate-mind-map-flow'; // Use the AI's node type
 
 import VisualMindMap, { type VisualMindMapNodeType, type VisualMindMapEdgeType } from '@/components/mind-maps/visual-mind-map';
 import type { Node as ReactFlowNode, Edge as ReactFlowEdge, Position } from '@xyflow/react';
 import type { CustomNodeData } from '@/components/mind-maps/custom-mindmap-node';
-
+import { Skeleton } from '@/components/ui/skeleton';
 
 const NODE_WIDTH = 180;
-const NODE_HEIGHT = 60;
+const NODE_HEIGHT = 'auto'; // Let content determine height
 const HORIZONTAL_SPACING = 60;
 const VERTICAL_SPACING = 80;
 
+interface FetchedMindMapData {
+  mindMapTitle: string;
+  nodes: AIMindMapNodeType[]; // Nodes from JSON are AIMindMapNodeType
+}
 
-function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: VisualMindMapNodeType[], edges: VisualMindMapEdgeType[] } {
+/**
+ * Transforms hierarchical AI-generated nodes into React Flow nodes and edges.
+ * @param aiNodes - Array of nodes with id, label, and optional parentId.
+ * @param rootNodeId - The ID of the root node for the layout.
+ * @returns Object containing arrays of React Flow nodes and edges.
+ */
+function autoLayout(aiNodes: AIMindMapNodeType[], rootNodeId: string): { nodes: VisualMindMapNodeType[], edges: VisualMindMapEdgeType[] } {
     const flowNodes: VisualMindMapNodeType[] = [];
     const flowEdges: VisualMindMapEdgeType[] = [];
     
@@ -36,10 +47,10 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
         }
     });
 
-    function determineNodeType(aiNode: AIMindMapNode, level: number): CustomNodeData['nodeType'] {
-        if (level === 0) return 'root';
-        if (level === 1) return 'chapter';
-        return 'subtopic';
+    function determineNodeType(aiNode: AIMindMapNodeType, level: number): CustomNodeData['nodeType'] {
+        if (level === 0) return 'root'; // Grade/Curriculum Root
+        if (level === 1) return 'chapter'; // Chapters
+        return 'subtopic'; // Sub-topics and deeper
     }
 
     function layout(nodeId: string, currentX: number, currentY: number, level: number): { width: number, newY: number } {
@@ -48,11 +59,14 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
 
         const children = childrenMap.get(nodeId) || [];
         let subtreeWidth = 0;
-        let maxYInSubtree = currentY + NODE_HEIGHT;
+        // Estimate node height; can be dynamic later if needed
+        const estimatedNodeHeight = (aiNode.label.length > 30 ? 80 : 60) + (level < 1 ? 10 : 0); 
+        let maxYInSubtree = currentY + estimatedNodeHeight;
+
 
         if (children.length > 0) {
-            let childStartX = currentX;
-            const childrenY = currentY + NODE_HEIGHT + VERTICAL_SPACING;
+            let childStartX = currentX; // Start children directly under parent for calculation
+            const childrenY = currentY + estimatedNodeHeight + VERTICAL_SPACING;
             
             const childrenLayouts = children.map(childId => layout(childId, childStartX, childrenY, level + 1));
             
@@ -62,6 +76,7 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
                  if (childAiNode) {
                     const childNode = flowNodes.find(fn => fn.id === children[index]);
                     if (childNode) {
+                       // Position child relative to the start of this subtree level
                        childNode.position.x = childStartX + currentChildXOffset + (childLayout.width / 2) - (NODE_WIDTH / 2);
                     }
                     currentChildXOffset += childLayout.width + HORIZONTAL_SPACING;
@@ -73,6 +88,7 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
             subtreeWidth = NODE_WIDTH;
         }
         
+        // Center the current node above its children (or use its own width if no children)
         const nodeX = currentX + (subtreeWidth / 2) - (NODE_WIDTH / 2);
 
         flowNodes.push({
@@ -83,9 +99,9 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
                 nodeType: determineNodeType(aiNode, level)
             },
             position: { x: nodeX, y: currentY },
-             sourcePosition: 'bottom' as Position,
-             targetPosition: 'top' as Position,
-            style: { width: NODE_WIDTH, height: 'auto' },
+            sourcePosition: 'bottom' as Position,
+            targetPosition: 'top' as Position,
+            style: { width: NODE_WIDTH, height: NODE_HEIGHT },
         });
         
         children.forEach(childId => {
@@ -94,7 +110,7 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
                 source: nodeId,
                 target: childId,
                 type: 'smoothstep',
-                animated: level < 1,
+                animated: level < 1, // Animate edges from root/chapter
             });
         });
         
@@ -103,9 +119,14 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
 
     layout(rootNodeId, 0, 50, 0);
     
+    // Center the whole graph
     const minX = Math.min(...flowNodes.map(n => n.position.x));
+    const maxX = Math.max(...flowNodes.map(n => n.position.x + NODE_WIDTH));
+    const graphActualWidth = maxX - minX;
+    const xOffset = -minX + ( (NODE_WIDTH * 3) - graphActualWidth) /2 ; // Assuming a viewport roughly 3 nodes wide
+
     flowNodes.forEach(n => {
-        n.position.x -= minX - 50;
+        n.position.x += xOffset;
     });
     
     return { nodes: flowNodes, edges: flowEdges };
@@ -116,8 +137,9 @@ export default function MindMapsPage() {
   const { toast } = useToast();
   const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
+  const [selectedCurriculumId, setSelectedCurriculumId] = useState<string | null>(null);
   
-  const [aiMindMapOutput, setAiMindMapOutput] = useState<GenerateMindMapOutput | null>(null);
+  const [fetchedMindMapData, setFetchedMindMapData] = useState<FetchedMindMapData | null>(null);
   const [flowNodes, setFlowNodes] = useState<VisualMindMapNodeType[]>([]);
   const [flowEdges, setFlowEdges] = useState<VisualMindMapEdgeType[]>([]);
 
@@ -125,7 +147,7 @@ export default function MindMapsPage() {
   const [isLoadingGrades, setIsLoadingGrades] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
   const [gradesError, setGradesError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [mindMapError, setMindMapError] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -163,87 +185,110 @@ export default function MindMapsPage() {
     fetchGrades();
   }, [toast]);
 
-  const loadMindMapFromCache = useCallback((gradeId: string): boolean => {
+  const getCacheKey = useCallback(() => {
+    if (!selectedGradeId || !selectedCurriculumId) return null;
+    return `mindMap-${selectedGradeId}-${selectedCurriculumId}`;
+  }, [selectedGradeId, selectedCurriculumId]);
+
+  const loadMindMapFromCache = useCallback((): boolean => {
+    const cacheKey = getCacheKey();
+    if (!cacheKey) return false;
+
     try {
-      const cachedData = localStorage.getItem(`mindMap-${gradeId}`);
+      const cachedData = localStorage.getItem(cacheKey);
       if (cachedData) {
-        const parsedData: GenerateMindMapOutput = JSON.parse(cachedData);
-        setAiMindMapOutput(parsedData);
-        const { nodes: newFlowNodes, edges: newFlowEdges } = autoLayout(parsedData.nodes, `grade-${gradeId}`);
-        setFlowNodes(newFlowNodes);
-        setFlowEdges(newFlowEdges);
+        const parsedData: FetchedMindMapData = JSON.parse(cachedData);
+        setFetchedMindMapData(parsedData);
+        const rootNode = parsedData.nodes.find(n => !n.parentId); // Find the root node
+        if (rootNode) {
+            const { nodes: newFlowNodes, edges: newFlowEdges } = autoLayout(parsedData.nodes, rootNode.id);
+            setFlowNodes(newFlowNodes);
+            setFlowEdges(newFlowEdges);
+        } else {
+             console.error("Root node not found in cached mind map data for key:", cacheKey);
+             setFlowNodes([]); setFlowEdges([]); // Clear if invalid structure
+        }
         return true;
       }
     } catch (e) {
       console.error("Failed to load mind map from cache:", e);
-      localStorage.removeItem(`mindMap-${gradeId}`);
+      localStorage.removeItem(cacheKey);
     }
     return false;
-  }, []);
+  }, [getCacheKey]);
 
+  // Effect to load from cache or prepare for fetch when selections change
   useEffect(() => {
-    if (selectedGradeId) {
-      setAiMindMapOutput(null);
-      setFlowNodes([]); setFlowEdges([]);
-      const loadedFromCache = loadMindMapFromCache(selectedGradeId);
+    setFetchedMindMapData(null); // Clear previous data
+    setFlowNodes([]); setFlowEdges([]);
+    setMindMapError(null);
+
+    if (selectedGradeId && selectedCurriculumId) {
+      const loadedFromCache = loadMindMapFromCache();
       if (!loadedFromCache && !isOnline) {
-         toast({ title: "Offline", description: "No cached mind map for this grade. Connect to generate one."});
+         toast({ title: "Offline", description: "No cached mind map for this selection. Connect to the internet to fetch it."});
+      } else if (!loadedFromCache && isOnline) {
+        // If not cached and online, user can click "Fetch Mind Map"
       }
     }
-  }, [selectedGradeId, loadMindMapFromCache, isOnline, toast]);
+  }, [selectedGradeId, selectedCurriculumId, loadMindMapFromCache, isOnline, toast]);
 
-  const handleGenerateMindMap = useCallback(async (forceRegenerate = false) => {
-    if (!selectedGradeId) {
-      toast({ title: "Select a Grade", description: "Please select a grade to generate a mind map.", variant: "destructive" });
+  const handleFetchMindMap = useCallback(async () => {
+    if (!selectedGradeId || !selectedCurriculumId) {
+      toast({ title: "Selection Required", description: "Please select a grade and curriculum.", variant: "destructive" });
       return;
     }
     if (!isOnline) {
-      toast({ title: "Offline", description: "Mind map generation requires an internet connection.", variant: "destructive" });
+      toast({ title: "Offline", description: "Mind map fetching requires an internet connection.", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
-    setError(null);
-    if (forceRegenerate || !loadMindMapFromCache(selectedGradeId)) {
-        try {
-            const selectedGradeObject = studyGrades.find(g => g.id === selectedGradeId);
-            if (!selectedGradeObject) {
-                toast({ title: "Error", description: "Selected grade details not found.", variant: "destructive" });
-                setIsLoading(false);
-                setError("Selected grade details not found.");
-                return;
-            }
-            const input: GenerateMindMapInput = {
-                gradeId: selectedGradeObject.id,
-                gradeName: selectedGradeObject.name,
-                chapters: selectedGradeObject.chapters.map(c => ({ id: c.id, name: c.name })),
-            };
-            const response: GenerateMindMapOutput = await generateMindMapData(input);
-            
-            if (!response || !response.nodes || response.nodes.length === 0) {
-                throw new Error("AI returned empty or invalid mind map data.");
-            }
+    setMindMapError(null);
+    setFlowNodes([]); setFlowEdges([]); // Clear previous graph
 
-            setAiMindMapOutput(response);
-            localStorage.setItem(`mindMap-${selectedGradeId}`, JSON.stringify(response));
-            const { nodes: newFlowNodes, edges: newFlowEdges } = autoLayout(response.nodes, `grade-${selectedGradeId}`);
+    try {
+        const response = await fetch(`/api/mind-maps?gradeId=${selectedGradeId}&curriculumId=${selectedCurriculumId}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Failed to fetch mind map (${response.status})`);
+        }
+        const data: FetchedMindMapData = await response.json();
+        
+        if (!data || !data.nodes || data.nodes.length === 0) {
+            throw new Error("Fetched mind map data is empty or invalid.");
+        }
+        
+        setFetchedMindMapData(data);
+        const cacheKey = getCacheKey();
+        if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(data));
+        
+        const rootNode = data.nodes.find(n => !n.parentId); // Find the root node
+        if (rootNode) {
+            const { nodes: newFlowNodes, edges: newFlowEdges } = autoLayout(data.nodes, rootNode.id);
             setFlowNodes(newFlowNodes);
             setFlowEdges(newFlowEdges);
-        } catch (err) {
-            console.error("Error generating mind map:", err);
-            const errorMsg = err instanceof Error ? err.message : "Could not generate the mind map.";
-            setError(errorMsg);
-            toast({ title: "Mind Map Generation Error", description: errorMsg, variant: "destructive" });
-            setAiMindMapOutput(null); setFlowNodes([]); setFlowEdges([]);
+        } else {
+            console.error("Root node not found in fetched mind map data.");
+            setFlowNodes([]); setFlowEdges([]);
+            throw new Error("Fetched mind map data does not have a valid root node.");
         }
+        toast({ title: "Mind Map Loaded", description: data.mindMapTitle });
+    } catch (err) {
+        console.error("Error fetching mind map:", err);
+        const errorMsg = err instanceof Error ? err.message : "Could not fetch the mind map.";
+        setMindMapError(errorMsg);
+        toast({ title: "Mind Map Fetch Error", description: errorMsg, variant: "destructive" });
+        setFetchedMindMapData(null); setFlowNodes([]); setFlowEdges([]);
     }
     setIsLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGradeId, isOnline, studyGrades, toast, loadMindMapFromCache]);
+  }, [selectedGradeId, selectedCurriculumId, isOnline, toast, getCacheKey]);
 
   const selectedGradeName = studyGrades.find(g => g.id === selectedGradeId)?.name || "";
-  const showGenerateButton = selectedGradeId && !aiMindMapOutput && isOnline && !isLoading;
-  const showRegenerateButton = selectedGradeId && aiMindMapOutput && isOnline && !isLoading;
+  const selectedCurriculumName = CURRICULUM_BOARDS.find(c => c.id === selectedCurriculumId)?.name || "";
+  const displayTitle = fetchedMindMapData?.mindMapTitle || (selectedGradeName && selectedCurriculumName ? `${selectedGradeName} - ${selectedCurriculumName}` : "");
+
+  const showFetchButton = selectedGradeId && selectedCurriculumId && !fetchedMindMapData && isOnline && !isLoading;
 
 
   const handleNodeClick = useCallback((event: React.MouseEvent, node: VisualMindMapNodeType) => {
@@ -256,7 +301,7 @@ export default function MindMapsPage() {
 
 
   return (
-    <div className="space-y-6 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+    <div className="space-y-6 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}> {/* Adjust height as needed */}
       <Card className="shadow-xl shrink-0">
         <CardHeader className="text-center">
           <div className="inline-block mx-auto bg-primary/10 p-3 rounded-full mb-2">
@@ -264,7 +309,7 @@ export default function MindMapsPage() {
           </div>
           <CardTitle className="text-3xl">Interactive Physics Mind Maps</CardTitle>
           <CardDescription>
-            Visualize topics and their connections. Select a grade to view or generate an AI-powered mind map.
+            Visualize topics and their connections. Select a grade and curriculum to view a mind map.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -274,14 +319,14 @@ export default function MindMapsPage() {
           <WifiOff className="h-4 w-4" />
           <AlertTitle>You are currently offline</AlertTitle>
           <AlertDescription>
-            Mind map generation/regeneration requires an internet connection. Cached maps may be available.
+            Mind map fetching requires an internet connection. Cached maps may be available.
           </AlertDescription>
         </Alert>
       )}
 
       <Card className="shrink-0">
         <CardHeader>
-          <CardTitle>Select Grade</CardTitle>
+          <CardTitle>Select Context</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
           {isLoadingGrades ? (
@@ -294,8 +339,8 @@ export default function MindMapsPage() {
             </Alert>
           ) : (
             <Select onValueChange={setSelectedGradeId} value={selectedGradeId || undefined}>
-              <SelectTrigger className="w-full sm:w-[280px]">
-                <SelectValue placeholder="Select a grade level" />
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectValue placeholder="Select Grade" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -307,42 +352,58 @@ export default function MindMapsPage() {
               </SelectContent>
             </Select>
           )}
-          {showGenerateButton && (
-            <Button onClick={() => handleGenerateMindMap(false)} disabled={isLoading || isLoadingGrades}>
+          <Select onValueChange={setSelectedCurriculumId} value={selectedCurriculumId || undefined}>
+              <SelectTrigger className="w-full sm:w-[280px]">
+                <SelectValue placeholder="Select Curriculum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Curriculum Boards</SelectLabel>
+                  {CURRICULUM_BOARDS.map((board) => (
+                    <SelectItem key={board.id} value={board.id}>{board.name}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          {showFetchButton && (
+            <Button onClick={() => handleFetchMindMap()} disabled={isLoading || isLoadingGrades}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Brain className="mr-2 h-4 w-4" />}
-              Generate Mind Map
-            </Button>
-          )}
-          {showRegenerateButton && (
-            <Button onClick={() => handleGenerateMindMap(true)} variant="outline" disabled={isLoading || isLoadingGrades}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Regenerate Mind Map
+              Fetch Mind Map
             </Button>
           )}
         </CardContent>
       </Card>
       
       <div className="flex-grow min-h-[400px]">
-        {selectedGradeId && (
+        {(selectedGradeId && selectedCurriculumId) ? (
             <VisualMindMap
                 initialNodes={flowNodes}
                 initialEdges={flowEdges}
                 isLoading={isLoading}
-                error={error}
+                error={mindMapError}
                 onNodeClick={handleNodeClick}
-                gradeName={selectedGradeName}
+                gradeName={displayTitle}
                 className="h-full w-full"
             />
-        )}
-        {!selectedGradeId && !isLoading && (
+        ) : (
+          !isLoading && ( // Only show placeholder if not loading something else
             <Card className="border-dashed flex-grow h-full">
                 <CardContent className="text-center py-10 text-muted-foreground flex flex-col items-center justify-center h-full">
                     <Map className="mx-auto h-12 w-12 mb-4" />
-                    <p>Please select a grade to view or generate its mind map.</p>
+                    <p>Please select a grade and curriculum to view its mind map.</p>
                 </CardContent>
             </Card>
+          )
+        )}
+        {isLoading && ( // Global loading indicator if fetching map data
+            <div className="flex items-center justify-center h-full min-h-[400px] text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+                <span className="ml-2">Loading mind map...</span>
+            </div>
         )}
       </div>
     </div>
   );
 }
+
+    
