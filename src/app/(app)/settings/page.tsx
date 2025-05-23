@@ -87,9 +87,7 @@ export default function SettingsPage() {
             />
           </div>
           <Button variant="outline" className="w-full" disabled>Sync Now (Fetch MCQs)</Button>
-          <p className="text-xs text-muted-foreground">
-            Note: The app is designed to be fully offline-capable. Syncing is optional and only enhances the question bank when initiated.
-          </p>
+          {/* Removed the note about offline-capability and optional sync */}
         </CardContent>
       </Card>
 
