@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare, Phone, Mail, WifiOff, Save, HelpCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Send, MessageSquare, Phone, Mail, WifiOff, Save, HelpCircle, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -31,24 +31,38 @@ export default function FeedbackPage() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
+  const [pendingFeedback, setPendingFeedback] = useState<StoredFeedback[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const loadPendingFeedback = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(LOCAL_STORAGE_FEEDBACK_KEY);
+      if (stored) {
+        setPendingFeedback(JSON.parse(stored));
+      } else {
+        setPendingFeedback([]);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsOnline(navigator.onLine);
+      loadPendingFeedback();
+
       const handleOnline = () => {
         setIsOnline(true);
-        // Optionally, try to send pending feedback when online
-        // sendPendingFeedback(); 
+        toast({ title: "Back Online!", description: "Attempting to send pending feedback." });
+        sendPendingFeedback(); 
       };
       const handleOffline = () => setIsOnline(false);
+
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
 
-      // Load pending feedback count
-      const stored = localStorage.getItem(LOCAL_STORAGE_FEEDBACK_KEY);
-      if (stored) {
-        setPendingFeedbackCount(JSON.parse(stored).length);
+      // Initial attempt to send if online and pending feedback exists
+      if (navigator.onLine && pendingFeedback.length > 0) {
+        sendPendingFeedback();
       }
 
       return () => {
@@ -56,21 +70,82 @@ export default function FeedbackPage() {
         window.removeEventListener('offline', handleOffline);
       };
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Initial load and online/offline listeners setup
 
-  const saveFeedbackLocally = (feedback: Omit<StoredFeedback, 'id' | 'timestamp'>) => {
-    const newFeedback: StoredFeedback = {
-        ...feedback,
-        id: `feedback-${Date.now()}`,
+  // Effect to send pending feedback when `isOnline` becomes true and there's pending feedback
+  useEffect(() => {
+    if (isOnline && pendingFeedback.length > 0) {
+      sendPendingFeedback();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, pendingFeedback.length]); // Re-run if isOnline changes or pendingFeedback length changes
+
+  const saveFeedbackLocally = (feedbackData: Omit<StoredFeedback, 'id' | 'timestamp'>) => {
+    const newFeedbackItem: StoredFeedback = {
+        ...feedbackData,
+        id: `feedback-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         timestamp: new Date().toISOString()
     };
-    const existingFeedback: StoredFeedback[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_FEEDBACK_KEY) || '[]');
-    existingFeedback.push(newFeedback);
-    localStorage.setItem(LOCAL_STORAGE_FEEDBACK_KEY, JSON.stringify(existingFeedback));
-    setPendingFeedbackCount(existingFeedback.length);
+    setPendingFeedback(prev => {
+        const updatedFeedback = [...prev, newFeedbackItem];
+        localStorage.setItem(LOCAL_STORAGE_FEEDBACK_KEY, JSON.stringify(updatedFeedback));
+        return updatedFeedback;
+    });
   };
 
-  // const sendPendingFeedback = async () => { /* ... placeholder for actual sync ... */ }
+  const sendPendingFeedback = useCallback(async () => {
+    if (isSyncing || !isOnline || pendingFeedback.length === 0) return;
+
+    setIsSyncing(true);
+    toast({
+      title: "Syncing...",
+      description: `Attempting to send ${pendingFeedback.length} pending feedback message(s).`,
+    });
+
+    let successfulSends = 0;
+    const remainingFeedback: StoredFeedback[] = [];
+
+    for (const item of pendingFeedback) {
+      try {
+        // Simulate API call
+        console.log("Attempting to send feedback:", item);
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000)); // Simulate network delay
+        // Simulate a chance of failure for demonstration
+        // if (Math.random() < 0.3) throw new Error("Simulated network error during sync");
+
+        console.log("Successfully sent feedback:", item.id);
+        successfulSends++;
+      } catch (error) {
+        console.error("Failed to send feedback item during sync:", item.id, error);
+        remainingFeedback.push(item); // Keep it for next try
+      }
+    }
+    
+    localStorage.setItem(LOCAL_STORAGE_FEEDBACK_KEY, JSON.stringify(remainingFeedback));
+    setPendingFeedback(remainingFeedback);
+    setIsSyncing(false);
+
+    if (successfulSends > 0) {
+      toast({
+        title: "Sync Complete!",
+        description: `Successfully sent ${successfulSends} feedback message(s). ${remainingFeedback.length > 0 ? `${remainingFeedback.length} remaining.` : ''}`,
+      });
+    } else if (pendingFeedback.length > 0 && remainingFeedback.length === pendingFeedback.length) {
+      toast({
+        title: "Sync Attempt Failed",
+        description: "Could not send pending feedback at this time. Will try again later.",
+        variant: "destructive"
+      });
+    } else if (remainingFeedback.length === 0 && pendingFeedback.length > 0) {
+         toast({
+            title: "All Pending Feedback Cleared!",
+            description: "All locally saved feedback has been successfully submitted.",
+         });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, pendingFeedback, toast, isSyncing]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,18 +175,33 @@ export default function FeedbackPage() {
       return;
     }
 
-    // Simulate API call for online submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Online submission:", feedbackData);
+    try {
+      // Simulate API call for online submission
+      console.log("Online submission attempt:", feedbackData);
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network
+      // if (Math.random() < 0.3) throw new Error("Simulated network error during online submission");
 
-    toast({
-      title: "Submission Sent!",
-      description: "Thank you! Your message has been sent and will be reviewed shortly.",
-    });
 
-    setName(""); setEmail(""); setSubject(""); setMessage("");
-    setIsSubmitting(false);
+      toast({
+        title: "Submission Sent!",
+        description: "Thank you! Your message has been sent and will be reviewed shortly.",
+      });
+      setName(""); setEmail(""); setSubject(""); setMessage("");
+    } catch (error) {
+        console.error("Online submission failed:", error);
+        toast({
+            title: "Submission Failed",
+            description: "Could not send your message. It has been saved locally and will be sent when you're back online.",
+            variant: "destructive",
+        });
+        saveFeedbackLocally(feedbackData); // Save locally if online submission fails
+        setName(""); setEmail(""); setSubject(""); setMessage("");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
+  
+  const pendingFeedbackCount = pendingFeedback.length;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -125,6 +215,18 @@ export default function FeedbackPage() {
           </AlertDescription>
         </Alert>
       )}
+      {isOnline && pendingFeedbackCount > 0 && (
+        <Alert variant="default" className="bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+          {isSyncing ? <Loader2 className="h-4 w-4 animate-spin !text-blue-600 dark:!text-blue-400" /> : <Save className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />}
+          <AlertTitle>{isSyncing ? "Syncing Offline Submissions..." : "Pending Offline Submissions"}</AlertTitle>
+          <AlertDescription>
+            {isSyncing ? `Attempting to send ${pendingFeedbackCount} message(s).` :
+            `You have ${pendingFeedbackCount} message(s) saved offline. They will be sent automatically.`}
+            {!isSyncing && <Button size="sm" variant="link" className="p-0 h-auto ml-1 text-blue-700 dark:text-blue-300 hover:underline" onClick={sendPendingFeedback}>Send now</Button>}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card className="shadow-xl">
         <CardHeader className="text-center">
           <div className="inline-block mx-auto bg-primary/10 p-3 rounded-full mb-2">
@@ -155,8 +257,8 @@ export default function FeedbackPage() {
               <Label htmlFor="message">Message / Question Details <span className="text-destructive">*</span></Label>
               <Textarea id="message" placeholder="Describe your feedback, question, or doubt in detail here..." rows={6} value={message} onChange={e => setMessage(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isOnline ? <Send className={`mr-2 h-4 w-4 ${isSubmitting ? 'animate-spin' : ''}`} /> : <Save className="mr-2 h-4 w-4" />}
+            <Button type="submit" className="w-full" disabled={isSubmitting || isSyncing}>
+              {(isSubmitting && isOnline) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isOnline ? <Send className="mr-2 h-4 w-4"/> : <Save className="mr-2 h-4 w-4" />)}
               {isSubmitting ? (isOnline ? "Submitting..." : "Saving...") : (isOnline ? "Send Message" : "Save Message Offline")}
             </Button>
           </form>
@@ -182,4 +284,3 @@ export default function FeedbackPage() {
     </div>
   );
 }
-
