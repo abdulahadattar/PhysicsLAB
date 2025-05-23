@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // For file input simulation
 import { Label } from "@/components/ui/label"; // For file input simulation
-import { AlertTriangle, Edit, CheckCircle, Clock, FileUp, School } from "lucide-react";
+import { AlertTriangle, Edit, CheckCircle, Clock, FileUp, School, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Assignment, StudyGrade } from '@/lib/types'; // Assuming StudyGrade might be needed for grade names
 import { format, parseISO, isPast } from 'date-fns';
