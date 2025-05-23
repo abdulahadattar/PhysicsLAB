@@ -18,14 +18,14 @@ const ChapterSchema = z.object({
   name: z.string(),
 });
 
-export const GenerateMindMapInputSchema = z.object({
+const GenerateMindMapInputSchema = z.object({
   gradeId: z.string().describe('The ID of the grade (e.g., "9", "10").'),
   gradeName: z.string().describe('The name of the grade (e.g., "Grade 9").'),
   chapters: z.array(ChapterSchema).describe('A list of chapters for the specified grade.'),
 });
 export type GenerateMindMapInput = z.infer<typeof GenerateMindMapInputSchema>;
 
-export const GenerateMindMapOutputSchema = z.object({
+const GenerateMindMapOutputSchema = z.object({
   mindMapText: z.string().describe('A textual representation of the mind map, using indentation or bullet points for hierarchy.'),
 });
 export type GenerateMindMapOutput = z.infer<typeof GenerateMindMapOutputSchema>;
@@ -84,3 +84,4 @@ const generateMindMapTextFlow = ai.defineFlow(
     return output;
   }
 );
+

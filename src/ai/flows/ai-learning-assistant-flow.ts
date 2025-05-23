@@ -52,14 +52,14 @@ const getRestrictedPhysicsKnowledgeTool = ai.defineTool(
 
 
 // Input and Output Schemas for the main flow
-export const AiLearningAssistantInputSchema = z.object({
+const AiLearningAssistantInputSchema = z.object({
   userQuery: z.string().describe('The user_s question or prompt about a physics topic, diagram, or problem.'),
   imageDataUri: z.string().optional().describe("An optional image provided by the user, as a data URI (e.g., a diagram, photo of an experiment). Format: 'data:<mimetype>;base64,<encoded_data>'."),
   // fileDataUri: z.string().optional().describe("Optional generic file data. (Processing might be limited)"), // Future enhancement
 });
 export type AiLearningAssistantInput = z.infer<typeof AiLearningAssistantInputSchema>;
 
-export const AiLearningAssistantOutputSchema = z.object({
+const AiLearningAssistantOutputSchema = z.object({
   explanation: z.string().describe('The AI_s explanation or answer to the user_s query. This should be clear, concise, and educationally valuable.'),
   relatedConcepts: z.array(z.string()).optional().describe('A list of related physics concepts for further exploration.'),
   confidence: z.string().optional().describe('A qualitative measure of the AI_s confidence in its answer (e.g., High, Medium, Low).'),
@@ -122,3 +122,4 @@ const aiLearningAssistantFlow = ai.defineFlow(
     };
   }
 );
+
