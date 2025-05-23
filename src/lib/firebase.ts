@@ -15,41 +15,66 @@ const firebaseConfig = {
 // Check if all required Firebase config variables are present
 const requiredConfigKeys: (keyof typeof firebaseConfig)[] = ['apiKey', 'authDomain', 'projectId', 'appId'];
 let allKeysPresent = true;
+const missingKeys: string[] = [];
+
 for (const key of requiredConfigKeys) {
   if (!firebaseConfig[key]) {
-    console.error(`Firebase config error: Missing environment variable NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}. Please check your .env.local file.`);
+    const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
+    missingKeys.push(envVarName);
     allKeysPresent = false;
   }
 }
 
 if (!allKeysPresent) {
-  console.error("Firebase initialization failed due to missing configuration variables. Please ensure all NEXT_PUBLIC_FIREBASE_... variables are set in your .env.local file and restart your development server.");
+  const errorMessage = `
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+CRITICAL Firebase Configuration Error:
+The following environment variable(s) are MISSING:
+  ${missingKeys.join('\n  ')}
+
+Please ensure these variables are correctly set in your .env.local file.
+This file MUST be in the root directory of your project.
+
+After creating or modifying .env.local, you MUST RESTART your Next.js development server.
+Firebase will NOT initialize correctly until this is resolved.
+See .env.example (if provided) or Firebase project settings for these values.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+`;
+  console.error(errorMessage);
 }
 
-let app: FirebaseApp;
-let auth: Auth;
 
-if (getApps().length === 0 && allKeysPresent) {
-  try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-  } catch (error) {
-    console.error("Error initializing Firebase app:", error);
-    // @ts-ignore - Allow app and auth to be undefined if init fails
-    app = undefined;
-    // @ts-ignore
-    auth = undefined;
+let app: FirebaseApp | undefined = undefined;
+let auth: Auth | undefined = undefined;
+let googleProvider: GoogleAuthProvider | {} = {}; // Use {} as a fallback to avoid errors if auth is not initialized
+
+// Initialize Firebase ONLY if all keys are present
+if (allKeysPresent) {
+  if (getApps().length === 0) {
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      googleProvider = new GoogleAuthProvider();
+    } catch (error) {
+      console.error("Error initializing Firebase app (even after config check):", error);
+      // app and auth will remain undefined
+    }
+  } else {
+    app = getApps()[0];
+    if (app) {
+      try {
+        auth = getAuth(app);
+        googleProvider = new GoogleAuthProvider();
+      } catch (error){
+        console.error("Error getting Auth instance from existing Firebase app:", error);
+      }
+    }
   }
-} else if (getApps().length > 0) {
-  app = getApps()[0];
-  auth = getAuth(app);
 } else {
-  // @ts-ignore
-  app = undefined;
-  // @ts-ignore
-  auth = undefined;
+  // If config keys are missing, do not attempt to initialize.
+  // The console errors above are the primary notification.
+  console.warn("Firebase initialization SKIPPED due to missing critical configuration variables. Please check your .env.local file and restart the server.");
 }
 
-const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, googleProvider };
