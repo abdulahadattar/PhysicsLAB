@@ -55,7 +55,6 @@ const getRestrictedPhysicsKnowledgeTool = ai.defineTool(
 const AiLearningAssistantInputSchema = z.object({
   userQuery: z.string().describe('The user_s question or prompt about a physics topic, diagram, or problem.'),
   imageDataUri: z.string().optional().describe("An optional image provided by the user, as a data URI (e.g., a diagram, photo of an experiment). Format: 'data:<mimetype>;base64,<encoded_data>'."),
-  // fileDataUri: z.string().optional().describe("Optional generic file data. (Processing might be limited)"), // Future enhancement
 });
 export type AiLearningAssistantInput = z.infer<typeof AiLearningAssistantInputSchema>;
 
@@ -63,7 +62,8 @@ const AiLearningAssistantOutputSchema = z.object({
   explanation: z.string().describe('The AI_s explanation or answer to the user_s query. This should be clear, concise, and educationally valuable.'),
   relatedConcepts: z.array(z.string()).optional().describe('A list of related physics concepts for further exploration.'),
   confidence: z.string().optional().describe('A qualitative measure of the AI_s confidence in its answer (e.g., High, Medium, Low).'),
-  // debugInfo: z.string().optional().describe("Debug information, e.g., if a tool was used."),
+  followUpQuestions: z.array(z.string()).optional().describe('A few thought-provoking follow-up questions based on the explanation to encourage deeper understanding.'),
+  suggestedTopics: z.array(z.string()).optional().describe('A list of specific, related topics the AI suggests for further study, possibly more targeted than relatedConcepts.'),
 });
 export type AiLearningAssistantOutput = z.infer<typeof AiLearningAssistantOutputSchema>;
 
@@ -84,12 +84,14 @@ Instructions:
 1.  Analyze the user's query: \`{{{userQuery}}}\`.
 2.  If an image is provided ({{#if imageDataUri}}see image: {{media url=imageDataUri}}{{else}}no image provided{{/if}}), use it as context for your explanation. Describe what you see if relevant, and relate it to the query.
 3.  Provide a clear and concise \`explanation\`.
-4.  If appropriate, suggest a few \`relatedConcepts\` for further study.
-5.  Estimate your \`confidence\` in the answer (High, Medium, Low).
-6.  **Learning Focus**: Stick to physics. If the query is unrelated to physics or learning, politely state that you are a physics assistant and cannot help with that, or gently redirect to a physics topic. Do not answer inappropriate requests.
-7.  **Restricted Knowledge**: If the user's query touches on highly advanced or niche topics, consider using the 'getRestrictedPhysicsKnowledgeTool' to fetch specialized information. Base your explanation on the tool's output if it provides relevant guidance. Do NOT directly tell the student "I am using a special tool" or mention the source name from the tool, just integrate the knowledge seamlessly. If the tool returns "No specific advanced guidance found", rely on your general knowledge.
-8.  Break down complex problems or explanations into smaller, understandable steps if possible.
-9.  Be encouraging and supportive.
+4.  If appropriate, suggest a few \`relatedConcepts\` for general further study.
+5.  Based on your explanation, provide 2-3 specific \`followUpQuestions\` to encourage the student to think more deeply about the topic.
+6.  If relevant, suggest 1-2 specific \`suggestedTopics\` for further, targeted study based on the current query.
+7.  Estimate your \`confidence\` in the answer (High, Medium, Low).
+8.  **Learning Focus**: Stick to physics. If the query is unrelated to physics or learning, politely state that you are a physics assistant and cannot help with that, or gently redirect to a physics topic. Do not answer inappropriate requests.
+9.  **Restricted Knowledge**: If the user's query touches on highly advanced or niche topics, consider using the 'getRestrictedPhysicsKnowledgeTool' to fetch specialized information. Base your explanation on the tool's output if it provides relevant guidance. Do NOT directly tell the student "I am using a special tool" or mention the source name from the tool, just integrate the knowledge seamlessly. If the tool returns "No specific advanced guidance found", rely on your general knowledge.
+10. Break down complex problems or explanations into smaller, understandable steps if possible.
+11. Be encouraging and supportive.
 `,
 });
 
@@ -107,19 +109,17 @@ const aiLearningAssistantFlow = ai.defineFlow(
         explanation: "I'm sorry, I couldn't generate a response at this moment. Please try again.",
         relatedConcepts: [],
         confidence: "Low",
+        followUpQuestions: [],
+        suggestedTopics: [],
       };
     }
-    // let debugInfo = "";
-    // if (response.usage?.toolCalls && response.usage.toolCalls.length > 0) {
-    //   debugInfo = `Used tool: ${response.usage.toolCalls[0].toolRequest.name}`;
-    // }
 
     return {
         explanation: output.explanation,
         relatedConcepts: output.relatedConcepts || [],
         confidence: output.confidence || "Medium",
-        // debugInfo: debugInfo || undefined,
+        followUpQuestions: output.followUpQuestions || [],
+        suggestedTopics: output.suggestedTopics || [],
     };
   }
 );
-

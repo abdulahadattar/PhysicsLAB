@@ -8,10 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Brain, Camera, FileImage, Send, Sparkles, Loader2, WifiOff } from "lucide-react";
+import { Brain, Camera, FileImage, Send, Sparkles, Loader2, WifiOff, MessageCircleQuestion, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from 'next/image';
 import { aiLearningAssistant, type AiLearningAssistantInput, type AiLearningAssistantOutput } from '@/ai/flows/ai-learning-assistant-flow';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function LearnWithAiPage() {
   const { toast } = useToast();
@@ -21,7 +23,6 @@ export default function LearnWithAiPage() {
   
   const [textQuery, setTextQuery] = useState("");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  // const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null); // Keep if needed for other processing
   const [aiResponse, setAiResponse] = useState<AiLearningAssistantOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -87,7 +88,6 @@ export default function LearnWithAiPage() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // setUploadedImageFile(file); // Keep if file object needed elsewhere
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result as string);
@@ -161,7 +161,7 @@ export default function LearnWithAiPage() {
           </div>
           <CardTitle className="text-3xl">Learn with AI</CardTitle>
           <CardDescription>
-            Ask physics questions, get explanations, or analyze images with our AI assistant.
+            Ask physics questions, get explanations, analyze images, and explore topics further with our AI assistant.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -179,7 +179,7 @@ export default function LearnWithAiPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5 text-primary"/>Camera & Image Input</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5 text-primary"/>Visual Input (Optional)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="aspect-video bg-muted rounded-md overflow-hidden relative">
@@ -217,7 +217,7 @@ export default function LearnWithAiPage() {
               <div className="mt-4 space-y-2">
                 <Label>Preview:</Label>
                 <Image src={uploadedImage} alt="Uploaded preview" width={200} height={150} className="rounded-md border object-contain" />
-                <Button variant="outline" size="sm" onClick={() => { setUploadedImage(null); /* setUploadedImageFile(null); */ }}>Clear Image</Button>
+                <Button variant="outline" size="sm" onClick={() => { setUploadedImage(null); }}>Clear Image</Button>
               </div>
             )}
           </CardContent>
@@ -247,16 +247,37 @@ export default function LearnWithAiPage() {
               <div className="mt-4 p-4 border rounded-md bg-secondary/30 space-y-3">
                 <h3 className="font-semibold text-lg">AI Response:</h3>
                 <p className="text-sm whitespace-pre-wrap">{aiResponse.explanation}</p>
+                
                 {aiResponse.relatedConcepts && aiResponse.relatedConcepts.length > 0 && (
-                    <div>
-                        <h4 className="font-medium">Related Concepts:</h4>
-                        <ul className="list-disc list-inside text-sm text-muted-foreground">
-                            {aiResponse.relatedConcepts.map((concept, index) => <li key={index}>{concept}</li>)}
+                    <div className="mt-3">
+                        <h4 className="font-medium text-sm flex items-center gap-1"><Lightbulb className="h-4 w-4 text-yellow-400"/>Related Concepts:</h4>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                            {aiResponse.relatedConcepts.map((concept, index) => <Badge key={index} variant="outline">{concept}</Badge>)}
+                        </div>
+                    </div>
+                )}
+
+                {aiResponse.followUpQuestions && aiResponse.followUpQuestions.length > 0 && (
+                    <div className="mt-3">
+                         <Separator className="my-3"/>
+                        <h4 className="font-medium text-sm flex items-center gap-1"><MessageCircleQuestion className="h-4 w-4 text-blue-500"/>Food for Thought:</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 mt-1 pl-2">
+                            {aiResponse.followUpQuestions.map((question, index) => <li key={index}>{question}</li>)}
                         </ul>
                     </div>
                 )}
+
+                {aiResponse.suggestedTopics && aiResponse.suggestedTopics.length > 0 && (
+                     <div className="mt-3">
+                         <Separator className="my-3"/>
+                        <h4 className="font-medium text-sm flex items-center gap-1"><Brain className="h-4 w-4 text-green-500"/>Explore Next:</h4>
+                         <div className="flex flex-wrap gap-2 mt-1">
+                            {aiResponse.suggestedTopics.map((topic, index) => <Badge key={index} variant="secondary">{topic}</Badge>)}
+                        </div>
+                    </div>
+                )}
                  {aiResponse.confidence && (
-                    <p className="text-xs text-muted-foreground">Confidence: {aiResponse.confidence}</p>
+                    <p className="text-xs text-muted-foreground pt-3 text-right">Confidence: {aiResponse.confidence}</p>
                  )}
               </div>
             )}
