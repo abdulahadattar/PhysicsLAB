@@ -1,8 +1,31 @@
 
+export interface MCQ {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+}
+
+export interface QuestionAnswer {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface ChapterContent {
+  pdfName?: string;
+  keyPoints?: string;
+  mcqs?: MCQ[];
+  shortAnswers?: QuestionAnswer[]; // CRQs
+  longAnswers?: QuestionAnswer[];  // ERQs
+  lastUpdated?: string;
+}
+
 export interface Chapter {
   id: string;
   name: string;
-  // Add other chapter-specific fields here if needed, e.g., pdfUrl, mcqs, keyPoints
+  content?: ChapterContent;
 }
 
 export interface StudyGrade {
@@ -10,5 +33,12 @@ export interface StudyGrade {
   name: string;
   chapters: Chapter[];
 }
+
+export interface TeacherChapterOverride extends ChapterContent {
+  chapterId: string;
+  gradeId: string;
+}
+
+export type TeacherChapterOverrides = Record<string, TeacherChapterOverride>;
 
 // You can add other shared types here
