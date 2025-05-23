@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { APP_AUTHOR, APP_NAME } from "@/lib/constants";
-import { Briefcase, GraduationCap, Lightbulb, Mail, Phone, ExternalLink } from "lucide-react";
+import { Briefcase, GraduationCap, Lightbulb, Mail, Phone, ExternalLink, ShieldCheck } from "lucide-react"; // Added ShieldCheck
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -32,11 +32,24 @@ export default function TeacherPortfolioPage() {
             <p className="text-muted-foreground leading-relaxed">
               As a dedicated physics educator with [Number] years of experience, I have a passion for demystifying the laws that govern our universe. My journey in education has been driven by the desire to see students not only succeed academically but also develop a genuine appreciation for physics. This application, {APP_NAME}, is a culmination of that passion, aiming to provide a modern, effective, and accessible learning tool for students of the Sindh Textbook Board and beyond.
             </p>
-             {/* Add more specific details if you have them, e.g., qualifications, specific schools/institutions */}
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold mb-3 flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-primary"/>Qualifications</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              {/* Placeholder for teacher qualifications. Edit this directly in the code. */}
+              Master of Science in Physics (University Name)
+              <br />
+              Bachelor of Education (University Name)
+              <br />
+              Certified Physics Teacher (Sindh Board)
+              <br />
+              [Any other relevant certifications or specializations]
+            </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 flex items-center"><Lightbulb className="mr-2 h-5 w-5 text-primary"/>Showcase & Achievements</h2>
+            <h2 className="text-xl font-semibold mb-3 flex items-center"><Lightbulb className="mr-2 h-5 w-5 text-primary"/>Showcase & Achievements in {APP_NAME}</h2>
             <div className="grid md:grid-cols-2 gap-4">
                 <Card className="p-4">
                     <h3 className="font-semibold mb-1">Interactive Simulations Development</h3>
@@ -100,3 +113,4 @@ export default function TeacherPortfolioPage() {
     </div>
   );
 }
+    

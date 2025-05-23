@@ -5,15 +5,15 @@
     "name": "Grade 9",
     "completeTextbookPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link",
     "chapters": [
-      { "id": "g9-chapter-1", "name": "Unit 1: Physical Quantities and Measurement", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-2", "name": "Unit 2: Kinematics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-3", "name": "Unit 3: Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-4", "name": "Unit 4: Turning Effect of Forces", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-5", "name": "Unit 5: Forces and Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-6", "name": "Unit 6: Gravitation", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-7", "name": "Unit 7: Properties of Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-8", "name": "Unit 8: Energy Sources and Transfer of Energy", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} },
-      { "id": "g9-chapter-9", "name": "Unit 9: Thermal Properties of Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link"} }
+      { "id": "g9-chapter-1", "name": "Unit 1: Physical Quantities and Measurement", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-2", "name": "Unit 2: Kinematics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [{"question": "If an object has zero velocity for an instant, does it necessarily have zero acceleration at that instant? Discuss with examples."}]} },
+      { "id": "g9-chapter-3", "name": "Unit 3: Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-4", "name": "Unit 4: Turning Effect of Forces", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-5", "name": "Unit 5: Forces and Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-6", "name": "Unit 6: Gravitation", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-7", "name": "Unit 7: Properties of Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-8", "name": "Unit 8: Energy Sources and Transfer of Energy", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g9-chapter-9", "name": "Unit 9: Thermal Properties of Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [{"question": "Why does a metal object feel colder than a wooden object at the same room temperature?", "hint":"Consider thermal conductivity."}]} }
     ]
   },
   {
@@ -26,7 +26,7 @@
         "name": "Unit 10: General Wave Properties",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 10: General Wave Properties will cover: Transverse and longitudinal waves, wave parameters (speed v, frequency f, wavelength λ, time period T, amplitude, crest, trough, cycle, wave front, compression, rarefaction), Simple Harmonic Motion (SHM) basics, energy transfer by waves, mechanical vs. electromagnetic waves, and phenomena like reflection, refraction, and diffraction. Real-world examples and problem-solving (v=fλ, T=1/f) will be included.]",
+          "keyPoints": "[Key concepts for Unit 10: General Wave Properties: Transverse and longitudinal waves, wave parameters (speed v, frequency f, wavelength λ, time period T, amplitude, crest, trough, cycle, wave front, compression, rarefaction), Simple Harmonic Motion (SHM) basics, energy transfer by waves, mechanical vs. electromagnetic waves, reflection, refraction, and diffraction. Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
             { "id": "g10-ch10-mcq1", "question": "Which formula correctly relates wave speed (v), frequency (f), and wavelength (λ)?", "options": ["v = f/λ", "v = fλ", "v = λ/f", "f = v/λ"], "correctAnswerIndex": 1, "explanation": "Wave speed is the product of its frequency and wavelength." }
           ],
@@ -35,7 +35,8 @@
           ],
           "longAnswers": [
             { "id": "g10-ch10-la1", "question": "Explain the phenomena of reflection, refraction, and diffraction of waves using diagrams.", "answer": "[Detailed explanation with diagrams for each phenomenon, possibly referencing ripple tank observations.]" }
-          ]
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -43,7 +44,7 @@
         "name": "Unit 11: Sound",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 11: Sound will cover: Sound production by vibrating sources, longitudinal nature (compressions, rarefactions), necessity of a medium (bell-in-jar), speed of sound in different media and factors affecting it (temperature, humidity), echo and its use, ultrasound and its applications, noise pollution, and timbre. Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 11: Sound: Sound production by vibrating sources, longitudinal nature (compressions, rarefactions), necessity of a medium (bell-in-jar), speed of sound in different media and factors affecting it (temperature, humidity), echo and its use, ultrasound and its applications, noise pollution, and timbre. Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
             { "id": "g10-ch11-mcq1", "question": "Which of the following is true about the speed of sound?", "options": ["Fastest in vacuum", "Fastest in gases", "Fastest in liquids", "Fastest in solids"], "correctAnswerIndex": 3, "explanation": "Sound travels fastest in solids due to the close packing of particles." }
           ],
@@ -52,7 +53,8 @@
           ],
           "longAnswers": [
             { "id": "g10-ch11-la1", "question": "Describe two medical applications of ultrasound.", "answer": "[Detailed explanation of applications like sonography/imaging and therapeutic uses.]" }
-          ]
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -60,16 +62,17 @@
         "name": "Unit 12: Electromagnetic Spectrum",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 12: Electromagnetic Spectrum will cover: Dispersion of light by a prism, colors of the spectrum (relation to f/λ), rainbow formation, properties of EM waves (same speed in air), main components of EM spectrum (radio, micro, IR, visible, UV, X-rays, gamma rays), and their common applications. Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 12: EM Spectrum: Dispersion of light by a prism, colors of the spectrum (relation to f/λ), rainbow formation, properties of EM waves (same speed in air), main components of EM spectrum (radio, micro, IR, visible, UV, X-rays, gamma rays), and their common applications. Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
-            { "id": "g10-ch12-mcq1", "question": "Which type of electromagnetic wave is used for satellite TV communication?", "options": ["Radio waves", "Microwaves", "Infra-red", "X-rays"], "correctAnswerIndex": 1, "explanation": "Microwaves are commonly used for satellite communication due to their ability to penetrate the Earth's atmosphere." }
+            { "id": "g10-ch12-mcq1", "question": "Which EM wave is used for satellite TV?", "options": ["Radio waves", "Microwaves", "Infra-red", "X-rays"], "correctAnswerIndex": 1, "explanation": "Microwaves are used for satellite communication." }
           ],
           "shortAnswers": [
-            { "id": "g10-ch12-sa1", "question": "List the colors of the visible spectrum in order of increasing wavelength.", "answer": "[Violet, Indigo, Blue, Green, Yellow, Orange, Red (VIBGYOR for frequency, reverse for wavelength).]" }
+            { "id": "g10-ch12-sa1", "question": "List visible spectrum colors by increasing wavelength.", "answer": "[Violet, Indigo, Blue, Green, Yellow, Orange, Red.]" }
           ],
           "longAnswers": [
-            { "id": "g10-ch12-la1", "question": "Describe two applications of X-rays.", "answer": "[Explanation of medical imaging (bones) and industrial uses (detecting cracks in metal).]" }
-          ]
+            { "id": "g10-ch12-la1", "question": "Describe two applications of X-rays.", "answer": "[Medical imaging (bones) and industrial uses (detecting cracks).]" }
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -77,16 +80,17 @@
         "name": "Unit 13: Geometrical Optics",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 13: Geometrical Optics will cover: Laws of reflection, mirror formula, uses of spherical mirrors, laws of refraction, Snell's law, total internal reflection and optical fibers, lens formula, power of a lens, uses of lenses (magnifying glass, camera, projector), microscopes, telescopes, and correction of vision defects. Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 13: Geometrical Optics: Laws of reflection, mirror formula, uses of spherical mirrors, laws of refraction, Snell's law, total internal reflection and optical fibers, lens formula, power of a lens, uses of lenses (magnifying glass, camera, projector), microscopes, telescopes, and correction of vision defects. Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
-            { "id": "g10-ch13-mcq1", "question": "What phenomenon is primarily responsible for the working of optical fibers?", "options": ["Reflection", "Refraction", "Diffraction", "Total Internal Reflection"], "correctAnswerIndex": 3, "explanation": "Optical fibers transmit light through successive total internal reflections." }
+            { "id": "g10-ch13-mcq1", "question": "Optical fibers work on the principle of:", "options": ["Reflection", "Refraction", "Diffraction", "Total Internal Reflection"], "correctAnswerIndex": 3, "explanation": "Optical fibers use total internal reflection." }
           ],
           "shortAnswers": [
-            { "id": "g10-ch13-sa1", "question": "State Snell's Law of refraction.", "answer": "[The ratio of the sine of the angle of incidence to the sine of the angle of refraction is a constant, for the light of a given colour and for the given pair of media (n1 sin θ1 = n2 sin θ2).]" }
+            { "id": "g10-ch13-sa1", "question": "State Snell's Law of refraction.", "answer": "[n1 sin θ1 = n2 sin θ2.]" }
           ],
           "longAnswers": [
-            { "id": "g10-ch13-la1", "question": "Explain, with a ray diagram, how a convex lens corrects long-sightedness (hypermetropia).", "answer": "[Explanation and diagram showing light focusing behind the retina and how a convex lens converges light rays to focus on the retina.]" }
-          ]
+            { "id": "g10-ch13-la1", "question": "Explain how a convex lens corrects long-sightedness (hypermetropia).", "answer": "[Explanation and diagram showing light focusing behind retina and how convex lens converges light.]" }
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -94,16 +98,17 @@
         "name": "Unit 14: Electrostatics",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 14: Electrostatics will cover: Production and detection of electric charge, types of charges, electrostatic induction, electroscope, Coulomb's law, electric field and intensity, electrostatic potential and potential difference (volt), hazards of static electricity, applications (paint spraying, dust extraction), capacitance and its unit, capacitors in series and parallel. Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 14: Electrostatics: Production and detection of charge, types of charges, electrostatic induction, electroscope, Coulomb's law, electric field/intensity, electrostatic potential/potential difference (volt), hazards of static electricity, applications (paint spraying, dust extraction), capacitance, capacitors in series/parallel. Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
-            { "id": "g10-ch14-mcq1", "question": "The force between two point charges is directly proportional to the:", "options": ["Sum of the charges", "Distance between charges", "Product of the charges", "Square of the distance between charges"], "correctAnswerIndex": 2, "explanation": "Coulomb's law states F ∝ q1q2." }
+            { "id": "g10-ch14-mcq1", "question": "Force between two point charges is proportional to:", "options": ["Sum of charges", "Distance", "Product of charges", "Square of distance"], "correctAnswerIndex": 2, "explanation": "Coulomb's law: F ∝ q1q2." }
           ],
           "shortAnswers": [
-            { "id": "g10-ch14-sa1", "question": "What is electrostatic induction?", "answer": "[Explanation of charging a conductor by bringing a charged object near it without direct contact.]" }
+            { "id": "g10-ch14-sa1", "question": "What is electrostatic induction?", "answer": "[Charging a conductor by bringing a charged object near it without contact.]" }
           ],
           "longAnswers": [
-            { "id": "g10-ch14-la1", "question": "Calculate the equivalent capacitance of three capacitors (2μF, 3μF, 6μF) connected in series.", "answer": "[Calculation showing 1/Ceq = 1/C1 + 1/C2 + 1/C3, resulting in Ceq = 1μF.]" }
-          ]
+            { "id": "g10-ch14-la1", "question": "Calculate equivalent capacitance of 2μF, 3μF, 6μF capacitors in series.", "answer": "[1/Ceq = 1/2 + 1/3 + 1/6 => Ceq = 1μF.]" }
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -111,16 +116,17 @@
         "name": "Unit 15: Current Electricity",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 15: Current Electricity will cover: Electric current, conventional current, potential difference, Ohm's law and its limitations, resistance and resistivity, factors affecting resistance, series/parallel circuits, V-I characteristics, Joule's law, circuit components and symbols, electrical measuring devices (ammeter, voltmeter, galvanometer), AC, hazards and safety measures (fuse, circuit breaker, earth wire). Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 15: Current Electricity: Electric current, conventional current, potential difference, Ohm's law and limitations, resistance/resistivity, factors affecting R, series/parallel circuits, V-I characteristics, Joule's law, circuit components/symbols, measuring devices (ammeter, voltmeter, galvanometer), AC, hazards/safety (fuse, circuit breaker, earth wire). Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
-            { "id": "g10-ch15-mcq1", "question": "Three resistors of 2Ω, 3Ω, and 6Ω are connected in parallel. Their equivalent resistance is:", "options": ["1Ω", "11Ω", "0.9Ω", "Cannot be determined"], "correctAnswerIndex": 0, "explanation": "1/Rp = 1/2 + 1/3 + 1/6 = (3+2+1)/6 = 6/6 = 1. So Rp = 1Ω." }
+            { "id": "g10-ch15-mcq1", "question": "Three resistors 2Ω, 3Ω, 6Ω in parallel. Equivalent resistance?", "options": ["1Ω", "11Ω", "0.9Ω", "N/A"], "correctAnswerIndex": 0, "explanation": "1/Rp = 1/2 + 1/3 + 1/6 = 1. So Rp = 1Ω." }
           ],
           "shortAnswers": [
-            { "id": "g10-ch15-sa1", "question": "State Ohm's Law and mention one of its limitations.", "answer": "[V=IR, provided physical conditions (like temperature) remain constant. Limitation: Not applicable to non-ohmic conductors like diodes or thermistors.]" }
+            { "id": "g10-ch15-sa1", "question": "State Ohm's Law and one limitation.", "answer": "[V=IR, if temp constant. Limit: non-ohmic conductors.]" }
           ],
           "longAnswers": [
-            { "id": "g10-ch15-la1", "question": "Explain the purpose of a fuse and an earth wire in household electrical safety.", "answer": "[Fuse: melts and breaks circuit if current exceeds safe limit. Earth wire: provides a low resistance path for current to flow to ground in case of a fault, preventing electric shock.]" }
-          ]
+            { "id": "g10-ch15-la1", "question": "Explain purpose of fuse and earth wire.", "answer": "[Fuse: breaks circuit if current high. Earth wire: low resistance path to ground for faults.]" }
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -128,16 +134,17 @@
         "name": "Unit 16: Electromagnetism",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 16: Electromagnetism will cover: Magnetic fields, plotting field lines, force on current-carrying conductor (motor principle), uses (relays, bells, speakers), electromagnetic induction, factors affecting induced emf, AC generator, mutual induction, transformers (step-up/step-down) and their uses. Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 16: Electromagnetism: Magnetic fields, plotting field lines, force on current-carrying conductor (motor principle), uses (relays, bells, speakers), electromagnetic induction, factors affecting induced emf, AC generator, mutual induction, transformers (step-up/down) and uses. Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
-            { "id": "g10-ch16-mcq1", "question": "A device that converts electrical energy into mechanical energy is a:", "options": ["Generator", "Transformer", "Motor", "Rectifier"], "correctAnswerIndex": 2, "explanation": "An electric motor uses the motor principle to convert electrical energy into mechanical rotation." }
+            { "id": "g10-ch16-mcq1", "question": "Device converting electrical to mechanical energy?", "options": ["Generator", "Transformer", "Motor", "Rectifier"], "correctAnswerIndex": 2, "explanation": "Electric motor converts electrical to mechanical energy." }
           ],
           "shortAnswers": [
-            { "id": "g10-ch16-sa1", "question": "State Faraday's law of electromagnetic induction.", "answer": "[The magnitude of the induced e.m.f. is directly proportional to the rate of change of magnetic flux linkage.]" }
+            { "id": "g10-ch16-sa1", "question": "State Faraday's law of electromagnetic induction.", "answer": "[Induced e.m.f. ∝ rate of change of magnetic flux linkage.]" }
           ],
           "longAnswers": [
-            { "id": "g10-ch16-la1", "question": "Explain the working principle of a step-up transformer with a labeled diagram.", "answer": "[Explanation of mutual induction, primary and secondary coils, relationship Ns/Np = Vs/Vp > 1 for step-up, with diagram.]" }
-          ]
+            { "id": "g10-ch16-la1", "question": "Explain working of step-up transformer with diagram.", "answer": "[Mutual induction, primary/secondary coils, Ns/Np = Vs/Vp > 1 for step-up, diagram.]" }
+          ],
+          "philosophicalQuestions": []
         }
       },
       {
@@ -145,21 +152,22 @@
         "name": "Unit 17: Introductory Electronics",
         "content": {
           "stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
-          "keyPoints": "[Key concepts for Unit 17: Introductory Electronics will cover: Analog vs. digital electronics, advantages of digital, examples of digital devices, computers as information processing machines, Cathode Ray Oscilloscope (CRO) basics, logic gates (NOT, OR, AND, NOR, NAND symbols and truth tables), simple uses of logic gates (e.g., burglar alarm). Real-world examples and problem-solving will be included.]",
+          "keyPoints": "[Key concepts for Unit 17: Electronics: Analog vs. digital, advantages of digital, digital devices, computers as info processing machines, CRO basics, logic gates (NOT, OR, AND, NOR, NAND symbols/truth tables), simple uses of logic gates (burglar alarm). Real-world examples, applications, and problem-solving techniques will be detailed here.]",
           "mcqs": [
-            { "id": "g10-ch17-mcq1", "question": "Which logic gate produces a HIGH output only when all its inputs are HIGH?", "options": ["OR", "NOT", "AND", "NOR"], "correctAnswerIndex": 2, "explanation": "An AND gate outputs 1 (HIGH) if and only if all its inputs are 1 (HIGH)." }
+            { "id": "g10-ch17-mcq1", "question": "Which logic gate outputs HIGH only if all inputs are HIGH?", "options": ["OR", "NOT", "AND", "NOR"], "correctAnswerIndex": 2, "explanation": "AND gate outputs 1 if all inputs are 1." }
           ],
           "shortAnswers": [
-            { "id": "g10-ch17-sa1", "question": "Draw the symbol and write the truth table for a NAND gate.", "answer": "[Symbol of NAND gate and its truth table (Output is 0 only if all inputs are 1).]" }
+            { "id": "g10-ch17-sa1", "question": "Draw symbol and truth table for a NAND gate.", "answer": "[Symbol and truth table (Output 0 only if all inputs 1).]" }
           ],
           "longAnswers": [
-            { "id": "g10-ch17-la1", "question": "Briefly explain how a simple burglar alarm can be constructed using logic gates.", "answer": "[Explanation using a sensor (e.g., switch) and a NOT gate or a combination of gates to trigger an alarm (e.g., LED or buzzer).]" }
-          ]
+            { "id": "g10-ch17-la1", "question": "How can a simple burglar alarm be made using logic gates?", "answer": "[Explanation using sensor and NOT/other gates to trigger alarm.]" }
+          ],
+          "philosophicalQuestions": []
         }
       },
-      { "id": "g10-chapter-18", "name": "Unit 18: Information and Communication Technology ICT", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link", "keyPoints": "[Content for Unit 18: ICT to be added. Focus on components and energy transformations as per broad curriculum guidelines, specific interactive elements need teacher input.]"} },
-      { "id": "g10-chapter-19", "name": "Unit 19: Atomic Structure", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link", "keyPoints": "[Content for Unit 19: Atomic Structure to be added. Specific interactive elements for Grade 10 need teacher input based on syllabus details.]"} },
-      { "id": "g10-chapter-20", "name": "Unit 20: Nuclear Structure", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link", "keyPoints": "[Content for Unit 20: Nuclear Structure to be added. Specific interactive elements for Grade 10 need teacher input based on syllabus details.]"} }
+      { "id": "g10-chapter-18", "name": "Unit 18: Information and Communication Technology ICT", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link", "keyPoints": "[Content for Unit 18: ICT to be added. Focus on components and energy transformations as per broad curriculum guidelines, specific interactive elements need teacher input.]", "philosophicalQuestions": []} },
+      { "id": "g10-chapter-19", "name": "Unit 19: Atomic Structure", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link", "keyPoints": "[Content for Unit 19: Atomic Structure to be added. Specific interactive elements for Grade 10 need teacher input based on syllabus details.]", "philosophicalQuestions": []} },
+      { "id": "g10-chapter-20", "name": "Unit 20: Nuclear Structure", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link", "keyPoints": "[Content for Unit 20: Nuclear Structure to be added. Specific interactive elements for Grade 10 need teacher input based on syllabus details.]", "philosophicalQuestions": []} }
     ]
   },
   {
@@ -167,20 +175,20 @@
     "name": "Grade 11",
     "completeTextbookPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link",
     "chapters": [
-      { "id": "g11-chapter-1", "name": "Unit 01: Measurements", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-2", "name": "Unit 02: Kinematics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-3", "name": "Unit 03: Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-4", "name": "Unit 04: Rotational and Circular Motion", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-5", "name": "Unit 05: Work, Energy and Power", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-6", "name": "Unit 06: Fluid Statics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-7", "name": "Unit 07: Fluid Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-8", "name": "Unit 08: Electric Fields", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-9", "name": "Unit 09: Capacitors", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-10", "name": "Unit 10: D.C Circuits", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-11", "name": "Unit 11: Oscillations", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-12", "name": "Unit 12: Acoustics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-13", "name": "Unit 13: Physical Optics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} },
-      { "id": "g11-chapter-14", "name": "Unit 14: Communication", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link"} }
+      { "id": "g11-chapter-1", "name": "Unit 01: Measurements", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-2", "name": "Unit 02: Kinematics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-3", "name": "Unit 03: Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-4", "name": "Unit 04: Rotational and Circular Motion", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-5", "name": "Unit 05: Work, Energy and Power", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-6", "name": "Unit 06: Fluid Statics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-7", "name": "Unit 07: Fluid Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-8", "name": "Unit 08: Electric Fields", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-9", "name": "Unit 09: Capacitors", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-10", "name": "Unit 10: D.C Circuits", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-11", "name": "Unit 11: Oscillations", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-12", "name": "Unit 12: Acoustics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-13", "name": "Unit 13: Physical Optics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g11-chapter-14", "name": "Unit 14: Communication", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } }
     ]
   },
   {
@@ -188,20 +196,21 @@
     "name": "Grade 12",
     "completeTextbookPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link",
     "chapters": [
-      { "id": "g12-chapter-1", "name": "Unit 15: Molecular Theory of Gases", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-2", "name": "Unit 16: First Law of Thermodynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-3", "name": "Unit 17: Second Law of Thermodynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-4", "name": "Unit 18: Magnetic Fields", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-5", "name": "Unit 19: Electromagnetic Induction", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-6", "name": "Unit 20: Alternating Current", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-7", "name": "Unit 21: Physics of Solids", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-8", "name": "Unit 22: Solid State of Electronics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-9", "name": "Unit 23: Digital Electronics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-10", "name": "Unit 24: Relativity", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-11", "name": "Unit 25: Quantum Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-12", "name": "Unit 26: Atomic Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-13", "name": "Unit 27: Nuclear Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} },
-      { "id": "g12-chapter-14", "name": "Unit 28: Particles Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link"} }
+      { "id": "g12-chapter-1", "name": "Unit 15: Molecular Theory of Gases", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-2", "name": "Unit 16: First Law of Thermodynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-3", "name": "Unit 17: Second Law of Thermodynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-4", "name": "Unit 18: Magnetic Fields", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-5", "name": "Unit 19: Electromagnetic Induction", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-6", "name": "Unit 20: Alternating Current", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-7", "name": "Unit 21: Physics of Solids", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-8", "name": "Unit 22: Solid State of Electronics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-9", "name": "Unit 23: Digital Electronics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-10", "name": "Unit 24: Relativity", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-11", "name": "Unit 25: Quantum Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-12", "name": "Unit 26: Atomic Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-13", "name": "Unit 27: Nuclear Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
+      { "id": "g12-chapter-14", "name": "Unit 28: Particles Physics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } }
     ]
   }
 ]
+    

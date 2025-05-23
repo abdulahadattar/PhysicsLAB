@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookText, ChevronRight, AlertTriangle, Loader2, FileText, Landmark, Globe, BookCopy as BookIcon } from "lucide-react";
 import { APP_AUTHOR } from "@/lib/constants";
-import type { StudyGrade } from '@/lib/types';
+import type { StudyGrade, TeacherGradeOverride } from '@/lib/types';
 import { useEffect, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -24,14 +24,21 @@ const fullTextbookConfigs: FullTextbookLink[] = [
   { key: 'nationalSyllabusFullPdfLink', label: "National Syllabus Full Textbook", icon: Globe },
 ];
 
+const STUDY_GRADES_CACHE_KEY = 'studyGradesCache';
+const TEACHER_GRADE_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherGradeOverrides';
 
-async function fetchStudyGrades(): Promise<{ data: StudyGrade[] | null, error?: string }> {
+
+async function fetchStudyGradesAPI(): Promise<{ data: StudyGrade[] | null, error?: string }> {
   try {
     const res = await fetch('/api/study-materials');
     if (!res.ok) {
       return { data: null, error: `Failed to fetch study materials: ${res.status} ${res.statusText}` };
     }
     const jsonData = await res.json();
+    if (!Array.isArray(jsonData)) {
+      console.error("API did not return an array for grades:", jsonData);
+      return { data: null, error: "Invalid data format received from API for grades."};
+    }
     return { data: jsonData };
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : 'Network error while fetching study materials.';
@@ -39,90 +46,108 @@ async function fetchStudyGrades(): Promise<{ data: StudyGrade[] | null, error?: 
   }
 }
 
+function applyGradeOverrides(grades: StudyGrade[], overrides: Record<string, Partial<TeacherGradeOverride>>): StudyGrade[] {
+  if (!grades || Object.keys(overrides).length === 0) return grades;
+  return grades.map(grade => {
+    const override = overrides[grade.id];
+    return override ? { ...grade, ...override } : grade;
+  });
+}
+
 export default function StudyMaterialPage() {
   const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [apiFetchAttempted, setApiFetchAttempted] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    setApiFetchAttempted(false);
-    let freshDataFetched = false;
-    let localOverridesApplied = false;
+    setError(null);
+    setInfoMessage(null);
+    let gradesToDisplay: StudyGrade[] = [];
+    let teacherOverrides: Record<string, Partial<TeacherGradeOverride>> = {};
 
-    // Try loading from localStorage overrides first to ensure teacher changes are prioritized if available
-    const gradeOverridesRaw = typeof window !== 'undefined' ? localStorage.getItem('physicsLabTeacherGradeOverrides') : null;
-    let allGradeOverrides: Record<string, Partial<StudyGrade>> = {};
-    if (gradeOverridesRaw) {
-        try {
-            allGradeOverrides = JSON.parse(gradeOverridesRaw);
-            localOverridesApplied = true;
-        } catch (e) {
-            console.error("Failed to parse grade overrides from localStorage:", e);
+    // 1. Try to load teacher overrides from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const overridesRaw = localStorage.getItem(TEACHER_GRADE_OVERRIDES_STORAGE_KEY);
+        if (overridesRaw) {
+          teacherOverrides = JSON.parse(overridesRaw);
         }
+      } catch (e) {
+        console.warn("Failed to parse teacher grade overrides from localStorage:", e);
+      }
     }
-
-    if (typeof window !== 'undefined' && navigator.onLine) {
-      const result = await fetchStudyGrades();
-      setApiFetchAttempted(true);
-      if (result.data) {
-        let fetchedData = result.data;
-        // Apply overrides to freshly fetched data
-        fetchedData = fetchedData.map(grade => {
-            const override = allGradeOverrides[grade.id];
-            return override ? { ...grade, ...override } : grade;
-        });
-        setStudyGrades(fetchedData);
-        localStorage.setItem('studyGradesCache', JSON.stringify(fetchedData)); // Use a different key for API fetched cache
-        setError(null);
-        freshDataFetched = true;
-      } else {
-        console.warn(`API fetch for study materials failed: ${result.error}`);
+    
+    // 2. Try to load cached data from localStorage
+    if (typeof window !== 'undefined') {
+      const cachedDataString = localStorage.getItem(STUDY_GRADES_CACHE_KEY);
+      if (cachedDataString) {
+        try {
+          const cachedData = JSON.parse(cachedDataString);
+          gradesToDisplay = applyGradeOverrides(cachedData, teacherOverrides);
+          setStudyGrades(gradesToDisplay);
+          setInfoMessage("Displaying cached content. Checking for updates...");
+        } catch (e) {
+          console.warn("Failed to parse cached study materials:", e);
+          localStorage.removeItem(STUDY_GRADES_CACHE_KEY); // Clear corrupted cache
+        }
       }
     }
 
-    if (!freshDataFetched) {
-      const cachedDataString = typeof window !== 'undefined' ? localStorage.getItem('studyGradesCache') : null;
-      if (cachedDataString) {
-        try {
-          let cachedData: StudyGrade[] = JSON.parse(cachedDataString);
-          // Apply overrides to cached data as well if not already applied
-          if (localOverridesApplied) { // only re-apply if initial fetch was skipped
-            cachedData = cachedData.map(grade => {
-                const override = allGradeOverrides[grade.id];
-                return override ? { ...grade, ...override } : grade;
-            });
-          }
-          setStudyGrades(cachedData);
-          setError(null);
-          if (apiFetchAttempted && typeof window !== 'undefined' && navigator.onLine) {
-            setError("Could not refresh study materials from the server. Displaying locally cached version. Some content might be outdated.");
-          }
-        } catch (e) {
-          console.error("Failed to parse cached study materials:", e);
-          if (typeof window !== 'undefined') localStorage.removeItem('studyGradesCache');
-          setError( (typeof window !== 'undefined' && !navigator.onLine) ? "You are offline and cached study materials could not be loaded." : "Failed to load study materials. Cache might be corrupted.");
+    // 3. If online, attempt to fetch fresh data from API
+    if (isOnline) {
+      const result = await fetchStudyGradesAPI();
+      if (result.data) {
+        gradesToDisplay = applyGradeOverrides(result.data, teacherOverrides);
+        setStudyGrades(gradesToDisplay);
+        setError(null);
+        setInfoMessage(null); // Clear "checking for updates" or cache message
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STUDY_GRADES_CACHE_KEY, JSON.stringify(result.data)); // Cache the raw API data
         }
       } else {
-        if (typeof window !== 'undefined' && !navigator.onLine) {
-          setError("You are offline and no study materials are cached. Please connect to the internet to load them.");
-        } else if (apiFetchAttempted) {
-          setError("Failed to fetch study materials from the server, and no cached data is available.");
+        // API fetch failed
+        if (gradesToDisplay.length > 0) {
+          // We have cached data, so it's a non-critical error
+          setError(`Could not refresh study materials: ${result.error || 'Unknown API error'}. Displaying last available version.`);
+          setInfoMessage(null);
         } else {
-           setError("Study materials could not be loaded. Please check your connection or try again later.");
+          // No cached data and API failed
+          setError(`Failed to load study materials: ${result.error || 'Unknown API error'}. Please check your connection or try again later.`);
         }
+      }
+    } else {
+      // Offline
+      if (gradesToDisplay.length === 0) {
+        setError("You are offline and no study materials are cached. Please connect to the internet to load them.");
+      } else {
+        setInfoMessage("You are offline. Displaying cached content.");
       }
     }
     setIsLoading(false);
-  }, [apiFetchAttempted]); // Ensure apiFetchAttempted is a dependency
+  }, [isOnline]);
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData]); // loadData is memoized and its dependencies include isOnline
 
-
-  if (isLoading) {
+  if (isLoading && studyGrades.length === 0) { // Show initial loader only if no data is displayed yet
     return (
       <div className="space-y-8">
         <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
@@ -152,14 +177,14 @@ export default function StudyMaterialPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {error} Please check your internet connection or try again later.
+            {error}
           </AlertDescription>
         </Alert>
       </div>
     );
   }
   
-  if (!isLoading && !error && studyGrades.length === 0) {
+  if (!isLoading && studyGrades.length === 0 && !error) {
      return (
       <div className="space-y-8">
         <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
@@ -173,7 +198,6 @@ export default function StudyMaterialPage() {
     );
   }
 
-
   return (
     <div className="space-y-8">
       <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
@@ -183,6 +207,18 @@ export default function StudyMaterialPage() {
         </CardHeader>
       </Card>
       
+      {isLoading && studyGrades.length > 0 && ( // Show subtle loading indicator if refreshing data
+          <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <span>Checking for updates...</span>
+          </div>
+      )}
+
+      {infoMessage && !isCacheWarning && (
+        <Alert variant="default">
+            <AlertDescription>{infoMessage}</AlertDescription>
+        </Alert>
+      )}
       {error && isCacheWarning && (
         <Alert variant="default" className="bg-yellow-50 border-yellow-300 text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300">
             <AlertTriangle className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
@@ -217,7 +253,7 @@ export default function StudyMaterialPage() {
                                         asChild
                                         size="sm"
                                         className="text-primary hover:underline px-1.5 py-1 h-auto text-xs"
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
                                     >
                                         <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                                         <config.icon className="h-3.5 w-3.5"/> {config.label.replace(" Full Textbook", "")}
@@ -254,3 +290,4 @@ export default function StudyMaterialPage() {
     </div>
   );
 }
+    

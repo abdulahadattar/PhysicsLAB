@@ -23,7 +23,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserCog, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen, ListChecks, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
+import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserCog, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen, ListChecks, Settings as SettingsIcon } from 'lucide-react'; // Removed ChevronDown, it's part of Accordion
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -37,14 +37,23 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input'; 
 import { Label } from '@/components/ui/label'; 
 import { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
-import type { StudyGrade, Chapter } from '@/lib/types';
+import type { StudyGrade } from '@/lib/types';
 import { Badge } from '../ui/badge';
 
+/**
+ * @fileOverview The main application shell component.
+ * Renders the sidebar, header, main content area, and footer.
+ * Manages global search functionality and simulated user login UI.
+ */
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
+/**
+ * SidebarInset is a local redefinition to avoid a previous SlotClone error.
+ * It's a simple main element styled to work with the inset sidebar variant.
+ */
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"main">
@@ -104,6 +113,7 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, []);
 
+  // Fetch study grades once on mount for search functionality
   const fetchStudyGradesForSearch = useCallback(async () => {
     if (studyGradesData.length > 0 || isLoadingSearchData) return; 
     setIsLoadingSearchData(true);
@@ -113,19 +123,17 @@ export function AppShell({ children }: AppShellProps) {
         const data = await res.json();
         setStudyGradesData(data);
       } else {
-        console.warn("Search: Could not fetch study materials for indexing.");
+        console.warn("AppShell Search: Could not fetch study materials for indexing.");
       }
     } catch (e) {
-      console.warn("Search: Error fetching study materials for indexing:", e);
+      console.warn("AppShell Search: Error fetching study materials for indexing:", e);
     }
     setIsLoadingSearchData(false);
   }, [studyGradesData.length, isLoadingSearchData]);
 
   useEffect(() => {
-    if (isSearchOpen || searchTerm.length > 0) {
-      fetchStudyGradesForSearch();
-    }
-  }, [isSearchOpen, searchTerm, fetchStudyGradesForSearch]);
+    fetchStudyGradesForSearch(); // Fetch once when AppShell mounts
+  }, [fetchStudyGradesForSearch]);
 
 
   const performSearch = useCallback((query: string) => {
@@ -137,11 +145,6 @@ export function AppShell({ children }: AppShellProps) {
     setIsSearchOpen(true);
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
-
-    // Client-side search. For a production app with large amounts of text content,
-    // a dedicated search index (e.g., Algolia, MeiliSearch, or client-side Lunr.js)
-    // would be much more performant and support advanced features like fuzzy matching
-    // or typo tolerance. This current implementation is based on direct substring matching.
 
     // Search Nav Items
     NAV_ITEMS.forEach(item => {
@@ -170,6 +173,7 @@ export function AppShell({ children }: AppShellProps) {
     });
     
     // Search Study Materials (Grades, Chapters, and basic content)
+    // Uses studyGradesData state which is fetched once on mount
     studyGradesData.forEach(grade => {
       if (grade.name.toLowerCase().includes(lowerQuery)) {
         results.push({ id: `grade-${grade.id}`, label: grade.name, href: `/study-material`, category: 'Study Grade', icon: BookOpen });
@@ -203,6 +207,7 @@ export function AppShell({ children }: AppShellProps) {
     });
 
     // Search Settings Keywords
+    // This is a client-side substring match for keywords related to settings.
     SETTINGS_SEARCHABLE_KEYWORDS.forEach(setting => {
         if(setting.term.toLowerCase().includes(lowerQuery) || setting.label.toLowerCase().includes(lowerQuery)) {
             if (!results.find(r => r.href === setting.href && r.category === 'Settings')) {
@@ -211,6 +216,7 @@ export function AppShell({ children }: AppShellProps) {
         }
     });
 
+    // Simple deduplication based on href and label
     const uniqueResults = results.reduce((acc, current) => {
         const x = acc.find(item => item.href === current.href && item.label === current.label);
         if (!x) {
@@ -220,8 +226,8 @@ export function AppShell({ children }: AppShellProps) {
         }
     }, [] as SearchResult[]);
 
-    setSearchResults(uniqueResults.slice(0, 10));
-  }, [studyGradesData]);
+    setSearchResults(uniqueResults.slice(0, 10)); // Limit to top 10 results
+  }, [studyGradesData]); // Depends on the fetched studyGradesData
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -231,7 +237,7 @@ export function AppShell({ children }: AppShellProps) {
         setSearchResults([]);
         setIsSearchOpen(false);
       }
-    }, 300); 
+    }, 300); // Debounce search by 300ms
 
     return () => {
       clearTimeout(handler);
@@ -252,8 +258,14 @@ export function AppShell({ children }: AppShellProps) {
     }
   };
 
+  /**
+   * Renders navigation items.
+   * Handles conditional rendering for teacher panel and active states.
+   * For sub-menus, it uses ShadCN Accordion.
+   */
   const renderNavItems = (items: NavItem[], isSubMenu = false) => {
     return items.map((item) => {
+      // Conditional rendering for Teacher Panel
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || viewAsStudent)) {
         return null;
       }
@@ -268,24 +280,23 @@ export function AppShell({ children }: AppShellProps) {
               <AccordionTrigger 
                 className={cn(
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center",
-                   isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
-                   // Remove explicit ChevronDown from here, AccordionTrigger adds its own
+                  isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
                 )}
                 asChild 
               >
                  <SidebarMenuButton
-                    asChild={true} 
+                    asChild={true} // This makes SidebarMenuButton pass its props to AccordionTrigger's button
                     className="w-full"
                     isActive={isActive && !isParentActive && !isSubMenu} 
                     tooltip={item.label}
                   >
-                    {/* Wrap children in a single span to ensure asChild works correctly */}
+                    {/* The content for the AccordionTrigger's button */}
                     <span className="flex w-full items-center justify-between">
                         <span className="flex items-center gap-2">
                             <item.icon />
                             <span>{item.label}</span>
                         </span>
-                        {/* ChevronDown is now part of AccordionTrigger by default */}
+                        {/* AccordionTrigger will add its own chevron here */}
                     </span>
                   </SidebarMenuButton>
               </AccordionTrigger>
@@ -328,7 +339,7 @@ export function AppShell({ children }: AppShellProps) {
     });
   };
 
-  if (isSessionLoading && !currentUser) { 
+  if (isSessionLoading && !currentUser) { // Initial loading state for auth
     return <div className="flex items-center justify-center h-screen text-lg">Loading Application...</div>; 
   }
 
@@ -370,18 +381,18 @@ export function AppShell({ children }: AppShellProps) {
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
           <SidebarTrigger className="md:hidden" />
           
-          <div className="relative flex-grow max-w-md">
+          <div className="relative flex-grow max-w-md"> {/* Search bar container */}
             <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
                 <PopoverAnchor asChild>
                     <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                         type="search"
-                        placeholder="Search app (e.g., Kinematics, Settings...)"
+                        placeholder="Search app..."
                         className="pl-10 w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        onFocus={() => { if(searchTerm) setIsSearchOpen(true); fetchStudyGradesForSearch(); }}
+                        onFocus={() => { if(searchTerm) setIsSearchOpen(true); }}
                         />
                         {searchTerm && (
                             <Button
@@ -400,7 +411,7 @@ export function AppShell({ children }: AppShellProps) {
                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-y-auto p-1" align="start">
                         <div className="flex flex-col gap-0.5">
                         {searchResults.map(result => {
-                            const Icon = result.icon || FileText;
+                            const Icon = result.icon || FileText; // Default icon
                             return (
                             <Button
                                 key={result.id}
@@ -431,14 +442,15 @@ export function AppShell({ children }: AppShellProps) {
             </Popover>
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto"> {/* Login/Profile section */}
             {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center"><WifiOff className="mr-1 h-3 w-3"/>Offline</Badge>}
             {isSessionLoading ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : !isLoggedIn ? (
               isLoginFlowActive ? (
                 <div className="flex items-center gap-2 flex-wrap justify-end">
-                 { (!isOnline && !isFirebaseConfigured) && (
+                  {/* Debug Login - shows if OFFLINE AND Firebase is NOT configured */}
+                  { (!isOnline && !isFirebaseConfigured) && (
                     <Card className="p-3 w-full md:w-auto shadow-md">
                         <CardHeader className="p-0 mb-2">
                             <CardTitle className="text-sm flex items-center"><KeyRound className="mr-1 h-4 w-4"/> Offline Debug Login</CardTitle>
@@ -456,9 +468,12 @@ export function AppShell({ children }: AppShellProps) {
                         </CardContent>
                     </Card>
                   )}
-                   <Button variant="default" size="sm" onClick={async () => { if(isFirebaseConfigured) {await signInWithGoogle();} setIsLoginFlowActive(false); }} disabled={!isOnline && !isFirebaseConfigured}>
-                    <UserCircle className="mr-2 h-4 w-4" /> Login with Google
-                  </Button>
+                   {/* Google Login - shows if ONLINE OR Firebase IS configured */}
+                   { (isOnline || isFirebaseConfigured) && (
+                     <Button variant="default" size="sm" onClick={async () => { if(isFirebaseConfigured) {await signInWithGoogle();} setIsLoginFlowActive(false); }} disabled={!isFirebaseConfigured && !isOnline}>
+                      <UserCircle className="mr-2 h-4 w-4" /> Login with Google
+                    </Button>
+                   )}
                   <Button variant="ghost" size="sm" onClick={() => setIsLoginFlowActive(false)}>Cancel</Button>
                 </div>
               ) : (
@@ -466,7 +481,7 @@ export function AppShell({ children }: AppShellProps) {
                   <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
                 </Button>
               )
-            ) : (
+            ) : ( // User is Logged In
               <>
                 <span className="text-sm text-muted-foreground hidden md:inline">
                   {currentUser?.displayName || currentUser?.email || "User"} (<span className="font-semibold capitalize">{userRole}</span>
@@ -496,3 +511,4 @@ export function AppShell({ children }: AppShellProps) {
     </SidebarProvider>
   );
 }
+    

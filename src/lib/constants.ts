@@ -13,7 +13,7 @@ import {
   NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText,
   SearchIcon, Timer, Weight, Replace, HelpCircle, MoveVertical, Speaker, Projector, Zap,
   Network, Binary, Pipette, Magnet, LineChart, Move, Anchor, RefreshCw, GitCommitHorizontal, Sun,
-  Archive
+  Archive, Info, UsersRound, BookMarked, Telescope, GraduationCap
 } from 'lucide-react';
 
 /**
@@ -42,6 +42,9 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/model-papers', label: 'Model Papers', icon: FileArchive },
   { href: '/practicals', label: 'Practicals', icon: Beaker },
   { href: '/mdcat-preparation', label: 'MDCAT Prep', icon: TestTubeDiagonal },
+  { href: '/about-us', label: 'About Us', icon: Info },
+  { href: '/research-centers', label: 'Physics Research', icon: Telescope },
+  { href: '/university-programs', label: 'University Programs', icon: GraduationCap },
   {
     href: '/teacher-dashboard',
     label: 'Teacher Panel',
@@ -98,22 +101,25 @@ export const SIMULATION_TOPICS: SimulationTopic[] = [
   { id: "newtons-laws-g9", name: "Newton's Laws (Force Vectors)", grade: "9", description: "Visualize forces, net force, and the application of Newton's laws of motion with interactive vectors.", icon: Move, image: "https://placehold.co/400x200.png", aiHint: "newton laws force" },
   { id: "density-measurement-g9", name: "Density Measurement (Interactive)", grade: "9", description: "Interactively determine density of objects using virtual measuring cylinders and balances.", icon: Archive, image: "https://placehold.co/400x200.png", aiHint: "density volume mass" },
   { id: "states-of-matter-g9", name: "States of Matter - Particle Model", grade: "9", description: "Visualize particle behavior in solids, liquids, and gases, and how temperature/pressure affect them. Includes a conceptual P-V diagram.", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "particles solid liquid gas" },
+  { id: "orbital-mechanics-g9", name: "Orbital Mechanics Explorer (Earth/Sun)", grade: "9/10", description: "Explore how Earth orbits the Sun. Adjust velocity and distance to see effects. (Conceptual)", icon: Orbit, image: "https://placehold.co/400x200.png", aiHint: "orbit planet sun" },
+  { id: "atomic-structure-explorer-g9", name: "Atomic Structure Explorer", grade: "9/10", description: "Visualize basic atomic structure. Observe changes with varying protons/neutrons/electrons. (Conceptual)", icon: Atom, image: "https://placehold.co/400x200.png", aiHint: "atom proton neutron electron" },
+
   // Grade 10
   { id: "wave-generator-g10", name: "Wave Generator (Adjustable Params)", grade: "10", description: "Generate transverse and longitudinal waves. Adjust frequency, amplitude, and wavelength to observe wave characteristics.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "wave generator physics" },
   { id: "ray-tracing-g10", name: "Ray Tracing (Mirrors & Lenses)", grade: "10", description: "Interactively trace rays for concave/convex mirrors and lenses. Observe image formation based on object position and focal length.", icon: Projector, image: "https://placehold.co/400x200.png", aiHint: "optics ray diagram" },
   { id: "ohms-law-g10", name: "Ohm's Law (Circuit Building)", grade: "10", description: "Build simple series and parallel circuits. Adjust voltage and resistance to observe changes in current and verify Ohm's Law.", icon: Network, image: "https://placehold.co/400x200.png", aiHint: "ohms law circuit" },
   { id: "electric-field-lines-g10", name: "Electric Field Lines (Basic)", grade: "10", description: "Place positive and negative point charges and visualize the resulting electric field lines and patterns.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "electric field charge" },
-  { id: "dispersion-prism-g10", name: "Dispersion of Light (Prism)", grade: "10", description: "Simulate white light passing through a prism to see the spectrum. Explain rainbow formation.", icon: Pipette, image: "https://placehold.co/400x200.png", aiHint: "light prism dispersion" },
-  { id: "magnetic-fields-forces-g10", name: "Magnetic Fields & Motor Principle", grade: "10", description: "Visualize magnetic fields and simulate the force on a current-carrying wire (motor principle).", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "magnetic field motor" },
+  // Removed: "Sound Wave Viewer & Echo," "Dispersion of Light (Prism)," "Magnetic Fields & Motor Principle," "Logic Gate Simulator" (as per AI-Reduced suggestions)
+
   // Grade 11
   { id: "circular-motion-g11", name: "Circular Motion (Centripetal Force)", grade: "11", description: "Explore uniform circular motion, vary speed and radius, and visualize centripetal force and acceleration vectors.", icon: RefreshCw, image: "https://placehold.co/400x200.png", aiHint: "circular motion physics" },
   { id: "roller-coaster-energy-g11", name: "Roller Coaster Energy (PE/KE)", grade: "11", description: "Simulate a roller coaster car, observing the transformation between potential and kinetic energy at different points on a track.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "energy conservation roller coaster" },
   { id: "archimedes-principle-g11", name: "Archimedes' Principle (Buoyancy)", grade: "11", description: "Investigate buoyancy by submerging objects of different densities and volumes in a fluid. Observe displaced fluid and buoyant force.", icon: Anchor, image: "https://placehold.co/400x200.png", aiHint: "buoyancy archimedes fluid" },
-  { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: "11", description: "Simulate a spring-mass system and observe Simple Harmonic Motion. Adjust mass, spring constant, and amplitude.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation" },
   { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: "11", description: "Visualize RC circuit charging and discharging. Observe voltage/current graphs over time as R and C vary.", icon: BatteryCharging, image: "https://placehold.co/400x200.png", aiHint: "capacitor circuit graph" },
+  { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: "11", description: "Simulate a spring-mass system and observe Simple Harmonic Motion. Adjust mass, spring constant, and amplitude.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation" },
   { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum. Adjust length and gravity to observe changes in period and Simple Harmonic Motion.", icon: MoveVertical, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
-  { id: "unit-converter-g11", name: "Unit Converter", grade: "11", description: "Convert between common units for length, mass, and time.", icon: Replace, image: "https://placehold.co/400x200.png", aiHint: "unit conversion tool" },
-  { id: "sig-figs-practice-g11", name: "Significant Figures Practice", grade: "11", description: "Practice identifying and applying rules for significant figures in measurements and calculations.", icon: Sigma, image: "https://placehold.co/400x200.png", aiHint: "significant figures math" },
+  // Removed: "Projectile Motion," "Unit Converter," "Significant Figures Practice" (as per AI-Reduced strategy)
+
   // Grade 12
   { id: "gas-laws-g12", name: "Gas Laws (P/V/T Relationships)", grade: "12", description: "Interactively explore Boyle's Law, Charles's Law, and Gay-Lussac's Law. Adjust P, V, T and observe relationships.", icon: Thermometer, image: "https://placehold.co/400x200.png", aiHint: "gas laws pressure volume temperature" },
   { id: "em-induction-g12", name: "Electromagnetic Induction (Magnet/Coil)", grade: "12", description: "Simulate moving a magnet near a coil or changing current in a primary coil to observe induced EMF and current.", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "electromagnetic induction faraday" },
@@ -148,5 +154,5 @@ export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: s
     {term: "sync", label: "Data Sync & App Update Settings", href: "/settings"},
     {term: "login", label: "Login/Account (via Header)", href: "/settings"},
     {term: "account", label: "Account Information (via Header)", href: "/settings"},
-    // {term: "update", label: "Check for App Updates Setting", href: "/settings"} // This is an action, not a setting section.
 ];
+    

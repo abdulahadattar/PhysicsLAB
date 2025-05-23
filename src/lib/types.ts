@@ -13,17 +13,26 @@ export interface QuestionAnswer {
   answer: string;
 }
 
+export interface PhilosophicalQuestion {
+  question: string;
+  hint?: string;
+}
+
 export interface ChapterContent {
-  stbbChapterPdfLink?: string;
-  teacherNotesPdfName?: string;
-  alternativeChapterPdfLink?: string;
-  punjabBoardPdfName?: string;
-  nationalSyllabusPdfName?: string;
-  ziauddinBoardPdfName?: string;
+  stbbChapterPdfLink?: string; // For specific chapter section from STBB book
+  teacherNotesPdfName?: string; // For teacher's own notes for this chapter
+  alternativeChapterPdfLink?: string; // For another alternative full PDF or chapter section
+  
+  // No longer using board-specific chapter PDFs here; those are at grade level.
+  // punjabBoardPdfName?: string;
+  // nationalSyllabusPdfName?: string;
+  // ziauddinBoardPdfName?: string;
+
   keyPoints?: string;
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[]; // CRQs
   longAnswers?: QuestionAnswer[];  // ERQs
+  philosophicalQuestions?: PhilosophicalQuestion[]; // New
   lastUpdated?: string;
 }
 
@@ -37,7 +46,7 @@ export interface StudyGrade {
   id: string;
   name: string;
   chapters: Chapter[];
-  completeTextbookPdfLink?: string;
+  completeTextbookPdfLink?: string; // Primary STBB full textbook link for the grade
   ziauddinBoardFullPdfLink?: string;
   punjabBoardFullPdfLink?: string;
   nationalSyllabusFullPdfLink?: string;
@@ -93,3 +102,4 @@ export interface Submission {
   status: 'pending_review' | 'graded' | 'rejected';
   rejectionReason?: string;
 }
+    
