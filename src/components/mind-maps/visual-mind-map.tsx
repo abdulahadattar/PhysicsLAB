@@ -1,7 +1,8 @@
+
 // src/components/mind-maps/visual-mind-map.tsx
 'use client';
 
-import React, { useEffect, useCallback } from 'react'; //Removed useMemo as it's not used
+import React, { useEffect, useCallback } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -27,13 +28,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ZoomInIcon, ZoomOutIcon, LocateIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Define the types for the props
-// Node data from AI should conform to CustomNodeData for the 'data' field,
-// and node type must be 'customMindMapNode'
-export type VisualMindMapNodeType = Node<CustomNodeData, 'customMindMapNode'>; // Renamed for clarity
-
-// Edge type, can be extended if you need custom edge data
-export type VisualMindMapEdgeType = Edge; // Renamed for clarity
+export type VisualMindMapNodeType = Node<CustomNodeData, 'customMindMapNode'>;
+export type VisualMindMapEdgeType = Edge;
 
 interface VisualMindMapProps {
   initialNodes?: VisualMindMapNodeType[];
@@ -42,31 +38,28 @@ interface VisualMindMapProps {
   error?: string | null;
   onNodeClick?: (event: React.MouseEvent, node: VisualMindMapNodeType) => void;
   onNodeDoubleClick?: (event: React.MouseEvent, node: VisualMindMapNodeType) => void;
-  gradeName?: string; // Optional: To display in the panel
-  className?: string; // To allow custom styling of the container
+  gradeName?: string;
+  className?: string;
 }
 
-// Register custom node type
 const nodeTypes = {
   customMindMapNode: CustomMindMapNode,
 };
 
-// Default viewport settings (optional)
 const initialViewport: Viewport = { x: 0, y: 0, zoom: 1 };
 
-// Default edge options
 const defaultEdgeOptions = {
-  animated: false, // Set to true if you want all edges animated by default
-  type: ConnectionLineType.SmoothStep, // Or Bezier, Straight, Step
+  animated: false,
+  type: ConnectionLineType.SmoothStep,
   markerEnd: {
     type: MarkerType.ArrowClosed,
     width: 15,
     height: 15,
-    color: 'hsl(var(--muted-foreground))', // Use theme color
+    color: 'hsl(var(--muted-foreground))',
   },
   style: {
     strokeWidth: 1.5,
-    stroke: 'hsl(var(--muted-foreground))', // Use theme color
+    stroke: 'hsl(var(--muted-foreground))',
   },
 };
 
@@ -81,21 +74,18 @@ const VisualMindMapContent: React.FC<VisualMindMapProps> = ({
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const { fitView, zoomIn, zoomOut } = useReactFlow(); // Removed getViewport, setViewport as not used
+  const { fitView, zoomIn, zoomOut } = useReactFlow();
 
   useEffect(() => {
-    // When initialNodes or initialEdges change from props, update the internal state
-    // Ensure node type is correctly set if not already
     setNodes(initialNodes.map(n => ({ ...n, type: n.type || 'customMindMapNode' })));
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   useEffect(() => {
-    // Fit view when nodes are loaded or changed significantly
-    if (nodes.length > 0 && !isLoading) { // Add !isLoading check
+    if (nodes.length > 0 && !isLoading) {
       const timeoutId = setTimeout(() => {
         fitView({ padding: 0.2, duration: 600, includeHiddenNodes: true });
-      }, 150); // Increased delay slightly for complex layouts
+      }, 150);
       return () => clearTimeout(timeoutId);
     }
   }, [nodes, fitView, isLoading]);
@@ -153,20 +143,20 @@ const VisualMindMapContent: React.FC<VisualMindMapProps> = ({
       onNodeDoubleClick={onNodeDoubleClick}
       defaultEdgeOptions={defaultEdgeOptions}
       connectionLineType={ConnectionLineType.SmoothStep}
-      connectionLineStyle={{ stroke: 'hsl(var(--border))', strokeWidth: 2 }} // Use theme color
+      connectionLineStyle={{ stroke: 'hsl(var(--border))', strokeWidth: 2 }}
       fitView
       fitViewOptions={{ padding: 0.2, duration: 600 }}
       defaultViewport={initialViewport}
       attributionPosition="bottom-left"
-      className="bg-background" 
+      className="bg-background"
       minZoom={0.1}
       maxZoom={2.5}
-      proOptions={{ hideAttribution: true }} 
+      proOptions={{ hideAttribution: true }}
     >
       <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="hsl(var(--border))" />
       <Controls
-        showInteractive={false} 
-        position="bottom-center" 
+        showInteractive={false}
+        position="bottom-center"
         className="[&>button]:bg-card [&>button]:border [&>button:hover]:bg-muted"
       />
       <MiniMap

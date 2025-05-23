@@ -5,19 +5,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Loader2, Map, Brain, WifiOff, AlertTriangle, Share2, RefreshCw } from "lucide-react"; // Added RefreshCw
+import { Loader2, Map, Brain, WifiOff, AlertTriangle, Share2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { StudyGrade, Chapter } from '@/lib/types';
 import { generateMindMapData, type GenerateMindMapInput, type GenerateMindMapOutput, type MindMapNode as AIMindMapNode } from '@/ai/flows/generate-mind-map-flow';
 
-import VisualMindMap, { type VisualMindMapNodeType, type VisualMindMapEdgeType } from '@/components/mind-maps/visual-mind-map'; // Updated import
-import type { Node as ReactFlowNode, Edge as ReactFlowEdge, Position } from '@xyflow/react'; // Kept for autoLayout internal types
+import VisualMindMap, { type VisualMindMapNodeType, type VisualMindMapEdgeType } from '@/components/mind-maps/visual-mind-map';
+import type { Node as ReactFlowNode, Edge as ReactFlowEdge, Position } from '@xyflow/react';
 import type { CustomNodeData } from '@/components/mind-maps/custom-mindmap-node';
 
 
-const NODE_WIDTH = 180; // Adjusted for CustomMindMapNode
-const NODE_HEIGHT = 60;  // Adjusted for CustomMindMapNode
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 60;
 const HORIZONTAL_SPACING = 60;
 const VERTICAL_SPACING = 80;
 
@@ -39,10 +39,9 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
     function determineNodeType(aiNode: AIMindMapNode, level: number): CustomNodeData['nodeType'] {
         if (level === 0) return 'root';
         if (level === 1) return 'chapter';
-        return 'subtopic'; // Default for deeper levels
+        return 'subtopic';
     }
 
-    // Recursive layout function
     function layout(nodeId: string, currentX: number, currentY: number, level: number): { width: number, newY: number } {
         const aiNode = aiNodes.find(n => n.id === nodeId);
         if (!aiNode) return { width: 0, newY: currentY };
@@ -78,15 +77,15 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
 
         flowNodes.push({
             id: nodeId,
-            type: 'customMindMapNode', // Use the custom node type
+            type: 'customMindMapNode',
             data: { 
                 label: aiNode.label,
                 nodeType: determineNodeType(aiNode, level)
             },
-            position: { x: nodeX, y: currentY }, // Position will be centered by parent
-             sourcePosition: 'bottom' as Position, // Explicitly cast
-             targetPosition: 'top' as Position,    // Explicitly cast
-            style: { width: NODE_WIDTH, height: 'auto' }, // Height auto for dynamic content
+            position: { x: nodeX, y: currentY },
+             sourcePosition: 'bottom' as Position,
+             targetPosition: 'top' as Position,
+            style: { width: NODE_WIDTH, height: 'auto' },
         });
         
         children.forEach(childId => {
@@ -94,29 +93,20 @@ function autoLayout(aiNodes: AIMindMapNode[], rootNodeId: string): { nodes: Visu
                 id: `e-${nodeId}-${childId}`,
                 source: nodeId,
                 target: childId,
-                type: 'smoothstep', // defaultEdgeOptions will apply from VisualMindMap
-                animated: level < 1, // Animate edges from root/chapter
+                type: 'smoothstep',
+                animated: level < 1,
             });
         });
         
         return { width: subtreeWidth, newY: maxYInSubtree };
     }
 
-    const { width: totalWidth } = layout(rootNodeId, 0, 50, 0);
+    layout(rootNodeId, 0, 50, 0);
     
-    // Center the root node based on total width; children positions are relative
-    const root FlowNode = flowNodes.find(n => n.id === rootNodeId);
-    if (rootFlowNode) {
-        const initialRootX = rootFlowNode.position.x;
-        const xOffset = -initialRootX; // Center based on its own subtree positioning for now
-        
-        // Adjust all node positions to center the graph loosely
-        // More sophisticated centering might consider the viewport.
-        const minX = Math.min(...flowNodes.map(n => n.position.x));
-        flowNodes.forEach(n => {
-            n.position.x -= minX - 50; // Shift so leftmost node is at x=50
-        });
-    }
+    const minX = Math.min(...flowNodes.map(n => n.position.x));
+    flowNodes.forEach(n => {
+        n.position.x -= minX - 50;
+    });
     
     return { nodes: flowNodes, edges: flowEdges };
 }
@@ -135,6 +125,8 @@ export default function MindMapsPage() {
   const [isLoadingGrades, setIsLoadingGrades] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
   const [gradesError, setGradesError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -184,25 +176,23 @@ export default function MindMapsPage() {
       }
     } catch (e) {
       console.error("Failed to load mind map from cache:", e);
-      localStorage.removeItem(`mindMap-${gradeId}`); 
+      localStorage.removeItem(`mindMap-${gradeId}`);
     }
     return false;
   }, []);
 
   useEffect(() => {
     if (selectedGradeId) {
-      setAiMindMapOutput(null); 
-      setFlowNodes([]); setFlowEdges([]); 
+      setAiMindMapOutput(null);
+      setFlowNodes([]); setFlowEdges([]);
       const loadedFromCache = loadMindMapFromCache(selectedGradeId);
-      if (!loadedFromCache && isOnline) {
-        // Wait for button press
-      } else if (!loadedFromCache && !isOnline) {
+      if (!loadedFromCache && !isOnline) {
          toast({ title: "Offline", description: "No cached mind map for this grade. Connect to generate one."});
       }
     }
   }, [selectedGradeId, loadMindMapFromCache, isOnline, toast]);
 
-  const handleGenerateMindMap = async (forceRegenerate = false) => {
+  const handleGenerateMindMap = useCallback(async (forceRegenerate = false) => {
     if (!selectedGradeId) {
       toast({ title: "Select a Grade", description: "Please select a grade to generate a mind map.", variant: "destructive" });
       return;
@@ -213,7 +203,7 @@ export default function MindMapsPage() {
     }
 
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
     if (forceRegenerate || !loadMindMapFromCache(selectedGradeId)) {
         try {
             const selectedGradeObject = studyGrades.find(g => g.id === selectedGradeId);
@@ -239,21 +229,21 @@ export default function MindMapsPage() {
             const { nodes: newFlowNodes, edges: newFlowEdges } = autoLayout(response.nodes, `grade-${selectedGradeId}`);
             setFlowNodes(newFlowNodes);
             setFlowEdges(newFlowEdges);
-        } catch (error) {
-            console.error("Error generating mind map:", error);
-            const errorMsg = error instanceof Error ? error.message : "Could not generate the mind map.";
+        } catch (err) {
+            console.error("Error generating mind map:", err);
+            const errorMsg = err instanceof Error ? err.message : "Could not generate the mind map.";
             setError(errorMsg);
             toast({ title: "Mind Map Generation Error", description: errorMsg, variant: "destructive" });
-            setAiMindMapOutput(null); setFlowNodes([]); setFlowEdges([]); 
+            setAiMindMapOutput(null); setFlowNodes([]); setFlowEdges([]);
         }
     }
     setIsLoading(false);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedGradeId, isOnline, studyGrades, toast, loadMindMapFromCache]);
 
   const selectedGradeName = studyGrades.find(g => g.id === selectedGradeId)?.name || "";
   const showGenerateButton = selectedGradeId && !aiMindMapOutput && isOnline && !isLoading;
   const showRegenerateButton = selectedGradeId && aiMindMapOutput && isOnline && !isLoading;
-  const [error, setError] = useState<string | null>(null);
 
 
   const handleNodeClick = useCallback((event: React.MouseEvent, node: VisualMindMapNodeType) => {
@@ -266,7 +256,7 @@ export default function MindMapsPage() {
 
 
   return (
-    <div className="space-y-6 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}> 
+    <div className="space-y-6 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
       <Card className="shadow-xl shrink-0">
         <CardHeader className="text-center">
           <div className="inline-block mx-auto bg-primary/10 p-3 rounded-full mb-2">

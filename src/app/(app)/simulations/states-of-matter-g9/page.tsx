@@ -26,8 +26,8 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-  initialX: number; 
-  initialY: number; 
+  initialX: number;
+  initialY: number;
   colorStops: { offset: number; color: string }[];
 }
 
@@ -39,8 +39,8 @@ interface PVDataPoint {
   pressure: number;
 }
 
-const PV_CHART_VOLUME_DOMAIN: [number, number] = [5, 25];
-const PV_CHART_PRESSURE_DOMAIN: [number, number] = [0.5, 5];
+const PV_CHART_VOLUME_DOMAIN: [number, number] = [5, 25]; // Conceptual units
+const PV_CHART_PRESSURE_DOMAIN: [number, number] = [0.5, 5]; // Conceptual units
 
 
 function resolveElasticCollision(p1: Particle, p2: Particle) {
@@ -48,36 +48,24 @@ function resolveElasticCollision(p1: Particle, p2: Particle) {
   const dy = p2.y - p1.y;
   let distance = Math.sqrt(dx * dx + dy * dy);
 
-  if (distance === 0) distance = 0.001; // prevent division by zero
+  if (distance === 0) distance = 0.001;
 
   if (distance < PARTICLE_DIAMETER) {
-    // Normal vector
     const nx = dx / distance;
     const ny = dy / distance;
-
-    // Tangential vector
     const tx = -ny;
     const ty = nx;
-
-    // Dot products (velocities along normal and tangential vectors)
     const dpTan1 = p1.vx * tx + p1.vy * ty;
     const dpTan2 = p2.vx * tx + p2.vy * ty;
     const dpNorm1 = p1.vx * nx + p1.vy * ny;
     const dpNorm2 = p2.vx * nx + p2.vy * ny;
-
-    // Conservation of momentum in 1D (normal direction)
-    // Assuming equal mass for simplicity in this model
     const v1PrimeNorm = dpNorm2;
     const v2PrimeNorm = dpNorm1;
-
-    // Update velocities
     p1.vx = tx * dpTan1 + nx * v1PrimeNorm;
     p1.vy = ty * dpTan1 + ny * v1PrimeNorm;
     p2.vx = tx * dpTan2 + nx * v2PrimeNorm;
     p2.vy = ty * dpTan2 + ny * v2PrimeNorm;
-    
-    // Separation step to prevent sticking
-    const overlap = 0.5 * (PARTICLE_DIAMETER - distance + 0.01); // Added small epsilon
+    const overlap = 0.5 * (PARTICLE_DIAMETER - distance + 0.01);
     p1.x -= overlap * nx;
     p1.y -= overlap * ny;
     p2.x += overlap * nx;
@@ -98,27 +86,25 @@ export default function StatesOfMatterPage() {
   const requestRef = useRef<number>();
 
   const getPredictedState = useCallback((temp: number, pres: number): PredictedState => {
-    // Simplified logic for predicted state
     if (temp > 0.28 && temp < 0.38 && pres > 0.33 && pres < 0.43) return "Near Triple Point";
-    
-    if (temp < 0.15) return "Solid"; // Very cold = solid
-    if (temp < 0.35) { // Cool to mild
-        if (pres > 0.6) return "Solid"; // High pressure forces solid
-        if (pres < 0.15 && temp > 0.25) return "Gas"; // Low pressure, mild temp = gas
-        return "Melting"; // In between
+    if (temp < 0.15) return "Solid";
+    if (temp < 0.35) {
+      if (pres > 0.7) return "Solid";
+      if (pres < 0.15 && temp > 0.28) return "Gas";
+      if (temp > 0.2 && temp < 0.3 && pres > 0.2 && pres < 0.5) return "Melting";
+      return "Liquid";
     }
-    if (temp < 0.7) { // Warm
-        if (pres > 0.8) return "Liquid"; // Very high pressure keeps it liquid
-        if (pres < 0.2) return "Gas"; // Low pressure allows gas
-        if (pres > 0.3 && pres < 0.7) return "Boiling"; // Mid pressures can lead to boiling
-        return "Liquid";
+    if (temp < 0.7) {
+      if (pres > 0.85) return "Liquid";
+      if (pres < 0.1) return "Gas";
+      if (pres > 0.25 && pres < 0.75 && temp > 0.4) return "Boiling";
+      return "Liquid";
     }
-    // Hot
-    if (pres > 0.65 && temp < 0.85) return "Supercritical Fluid"; // High P, high T
+    if (pres > 0.7 && temp < 0.85) return "Supercritical Fluid";
     return "Gas";
   }, []);
-  
-  const getParticleColorStops = useCallback((currentMatterState: MatterState, currentTempFactor: number) => {
+
+  const getParticleColorStops = useCallback((currentMatterState: MatterState, currentTempFactor: number): { offset: number; color: string }[] => {
     let baseHue: number;
     let saturation = 70;
     let lightness = 60;
@@ -126,67 +112,66 @@ export default function StatesOfMatterPage() {
     let alpha2 = 0.4;
 
     if (currentMatterState === 'gas') {
-        baseHue = 30 + Math.min(1, currentTempFactor * 1.8) * 30; // Orange to Red
-        saturation = 80 + currentTempFactor * 15;
-        lightness = 55 + currentTempFactor * 10;
-        alpha1 = 0.8 + currentTempFactor * 0.15;
-        alpha2 = 0.2 + currentTempFactor * 0.2;
+      baseHue = 30 + Math.min(1, currentTempFactor * 1.8) * 30;
+      saturation = 80 + currentTempFactor * 15;
+      lightness = 55 + currentTempFactor * 10;
+      alpha1 = 0.8 + currentTempFactor * 0.15;
+      alpha2 = 0.2 + currentTempFactor * 0.2;
     } else if (currentMatterState === 'liquid') {
-        baseHue = 200; // Blue
-        saturation = 65 + currentTempFactor * 10;
-        lightness = 50 + currentTempFactor * 10;
+      baseHue = 200;
+      saturation = 65 + currentTempFactor * 10;
+      lightness = 50 + currentTempFactor * 10;
     } else { // solid
-        baseHue = 270; // Purple
-        saturation = 60 + currentTempFactor * 10;
-        lightness = 45 + currentTempFactor * 10;
+      baseHue = 270;
+      saturation = 60 + currentTempFactor * 10;
+      lightness = 45 + currentTempFactor * 10;
     }
-    
     return [
-        { offset: 0, color: `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${alpha1})` },
-        { offset: 1, color: `hsla(${baseHue}, ${saturation}%, ${Math.max(20, lightness - 25)}%, ${alpha2})` }
+      { offset: 0, color: `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${alpha1})` },
+      { offset: 1, color: `hsla(${baseHue}, ${saturation}%, ${Math.max(20, lightness - 25)}%, ${alpha2})` }
     ];
   }, []);
 
 
   const initializeParticles = useCallback(() => {
     const newParticles: Particle[] = [];
-    const initialTempFactor = temperatureFactor; // Capture temp at time of initialization
+    const currentInitialTempFactor = temperatureFactor;
 
     for (let i = 0; i < NUM_PARTICLES; i++) {
-      let p: Partial<Particle> & {initialX?:number, initialY?:number} = { 
+      let p: Partial<Particle> & { initialX?: number, initialY?: number } = {
         id: i,
-        colorStops: getParticleColorStops(matterState, initialTempFactor) // Use initial temp for initial colors
+        colorStops: getParticleColorStops(matterState, currentInitialTempFactor)
       };
-      if (matterState === "solid") {
-        const numCols = Math.floor(Math.sqrt(NUM_PARTICLES * (CANVAS_WIDTH / (PARTICLE_DIAMETER * 1.2)) / (CANVAS_HEIGHT / (PARTICLE_DIAMETER*1.2)))) || 5;
-        const numRows = Math.ceil(NUM_PARTICLES / numCols);
-        const spacingX = (CANVAS_WIDTH - PARTICLE_DIAMETER*2) / Math.max(1, numCols > 1 ? numCols -1 : 1 );
-        const spacingY = (CANVAS_HEIGHT - PARTICLE_DIAMETER*2) / Math.max(1, numRows > 1 ? numRows -1 : 1);
-        
-        const col = i % numCols;
-        const row = Math.floor(i / numCols);
+      const jitter = PARTICLE_DIAMETER * 0.1;
 
-        p.initialX = PARTICLE_DIAMETER + col * spacingX;
-        p.initialY = PARTICLE_DIAMETER + row * spacingY;
+      if (matterState === "solid") {
+        const particlesPerRow = Math.floor(Math.sqrt(NUM_PARTICLES * (CANVAS_WIDTH / CANVAS_HEIGHT)));
+        const particlesPerCol = Math.ceil(NUM_PARTICLES / particlesPerRow);
+        const spacingX = (CANVAS_WIDTH - PARTICLE_DIAMETER * 2) / Math.max(1, particlesPerRow > 1 ? particlesPerRow -1: 1);
+        const spacingY = (CANVAS_HEIGHT - PARTICLE_DIAMETER * 2) / Math.max(1, particlesPerCol > 1 ? particlesPerCol -1: 1);
+        const col = i % particlesPerRow;
+        const row = Math.floor(i / particlesPerRow);
+        p.initialX = PARTICLE_DIAMETER + col * spacingX + (Math.random() - 0.5) * jitter;
+        p.initialY = PARTICLE_DIAMETER + row * spacingY + (Math.random() - 0.5) * jitter;
         p.x = p.initialX;
         p.y = p.initialY;
-        p.vx = (Math.random() - 0.5) * 0.05; // Minimal initial vibration
-        p.vy = (Math.random() - 0.5) * 0.05;
+        p.vx = (Math.random() - 0.5) * 0.05 * (1 + currentInitialTempFactor);
+        p.vy = (Math.random() - 0.5) * 0.05 * (1 + currentInitialTempFactor);
       } else if (matterState === "liquid") {
         p.x = PARTICLE_RADIUS + Math.random() * (CANVAS_WIDTH - PARTICLE_DIAMETER);
-        p.y = CANVAS_HEIGHT * 0.6 + Math.random() * (CANVAS_HEIGHT * 0.4 - PARTICLE_DIAMETER); // Start lower
+        p.y = CANVAS_HEIGHT * 0.7 + Math.random() * (CANVAS_HEIGHT * 0.3 - PARTICLE_DIAMETER); // Start lower third
         const angle = Math.random() * 2 * Math.PI;
-        const speed = 0.05 + Math.random() * 0.1; // Moderate initial speed
+        const speed = 0.1 + Math.random() * 0.2 * (1 + currentInitialTempFactor);
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed;
-        p.initialX = p.x; // Not strictly used for lattice but can be reference
+        p.initialX = p.x;
         p.initialY = p.y;
       } else { // gas
         p.x = PARTICLE_RADIUS + Math.random() * (CANVAS_WIDTH - PARTICLE_DIAMETER);
         p.y = PARTICLE_RADIUS + Math.random() * (CANVAS_HEIGHT - PARTICLE_DIAMETER);
         const angle = Math.random() * 2 * Math.PI;
-        const speedBase = 0.5; // Gas particles start with some energy
-        const speed = speedBase + (Math.random() - 0.5) * speedBase * 0.5;
+        const speedBase = 0.8;
+        const speed = speedBase * (1 + currentInitialTempFactor) + (Math.random() - 0.5) * speedBase * 0.5;
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed;
         p.initialX = p.x;
@@ -195,31 +180,30 @@ export default function StatesOfMatterPage() {
       newParticles.push(p as Particle);
     }
     setParticles(newParticles);
-  }, [matterState, getParticleColorStops, temperatureFactor]); // temperatureFactor is included for initial color setup
+  }, [matterState, getParticleColorStops, temperatureFactor]);
 
   useEffect(() => {
     initializeParticles();
-  }, [initializeParticles]); // This now correctly runs when matterState changes (due to getParticleColorStops being stable and initializeParticles depending on matterState)
+  }, [initializeParticles]);
 
 
   const updateParticles = useCallback(() => {
-    const K_TEMP_EFFECT = 0.1 + temperatureFactor * 2.5; 
-    const K_PRESSURE_CONFINEMENT = 0.5 + (1 - pressureFactor) * 1.5; 
-    
-    const K_SOLID_LATTICE = 0.15 + pressureFactor * 0.3; 
-    const K_SOLID_VIBRATION_STRENGTH = 0.01 * K_TEMP_EFFECT + temperatureFactor * 0.1;
-    
-    const K_LIQUID_GRAVITY = 0.015; // Constant gravity
-    const K_LIQUID_COHESION_STRENGTH = 0.005 * (1 - temperatureFactor * 0.7); 
-    const K_LIQUID_REPULSION_STRENGTH = 0.1;
-    const K_LIQUID_INTERACTION_RANGE = PARTICLE_DIAMETER * 2.5;
-    const K_LIQUID_DAMPING = 0.98;
+    const K_TEMP_EFFECT = 0.2 + temperatureFactor * 3; // Increased range
+    const K_PRESSURE_CONFINEMENT_FACTOR = 0.6 + (1 - pressureFactor) * 1.8; // For gas volume
+
+    const K_SOLID_LATTICE = 0.2 + pressureFactor * 0.4;
+    const K_SOLID_VIBRATION_STRENGTH = 0.02 * K_TEMP_EFFECT + temperatureFactor * 0.15;
+
+    const K_LIQUID_GRAVITY = 0.01;
+    const K_LIQUID_COHESION_STRENGTH = 0.008 * (1 - temperatureFactor * 0.5); // Weaker at high temp
+    const K_LIQUID_REPULSION_STRENGTH = 0.15;
+    const K_LIQUID_INTERACTION_RANGE = PARTICLE_DIAMETER * 2.8;
+    const K_LIQUID_DAMPING = 0.985;
 
 
     setParticles(prevParticles => {
-      const newParticleArray = prevParticles.map(p => ({...p})); 
+      const newParticleArray = prevParticles.map(p => ({ ...p }));
 
-      // Particle-particle interactions
       for (let i = 0; i < newParticleArray.length; i++) {
         for (let j = i + 1; j < newParticleArray.length; j++) {
           const p1 = newParticleArray[i];
@@ -233,159 +217,142 @@ export default function StatesOfMatterPage() {
             const distSq = dx * dx + dy * dy;
             const dist = Math.sqrt(distSq);
 
-            if (dist < PARTICLE_DIAMETER && dist > 0.01) { // Repulsion if overlapping
+            if (dist < PARTICLE_DIAMETER && dist > 0.01) {
               const force = K_LIQUID_REPULSION_STRENGTH * (PARTICLE_DIAMETER - dist) / dist;
-              // Apply force scaled by a small factor to prevent explosion, consider this as impulse
-              const impulseFactor = 0.1; 
-              p1.vx -= force * (dx / dist) * impulseFactor; 
+              const impulseFactor = 0.12;
+              p1.vx -= force * (dx / dist) * impulseFactor;
               p1.vy -= force * (dy / dist) * impulseFactor;
               p2.vx += force * (dx / dist) * impulseFactor;
               p2.vy += force * (dy / dist) * impulseFactor;
-
-              // Separation step
               const overlap = 0.5 * (PARTICLE_DIAMETER - dist + 0.01);
               p1.x -= overlap * (dx / dist);
               p1.y -= overlap * (dy / dist);
               p2.x += overlap * (dx / dist);
               p2.y += overlap * (dy / dist);
-
-            } else if (dist < K_LIQUID_INTERACTION_RANGE && dist > PARTICLE_DIAMETER) { // Cohesion if close
+            } else if (dist < K_LIQUID_INTERACTION_RANGE && dist > PARTICLE_DIAMETER) {
               const force = K_LIQUID_COHESION_STRENGTH * (dist - PARTICLE_DIAMETER) / dist;
-              const impulseFactor = 0.05;
+              const impulseFactor = 0.06;
               p1.vx += force * (dx / dist) * impulseFactor;
               p1.vy += force * (dy / dist) * impulseFactor;
               p2.vx -= force * (dx / dist) * impulseFactor;
               p2.vy -= force * (dy / dist) * impulseFactor;
             }
           }
-          // Solid particle-particle interaction is minimal, mainly lattice based
         }
       }
-      
+
       return newParticleArray.map(p => {
         let { x, y, vx, vy, initialX, initialY } = p;
         const newColorStops = getParticleColorStops(matterState, temperatureFactor);
 
         if (matterState === "solid") {
-          // Force towards lattice position
           vx += (initialX - x) * K_SOLID_LATTICE;
           vy += (initialY - y) * K_SOLID_LATTICE;
-          // Random vibration based on temperature
           vx += (Math.random() - 0.5) * K_SOLID_VIBRATION_STRENGTH;
           vy += (Math.random() - 0.5) * K_SOLID_VIBRATION_STRENGTH;
-          // Damping (influenced by pressure - higher P, more damping/rigidity)
-          vx *= (0.9 - pressureFactor * 0.2); 
-          vy *= (0.9 - pressureFactor * 0.2);
+          vx *= (0.85 - pressureFactor * 0.15);
+          vy *= (0.85 - pressureFactor * 0.15);
         } else if (matterState === "liquid") {
-          vy += K_LIQUID_GRAVITY; // Apply gravity
-          // Apply temperature based agitation
-          vx += (Math.random() - 0.5) * K_TEMP_EFFECT * 0.02;
-          vy += (Math.random() - 0.5) * K_TEMP_EFFECT * 0.02;
-          vx *= K_LIQUID_DAMPING; 
+          vy += K_LIQUID_GRAVITY;
+          vx += (Math.random() - 0.5) * K_TEMP_EFFECT * 0.025 * (1 + pressureFactor * 0.5); // Pressure adds agitation
+          vy += (Math.random() - 0.5) * K_TEMP_EFFECT * 0.025 * (1 + pressureFactor * 0.5);
+          vx *= K_LIQUID_DAMPING;
           vy *= K_LIQUID_DAMPING;
-        } else { // Gas
-            // Speed is influenced by K_TEMP_EFFECT during collision and initial setup.
-            // No additional random agitation per frame like liquids/solids needed here
-            // as collisions and wall bounces handle energy distribution.
+        } else { // Gas - speed primarily comes from K_TEMP_EFFECT and collisions
+          vx *= 0.998; // Slight air drag
+          vy *= 0.998;
         }
 
-        x += vx * (matterState === 'gas' ? K_TEMP_EFFECT * 0.3 : 1); // Gas moves faster visually
-        y += vy * (matterState === 'gas' ? K_TEMP_EFFECT * 0.3 : 1);
+        x += vx * (matterState === 'gas' ? K_TEMP_EFFECT * 0.1 : 1);
+        y += vy * (matterState === 'gas' ? K_TEMP_EFFECT * 0.1 : 1);
 
-        let restitution = matterState === 'gas' ? 0.85 : (matterState === 'liquid' ? 0.2 : 0.1); 
+        let restitution = matterState === 'gas' ? 0.9 : (matterState === 'liquid' ? 0.3 : 0.15);
 
-        // Wall collision logic
         let minX = PARTICLE_RADIUS;
         let maxX = CANVAS_WIDTH - PARTICLE_RADIUS;
         let minY = PARTICLE_RADIUS;
         let maxY = CANVAS_HEIGHT - PARTICLE_RADIUS;
 
         if (matterState === 'gas') {
-            const effectiveWidth = CANVAS_WIDTH / K_PRESSURE_CONFINEMENT;
-            const effectiveHeight = CANVAS_HEIGHT / K_PRESSURE_CONFINEMENT;
-            minX = (CANVAS_WIDTH - effectiveWidth) / 2 + PARTICLE_RADIUS;
-            maxX = minX + effectiveWidth - PARTICLE_DIAMETER; // Corrected to diameter
-            minY = (CANVAS_HEIGHT - effectiveHeight) / 2 + PARTICLE_RADIUS;
-            maxY = minY + effectiveHeight - PARTICLE_DIAMETER; // Corrected to diameter
+          const effectiveWidth = CANVAS_WIDTH / K_PRESSURE_CONFINEMENT_FACTOR;
+          const effectiveHeight = CANVAS_HEIGHT / K_PRESSURE_CONFINEMENT_FACTOR;
+          minX = (CANVAS_WIDTH - effectiveWidth) / 2 + PARTICLE_RADIUS;
+          maxX = minX + effectiveWidth - PARTICLE_DIAMETER;
+          minY = (CANVAS_HEIGHT - effectiveHeight) / 2 + PARTICLE_RADIUS;
+          maxY = minY + effectiveHeight - PARTICLE_DIAMETER;
         }
 
-        if (x < minX) { vx *= -restitution; x = minX + (minX - x) * restitution * 0.1; } // Add slight pushback
-        if (x > maxX) { vx *= -restitution; x = maxX - (x - maxX) * restitution * 0.1; }
-        if (y < minY) { vy *= -restitution; y = minY + (minY - y) * restitution * 0.1; if(matterState === 'liquid') vx *= 0.9; } 
-        if (y > maxY) { vy *= -restitution; y = maxY - (y - maxY) * restitution * 0.1; }
-        
-        // Speed cap for non-gases to prevent instability
+        if (x < minX) { vx *= -restitution; x = minX + (minX - x) * restitution * 0.2; }
+        if (x > maxX) { vx *= -restitution; x = maxX - (x - maxX) * restitution * 0.2; }
+        if (y < minY) { vy *= -restitution; y = minY + (minY - y) * restitution * 0.2; if (matterState === 'liquid') vx *= 0.95; }
+        if (y > maxY) { vy *= -restitution; y = maxY - (y - maxY) * restitution * 0.2; }
+
         if (matterState !== 'gas') {
-            const MAX_SPEED_NON_GAS = 1.5 + K_TEMP_EFFECT * 0.5; // Reduced effect from temp
-            const speedSq = vx*vx + vy*vy;
-            if (speedSq > MAX_SPEED_NON_GAS * MAX_SPEED_NON_GAS) {
-                const speed = Math.sqrt(speedSq);
-                vx = (vx / speed) * MAX_SPEED_NON_GAS;
-                vy = (vy / speed) * MAX_SPEED_NON_GAS;
-            }
+          const MAX_SPEED_NON_GAS = 1.8 + K_TEMP_EFFECT * 0.3;
+          const speedSq = vx * vx + vy * vy;
+          if (speedSq > MAX_SPEED_NON_GAS * MAX_SPEED_NON_GAS) {
+            const speed = Math.sqrt(speedSq);
+            vx = (vx / speed) * MAX_SPEED_NON_GAS;
+            vy = (vy / speed) * MAX_SPEED_NON_GAS;
+          }
         }
         return { ...p, x, y, vx, vy, colorStops: newColorStops };
       })
     });
   }, [matterState, temperatureFactor, pressureFactor, getParticleColorStops]);
 
+  const drawSimulation = useCallback((ctx: CanvasRenderingContext2D, currentParticles: Particle[], currentMatterState: MatterState, currentPressureFactor: number) => {
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    const canvas = ctx.canvas;
+    const computedStyle = getComputedStyle(canvas);
+    const mutedColorHSL = computedStyle.getPropertyValue('--muted').trim();
+
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+    if (mutedColorHSL && mutedColorHSL.includes('%')) {
+        bgGradient.addColorStop(0, `hsla(${mutedColorHSL}, 0.6)`);
+        bgGradient.addColorStop(1, `hsla(${mutedColorHSL}, 0.3)`);
+    } else {
+        bgGradient.addColorStop(0, "rgba(220, 220, 230, 0.6)");
+        bgGradient.addColorStop(1, "rgba(220, 220, 230, 0.3)");
+    }
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    if (currentMatterState === "gas") {
+        const K_PRESSURE_CONFINEMENT_FACTOR = 0.6 + (1 - currentPressureFactor) * 1.8;
+        const effectiveWidth = CANVAS_WIDTH / K_PRESSURE_CONFINEMENT_FACTOR;
+        const effectiveHeight = CANVAS_HEIGHT / K_PRESSURE_CONFINEMENT_FACTOR;
+        const offsetX = (CANVAS_WIDTH - effectiveWidth) / 2;
+        const offsetY = (CANVAS_HEIGHT - effectiveHeight) / 2;
+        ctx.strokeStyle = "hsl(var(--border))";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(offsetX, offsetY, effectiveWidth, effectiveHeight);
+    }
+
+    currentParticles.forEach(p => {
+        const gradient = ctx.createRadialGradient(p.x, p.y, PARTICLE_RADIUS * 0.1, p.x, p.y, PARTICLE_RADIUS);
+        if (p.colorStops && p.colorStops.length === 2) {
+            gradient.addColorStop(p.colorStops[0].offset, p.colorStops[0].color);
+            gradient.addColorStop(p.colorStops[1].offset, p.colorStops[1].color);
+        } else {
+            gradient.addColorStop(0, "rgba(100,100,100,0.95)");
+            gradient.addColorStop(1, "rgba(50,50,50,0.4)");
+        }
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, PARTICLE_RADIUS, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+  }, []); // No direct dependencies, accesses arguments
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    const draw = () => {
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      
-      const computedStyle = getComputedStyle(canvas);
-      const mutedColorHSL = computedStyle.getPropertyValue('--muted').trim(); 
-
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-      // Ensure mutedColorHSL is valid before using it
-      if (mutedColorHSL && mutedColorHSL.includes('%')) { // Basic check for HSL format
-        bgGradient.addColorStop(0, `hsla(${mutedColorHSL}, 0.6)`);
-        bgGradient.addColorStop(1, `hsla(${mutedColorHSL}, 0.3)`);
-      } else { // Fallback if CSS variable isn't as expected
-        bgGradient.addColorStop(0, "rgba(200, 200, 220, 0.6)");
-        bgGradient.addColorStop(1, "rgba(200, 200, 220, 0.3)");
-      }
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0,0,CANVAS_WIDTH, CANVAS_HEIGHT);
-
-
-      if (matterState === "gas") {
-        const K_PRESSURE_CONFINEMENT = 0.5 + (1 - pressureFactor) * 1.5;
-        const effectiveWidth = CANVAS_WIDTH / K_PRESSURE_CONFINEMENT;
-        const effectiveHeight = CANVAS_HEIGHT / K_PRESSURE_CONFINEMENT;
-        const offsetX = (CANVAS_WIDTH - effectiveWidth) / 2;
-        const offsetY = (CANVAS_HEIGHT - effectiveHeight) / 2;
-
-        ctx.strokeStyle = "hsl(var(--border))"; 
-        ctx.lineWidth = 2;
-        ctx.strokeRect(offsetX, offsetY, effectiveWidth, effectiveHeight);
-      }
-
-      particles.forEach(p => {
-        const gradient = ctx.createRadialGradient(p.x, p.y, PARTICLE_RADIUS * 0.1, p.x, p.y, PARTICLE_RADIUS);
-        // Gracefully handle if colorStops are undefined momentarily
-        if (p.colorStops && p.colorStops.length === 2) {
-            gradient.addColorStop(p.colorStops[0].offset, p.colorStops[0].color);
-            gradient.addColorStop(p.colorStops[1].offset, p.colorStops[1].color);
-        } else { // Fallback color
-            gradient.addColorStop(0, "rgba(100,100,100,0.95)");
-            gradient.addColorStop(1, "rgba(50,50,50,0.4)");
-        }
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, PARTICLE_RADIUS, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    };
-
     const animate = () => {
-      updateParticles();
-      draw();
+      updateParticles(); // This will update the `particles` state
+      // The drawing will happen in the subsequent effect that depends on `particles`
       requestRef.current = requestAnimationFrame(animate);
     };
 
@@ -393,35 +360,45 @@ export default function StatesOfMatterPage() {
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [particles, updateParticles, matterState, pressureFactor]); // Removed getParticleColorStops as it's stable
+  }, [updateParticles]); // Only depends on updateParticles
+
+  useEffect(() => {
+    // This effect is solely for drawing when particles state changes
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx && canvas) {
+        drawSimulation(ctx, particles, matterState, pressureFactor);
+    }
+  }, [particles, matterState, pressureFactor, drawSimulation]);
+
 
   useEffect(() => {
     const predState = getPredictedState(temperatureFactor, pressureFactor);
     setPredictedStateText(predState);
-    
-    let conceptualVolumeValue = 10; 
+
+    let conceptualVolumeValue = 10;
     let conceptualPressureValue = 1;
+    const K_PRESSURE_CONFINEMENT_FACTOR = 0.6 + (1 - pressureFactor) * 1.8;
 
     if (matterState === "gas") {
-        const K_PRESSURE_CONFINEMENT = 0.5 + (1 - pressureFactor) * 1.5;
-        const baseVolume = PV_CHART_VOLUME_DOMAIN[1] * 0.9; 
-        conceptualVolumeValue = (baseVolume / K_PRESSURE_CONFINEMENT) * (1 + temperatureFactor * 0.1);
-        conceptualPressureValue = (PV_CHART_PRESSURE_DOMAIN[0] + 0.2) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.6) + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.8);
+      const baseVolume = PV_CHART_VOLUME_DOMAIN[1] * 0.8;
+      conceptualVolumeValue = (baseVolume / K_PRESSURE_CONFINEMENT_FACTOR) * (1 + temperatureFactor * 0.15);
+      conceptualPressureValue = (PV_CHART_PRESSURE_DOMAIN[0] + 0.3) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.7) + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.7);
     } else if (matterState === "liquid") {
-        conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[0] + (PV_CHART_VOLUME_DOMAIN[1] - PV_CHART_VOLUME_DOMAIN[0]) * 0.15 * (1 + temperatureFactor * 0.03); 
-        conceptualPressureValue = PV_CHART_PRESSURE_DOMAIN[0] + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.5) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.2);
+      conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[0] + (PV_CHART_VOLUME_DOMAIN[1] - PV_CHART_VOLUME_DOMAIN[0]) * 0.20 * (1 + temperatureFactor * 0.02 - pressureFactor * 0.01);
+      conceptualPressureValue = PV_CHART_PRESSURE_DOMAIN[0] + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.6) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.25);
     } else { // solid
-        conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[0] + (PV_CHART_VOLUME_DOMAIN[1] - PV_CHART_VOLUME_DOMAIN[0]) * 0.05 * (1 + temperatureFactor * 0.01); 
-        conceptualPressureValue = PV_CHART_PRESSURE_DOMAIN[0] + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.4) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.1);
+      conceptualVolumeValue = PV_CHART_VOLUME_DOMAIN[0] + (PV_CHART_VOLUME_DOMAIN[1] - PV_CHART_VOLUME_DOMAIN[0]) * 0.10 * (1 + temperatureFactor * 0.01 - pressureFactor * 0.02);
+      conceptualPressureValue = PV_CHART_PRESSURE_DOMAIN[0] + (pressureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.5) + (temperatureFactor * (PV_CHART_PRESSURE_DOMAIN[1] - PV_CHART_PRESSURE_DOMAIN[0]) * 0.15);
     }
-     
+
     conceptualVolumeValue = Math.max(PV_CHART_VOLUME_DOMAIN[0], Math.min(conceptualVolumeValue, PV_CHART_VOLUME_DOMAIN[1]));
     conceptualPressureValue = Math.max(PV_CHART_PRESSURE_DOMAIN[0], Math.min(conceptualPressureValue, PV_CHART_PRESSURE_DOMAIN[1]));
 
     setPvData([{ volume: conceptualVolumeValue, pressure: conceptualPressureValue }]);
 
   }, [temperatureFactor, pressureFactor, getPredictedState, matterState]);
-  
+
   const pvChartConfig = {
     pressure: { label: "Pressure", color: "hsl(var(--primary))" },
   };
@@ -443,7 +420,7 @@ export default function StatesOfMatterPage() {
             </div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon"><HelpCircle className="h-5 w-5"/></Button>
+                <Button variant="outline" size="icon"><HelpCircle className="h-5 w-5" /></Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 text-sm">
                 <p>Select a primary state model, then adjust Temperature and Pressure to observe changes. The "Predicted State" indicates a likely phase. The P-V diagram shows conceptual pressure-volume relationships (most dynamic for gases).</p>
@@ -469,11 +446,11 @@ export default function StatesOfMatterPage() {
                     </RadioGroup>
                   </div>
                   <div>
-                    <Label htmlFor="temperature" className="flex items-center"><Thermometer className="mr-1 h-4 w-4 text-red-500"/>Temperature: {(temperatureFactor * 100).toFixed(0)}%</Label>
+                    <Label htmlFor="temperature" className="flex items-center"><Thermometer className="mr-1 h-4 w-4 text-red-500" />Temperature: {(temperatureFactor * 100).toFixed(0)}%</Label>
                     <Slider id="temperature" min={0.01} max={1} step={0.01} value={[temperatureFactor]} onValueChange={(v) => setTemperatureFactor(v[0])} />
                   </div>
                   <div>
-                    <Label htmlFor="pressure" className="flex items-center"><Wind className="mr-1 h-4 w-4 text-blue-500"/>Pressure: {(pressureFactor * 100).toFixed(0)}%</Label>
+                    <Label htmlFor="pressure" className="flex items-center"><Wind className="mr-1 h-4 w-4 text-blue-500" />Pressure: {(pressureFactor * 100).toFixed(0)}%</Label>
                     <Slider id="pressure" min={0.01} max={1} step={0.01} value={[pressureFactor]} onValueChange={(v) => setPressureFactor(v[0])} />
                   </div>
                 </CardContent>
@@ -481,21 +458,21 @@ export default function StatesOfMatterPage() {
               <Card>
                 <CardHeader><CardTitle className="text-xl">State Information</CardTitle></CardHeader>
                 <CardContent className="text-sm space-y-2">
-                    <p>Selected Model: <span className="font-semibold capitalize">{matterState}</span></p>
-                    <p>Predicted State: <span className="font-semibold">{predictedStateText}</span></p>
-                     {predictedStateText === "Near Triple Point" && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400">Conceptual triple point conditions: particles may exhibit mixed behaviors.</p>
-                    )}
-                    <div className="pt-2 text-xs text-muted-foreground">
-                        {matterState === "solid" && "Particles vibrate in fixed positions. High T increases vibration. High P constrains structure, slightly compressing."}
-                        {matterState === "liquid" && "Particles are close, cohesive but mobile. High T increases fluidity/energy. High P increases internal agitation."}
-                        {matterState === "gas" && "Particles are far apart, move freely. High T increases speed. High P reduces volume, increases collisions."}
-                    </div>
+                  <p>Selected Model: <span className="font-semibold capitalize">{matterState}</span></p>
+                  <p>Predicted State: <span className="font-semibold">{predictedStateText}</span></p>
+                  {predictedStateText === "Near Triple Point" && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">Conceptual triple point conditions: particles may exhibit mixed behaviors.</p>
+                  )}
+                  <div className="pt-2 text-xs text-muted-foreground">
+                    {matterState === "solid" && "Particles vibrate in fixed positions. High T increases vibration. High P constrains structure, slightly compressing."}
+                    {matterState === "liquid" && "Particles are close, cohesive but mobile. High T increases fluidity/energy. High P increases internal agitation."}
+                    {matterState === "gas" && "Particles are far apart, move freely. High T increases speed. High P reduces volume, increases collisions."}
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="lg:col-span-2 space-y-4"> 
+            <div className="lg:col-span-2 space-y-4">
               <Card className="h-full">
                 <CardHeader><CardTitle className="text-lg">Particle Visualization</CardTitle></CardHeader>
                 <CardContent className="flex items-center justify-center p-0">
@@ -505,45 +482,44 @@ export default function StatesOfMatterPage() {
               <Card>
                 <CardHeader><CardTitle className="text-lg flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-green-500" />Conceptual P-V Diagram</CardTitle></CardHeader>
                 <CardContent>
-                {(matterState === 'solid' || matterState === 'liquid') ? (
+                  {(matterState === 'solid' || matterState === 'liquid') ? (
                     <div className="h-[200px] flex items-center justify-center text-center text-muted-foreground text-sm">
-                        <p>P-V diagram is most illustrative for gases. <br /> Solids and liquids have minimal volume changes with pressure in this model.</p>
+                      <p>P-V diagram is most illustrative for gases. <br /> Solids and liquids have minimal volume changes with pressure in this model.</p>
                     </div>
-                ) : (
-                  <ChartContainer config={pvChartConfig} className="h-[200px] w-full">
-                    <ScatterChart margin={{ top: 5, right: 20, bottom: 20, left: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        type="number" 
-                        dataKey="volume" 
-                        name="Volume" 
-                        domain={PV_CHART_VOLUME_DOMAIN}
-                        tickFormatter={(val) => val.toFixed(1)}
-                        label={{ value: "Conceptual Volume", position: "insideBottom", offset: -10, fontSize: 10 }}
-                       />
-                      <YAxis 
-                        type="number" 
-                        dataKey="pressure" 
-                        name="Pressure" 
-                        domain={PV_CHART_PRESSURE_DOMAIN}
-                        tickFormatter={(val) => val.toFixed(1)}
-                        label={{ value: "Conceptual Pressure", angle: -90, position: "insideLeft", offset: 0, fontSize: 10 }}
-                       />
-                      <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent />} />
-                      <Scatter name="Current State" data={pvData} fill="hsl(var(--primary))" />
-                    </ScatterChart>
-                  </ChartContainer>
-                )}
+                  ) : (
+                    <ChartContainer config={pvChartConfig} className="h-[200px] w-full">
+                      <ScatterChart margin={{ top: 5, right: 20, bottom: 20, left: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          type="number"
+                          dataKey="volume"
+                          name="Volume"
+                          domain={PV_CHART_VOLUME_DOMAIN}
+                          tickFormatter={(val) => val.toFixed(1)}
+                          label={{ value: "Conceptual Volume", position: "insideBottom", offset: -10, fontSize: 10 }}
+                        />
+                        <YAxis
+                          type="number"
+                          dataKey="pressure"
+                          name="Pressure"
+                          domain={PV_CHART_PRESSURE_DOMAIN}
+                          tickFormatter={(val) => val.toFixed(1)}
+                          label={{ value: "Conceptual Pressure", angle: -90, position: "insideLeft", offset: 0, fontSize: 10 }}
+                        />
+                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent />} />
+                        <Scatter name="Current State" data={pvData} fill="hsl(var(--primary))" />
+                      </ScatterChart>
+                    </ChartContainer>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
         </CardContent>
         <CardFooter>
-            <p className="text-xs text-muted-foreground">Note: This is a conceptual model. Particle interactions and state transitions are simplified for educational visualization.</p>
+          <p className="text-xs text-muted-foreground">Note: This is a conceptual model. Particle interactions and state transitions are simplified for educational visualization.</p>
         </CardFooter>
       </Card>
     </div>
   );
 }
-    
