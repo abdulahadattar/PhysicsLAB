@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Defines constant values used throughout the application.
  * This includes navigation structures, lists of topics for simulations and quizzes,
@@ -7,12 +8,12 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon,
-  UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, ClockIcon, Waves, Sigma,
+  UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Waves, Sigma,
   BatteryCharging, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy,
   NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText,
   SearchIcon, Timer, Weight, Replace, HelpCircle, MoveVertical, Speaker, Projector, Zap,
   Network, Binary, Pipette, Magnet, LineChart, Move, Anchor, RefreshCw, GitCommitHorizontal, Sun,
-  UploadCloud // Added UploadCloud
+  Archive
 } from 'lucide-react';
 
 /**
@@ -102,6 +103,8 @@ export const SIMULATION_TOPICS: SimulationTopic[] = [
   { id: "ray-tracing-g10", name: "Ray Tracing (Mirrors & Lenses)", grade: "10", description: "Interactively trace rays for concave/convex mirrors and lenses. Observe image formation based on object position and focal length.", icon: Projector, image: "https://placehold.co/400x200.png", aiHint: "optics ray diagram" },
   { id: "ohms-law-g10", name: "Ohm's Law (Circuit Building)", grade: "10", description: "Build simple series and parallel circuits. Adjust voltage and resistance to observe changes in current and verify Ohm's Law.", icon: Network, image: "https://placehold.co/400x200.png", aiHint: "ohms law circuit" },
   { id: "electric-field-lines-g10", name: "Electric Field Lines (Basic)", grade: "10", description: "Place positive and negative point charges and visualize the resulting electric field lines and patterns.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "electric field charge" },
+  { id: "dispersion-prism-g10", name: "Dispersion of Light (Prism)", grade: "10", description: "Simulate white light passing through a prism to see the spectrum. Explain rainbow formation.", icon: Pipette, image: "https://placehold.co/400x200.png", aiHint: "light prism dispersion" },
+  { id: "magnetic-fields-forces-g10", name: "Magnetic Fields & Motor Principle", grade: "10", description: "Visualize magnetic fields and simulate the force on a current-carrying wire (motor principle).", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "magnetic field motor" },
   // Grade 11
   { id: "circular-motion-g11", name: "Circular Motion (Centripetal Force)", grade: "11", description: "Explore uniform circular motion, vary speed and radius, and visualize centripetal force and acceleration vectors.", icon: RefreshCw, image: "https://placehold.co/400x200.png", aiHint: "circular motion physics" },
   { id: "roller-coaster-energy-g11", name: "Roller Coaster Energy (PE/KE)", grade: "11", description: "Simulate a roller coaster car, observing the transformation between potential and kinetic energy at different points on a track.", icon: Zap, image: "https://placehold.co/400x200.png", aiHint: "energy conservation roller coaster" },
@@ -109,6 +112,8 @@ export const SIMULATION_TOPICS: SimulationTopic[] = [
   { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: "11", description: "Simulate a spring-mass system and observe Simple Harmonic Motion. Adjust mass, spring constant, and amplitude.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation" },
   { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: "11", description: "Visualize RC circuit charging and discharging. Observe voltage/current graphs over time as R and C vary.", icon: BatteryCharging, image: "https://placehold.co/400x200.png", aiHint: "capacitor circuit graph" },
   { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum. Adjust length and gravity to observe changes in period and Simple Harmonic Motion.", icon: MoveVertical, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
+  { id: "unit-converter-g11", name: "Unit Converter", grade: "11", description: "Convert between common units for length, mass, and time.", icon: Replace, image: "https://placehold.co/400x200.png", aiHint: "unit conversion tool" },
+  { id: "sig-figs-practice-g11", name: "Significant Figures Practice", grade: "11", description: "Practice identifying and applying rules for significant figures in measurements and calculations.", icon: Sigma, image: "https://placehold.co/400x200.png", aiHint: "significant figures math" },
   // Grade 12
   { id: "gas-laws-g12", name: "Gas Laws (P/V/T Relationships)", grade: "12", description: "Interactively explore Boyle's Law, Charles's Law, and Gay-Lussac's Law. Adjust P, V, T and observe relationships.", icon: Thermometer, image: "https://placehold.co/400x200.png", aiHint: "gas laws pressure volume temperature" },
   { id: "em-induction-g12", name: "Electromagnetic Induction (Magnet/Coil)", grade: "12", description: "Simulate moving a magnet near a coil or changing current in a primary coil to observe induced EMF and current.", icon: Magnet, image: "https://placehold.co/400x200.png", aiHint: "electromagnetic induction faraday" },
@@ -139,10 +144,9 @@ export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: s
     {term: "light mode", label: "Light Mode Theme Setting", href: "/settings"},
     {term: "fun facts", label: "Fun Physics Facts Panel Setting", href: "/settings"},
     {term: "tidbits", label: "Fun Physics Tidbits Panel Setting", href: "/settings"},
-    // {term: "notifications", label: "Notification Settings (Coming Soon)", href: "/settings"}, // Feature not yet active
     {term: "offline", label: "Offline Data & App Update Settings", href: "/settings"},
     {term: "sync", label: "Data Sync & App Update Settings", href: "/settings"},
-    {term: "login", label: "Login/Account (via Header)", href: "/settings"}, // Points to settings, but login is in header
-    {term: "account", label: "Account Information (via Header)", href: "/settings"}, // "
+    {term: "login", label: "Login/Account (via Header)", href: "/settings"},
+    {term: "account", label: "Account Information (via Header)", href: "/settings"},
     // {term: "update", label: "Check for App Updates Setting", href: "/settings"} // This is an action, not a setting section.
 ];
