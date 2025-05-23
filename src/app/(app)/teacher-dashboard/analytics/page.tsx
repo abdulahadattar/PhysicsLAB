@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, BarChart3, TrendingDown, TrendingUp, UserCheck, Percent, AlertTriangle, Loader2, BookOpen, CheckCircle, Clock, Activity, History } from "lucide-react";
+import { ArrowLeft, BarChart3, TrendingDown, TrendingUp, UserCheck, Percent, AlertTriangle, Loader2, BookOpen, CheckCircle, Clock, Activity, History, Smartphone, Laptop, Wifi, Signal } from "lucide-react";
 import Link from "next/link";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer } from "recharts"
@@ -39,11 +39,11 @@ const quizPerformanceByTopicData = [
 ];
 
 const mockStudentData = [
-    { id: "s001", name: "Ahmed Ali", grade: "Grade 9", averageQuizScore: 85, quizzesCompleted: 12, timeSpentInApp: "18h 45m", lastQuizTimestamp: "2024-05-21", lastLogin: "2024-05-23 10:15 AM", averageSessionDuration: "42 min", totalSessions: 25, mostUsedFeature: "Simulations", lastActiveFeature: "Simulations (Projectile Motion)", avatar: "https://placehold.co/40x40.png?text=AA", strengths: ["Kinematics", "Dynamics"], weaknesses: ["Optics"] },
-    { id: "s002", name: "Fatima Khan", grade: "Grade 10", averageQuizScore: 72, quizzesCompleted: 8, timeSpentInApp: "12h 15m", lastQuizTimestamp: "2024-05-19", lastLogin: "2024-05-22 08:30 PM", averageSessionDuration: "55 min", totalSessions: 18, mostUsedFeature: "Study Material", lastActiveFeature: "Study Material (Electromagnetism)", avatar: "https://placehold.co/40x40.png?text=FK", strengths: ["Electromagnetism"], weaknesses: ["Thermodynamics", "Optics"] },
-    { id: "s003", name: "Bilal Hassan", grade: "Grade 9", averageQuizScore: 91, quizzesCompleted: 15, timeSpentInApp: "22h 00m", lastQuizTimestamp: "2024-05-22", lastLogin: "2024-05-23 01:00 PM", averageSessionDuration: "60 min", totalSessions: 30, mostUsedFeature: "Quizzes", lastActiveFeature: "Quizzes (Daily Challenge)", avatar: "https://placehold.co/40x40.png?text=BH", strengths: ["All Topics"], weaknesses: ["None apparent"] },
-    { id: "s004", name: "Aisha Rao", grade: "Grade 11", averageQuizScore: 68, quizzesCompleted: 5, timeSpentInApp: "9h 30m", lastQuizTimestamp: "2024-05-15", lastLogin: "2024-05-20 11:00 AM", averageSessionDuration: "30 min", totalSessions: 15, mostUsedFeature: "Learn with AI", lastActiveFeature: "Learn with AI", avatar: "https://placehold.co/40x40.png?text=AR", strengths: ["Capacitors"], weaknesses: ["Projectile Motion", "SHM"] },
-    { id: "s005", name: "Usman Tariq", grade: "Grade 12", averageQuizScore: 78, quizzesCompleted: 10, timeSpentInApp: "16h 50m", lastQuizTimestamp: "2024-05-20", lastLogin: "2024-05-21 09:00 AM", averageSessionDuration: "48 min", totalSessions: 22, mostUsedFeature: "Simulations", lastActiveFeature: "Simulations (States of Matter)", avatar: "https://placehold.co/40x40.png?text=UT", strengths: ["Thermodynamics", "Modern Physics"], weaknesses: ["AC Circuits"] },
+    { id: "s001", name: "Ahmed Ali", grade: "Grade 9", averageQuizScore: 85, quizzesCompleted: 12, timeSpentInApp: "18h 45m", lastQuizTimestamp: "2024-05-21", lastLogin: "2024-05-23 10:15 AM", averageSessionDuration: "42 min", totalSessions: 25, mostUsedFeature: "Simulations", lastActiveFeature: "Simulations (Projectile Motion - 15min)", avatar: "https://placehold.co/40x40.png?text=AA", strengths: ["Kinematics", "Dynamics"], weaknesses: ["Optics"], deviceType: "Desktop", networkTypeGuess: "Wi-Fi" },
+    { id: "s002", name: "Fatima Khan", grade: "Grade 10", averageQuizScore: 72, quizzesCompleted: 8, timeSpentInApp: "12h 15m", lastQuizTimestamp: "2024-05-19", lastLogin: "2024-05-22 08:30 PM", averageSessionDuration: "55 min", totalSessions: 18, mostUsedFeature: "Study Material", lastActiveFeature: "Study Material (Electromagnetism - 25min)", avatar: "https://placehold.co/40x40.png?text=FK", strengths: ["Electromagnetism"], weaknesses: ["Thermodynamics", "Optics"], deviceType: "Mobile", networkTypeGuess: "Cellular" },
+    { id: "s003", name: "Bilal Hassan", grade: "Grade 9", averageQuizScore: 91, quizzesCompleted: 15, timeSpentInApp: "22h 00m", lastQuizTimestamp: "2024-05-22", lastLogin: "2024-05-23 01:00 PM", averageSessionDuration: "60 min", totalSessions: 30, mostUsedFeature: "Quizzes", lastActiveFeature: "Quizzes (Daily Challenge - 12 attempts)", avatar: "https://placehold.co/40x40.png?text=BH", strengths: ["All Topics"], weaknesses: ["None apparent"], deviceType: "Desktop", networkTypeGuess: "Wi-Fi" },
+    { id: "s004", name: "Aisha Rao", grade: "Grade 11", averageQuizScore: 68, quizzesCompleted: 5, timeSpentInApp: "9h 30m", lastQuizTimestamp: "2024-05-15", lastLogin: "2024-05-20 11:00 AM", averageSessionDuration: "30 min", totalSessions: 15, mostUsedFeature: "Learn with AI", lastActiveFeature: "Learn with AI (Capacitor question - 20min)", avatar: "https://placehold.co/40x40.png?text=AR", strengths: ["Capacitors"], weaknesses: ["Projectile Motion", "SHM"], deviceType: "Mobile", networkTypeGuess: "Wi-Fi" },
+    { id: "s005", name: "Usman Tariq", grade: "Grade 12", averageQuizScore: 78, quizzesCompleted: 10, timeSpentInApp: "16h 50m", lastQuizTimestamp: "2024-05-20", lastLogin: "2024-05-21 09:00 AM", averageSessionDuration: "48 min", totalSessions: 22, mostUsedFeature: "Simulations", lastActiveFeature: "Simulations (States of Matter - 30min)", avatar: "https://placehold.co/40x40.png?text=UT", strengths: ["Thermodynamics", "Modern Physics"], weaknesses: ["AC Circuits"], deviceType: "Desktop", networkTypeGuess: "Cellular" },
 ];
 
 const mockFeatureUsageData = [
@@ -376,6 +376,8 @@ export default function TeacherAnalyticsPage() {
                                 <TableHead>Total Time in App</TableHead>
                                 <TableHead>Last Quiz</TableHead>
                                 <TableHead>Last Login</TableHead>
+                                <TableHead>Device</TableHead>
+                                <TableHead>Network (Guess)</TableHead>
                                 <TableHead>Avg. Session</TableHead>
                                 <TableHead>Total Sessions</TableHead>
                                 <TableHead>Most Used Feature</TableHead>
@@ -402,6 +404,14 @@ export default function TeacherAnalyticsPage() {
                                     <TableCell>{student.timeSpentInApp}</TableCell>
                                     <TableCell>{student.lastQuizTimestamp}</TableCell>
                                     <TableCell>{student.lastLogin}</TableCell>
+                                    <TableCell>
+                                        {student.deviceType === "Mobile" ? <Smartphone className="h-4 w-4 text-muted-foreground" /> : <Laptop className="h-4 w-4 text-muted-foreground" />} 
+                                        <span className="ml-1 text-xs">{student.deviceType}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        {student.networkTypeGuess === "Wi-Fi" ? <Wifi className="h-4 w-4 text-blue-500" /> : <Signal className="h-4 w-4 text-orange-500" />}
+                                        <span className="ml-1 text-xs">{student.networkTypeGuess}</span>
+                                    </TableCell>
                                     <TableCell>{student.averageSessionDuration}</TableCell>
                                     <TableCell>{student.totalSessions}</TableCell>
                                     <TableCell><Badge variant="secondary">{student.mostUsedFeature}</Badge></TableCell>
@@ -428,5 +438,7 @@ export default function TeacherAnalyticsPage() {
   );
 }
       
+
+    
 
     
