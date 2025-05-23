@@ -44,7 +44,7 @@ See .env.example (if provided) or Firebase project settings for these values.
 Firebase features like Google Sign-In will be disabled.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 `;
-  console.error(errorMessage);
+  console.warn(errorMessage); // Changed from console.error
   // app and auth will remain undefined, preventing initialization attempts
 } else {
   if (getApps().length === 0) {
