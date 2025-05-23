@@ -15,8 +15,11 @@ export interface QuestionAnswer {
 
 export interface ChapterContent {
   sindhTextbookPdfName?: string;
-  alternativeTextbookPdfName?: string;
+  alternativeTextbookPdfName?: string; // General alternative
   teacherNotesPdfName?: string;
+  punjabBoardPdfName?: string;
+  nationalSyllabusPdfName?: string;
+  ziauddinBoardPdfName?: string;
   keyPoints?: string;
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[]; // CRQs
@@ -34,7 +37,7 @@ export interface StudyGrade {
   id: string;
   name: string;
   chapters: Chapter[];
-  completeTextbookPdfLink?: string; // New field for complete textbook link
+  completeTextbookPdfLink?: string;
 }
 
 export interface TeacherChapterOverride extends ChapterContent {

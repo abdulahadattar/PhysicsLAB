@@ -9,14 +9,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save } from "lucide-react"; // Changed UploadCloud to Link2
+import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { StudyGrade, Chapter, TeacherChapterOverrides, ChapterContent, MCQ, QuestionAnswer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { extractChapterContent, type ExtractedChapterContentOutput } from '@/ai/flows/extractChapterContentFlow';
 
 const TEACHER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides';
-type PdfTypeKey = 'sindhTextbookPdfName' | 'alternativeTextbookPdfName' | 'teacherNotesPdfName';
+
+type PdfTypeKey = keyof Pick<ChapterContent, 
+  'sindhTextbookPdfName' | 
+  'alternativeTextbookPdfName' | 
+  'teacherNotesPdfName' | 
+  'punjabBoardPdfName' | 
+  'nationalSyllabusPdfName' | 
+  'ziauddinBoardPdfName'
+>;
+
+interface PdfConfigItem {
+  key: PdfTypeKey;
+  label: string;
+  placeholder: string;
+}
 
 export default function TeacherContentManagementPage() {
   const { toast } = useToast();
@@ -29,6 +43,15 @@ export default function TeacherContentManagementPage() {
   
   const [editableContent, setEditableContent] = useState<Partial<ChapterContent>>({});
   const [isGeneratingAiContent, setIsGeneratingAiContent] = useState(false);
+
+  const pdfConfig: PdfConfigItem[] = [
+    { key: 'sindhTextbookPdfName', label: 'Sindh Textbook PDF Link', placeholder: 'Sindh Board Google Drive PDF link' },
+    { key: 'ziauddinBoardPdfName', label: 'Ziauddin Board PDF Link', placeholder: 'Ziauddin Board Google Drive PDF link' },
+    { key: 'punjabBoardPdfName', label: 'Punjab Board PDF Link', placeholder: 'Punjab Board Google Drive PDF link' },
+    { key: 'nationalSyllabusPdfName', label: 'National Syllabus PDF Link', placeholder: 'National Syllabus Google Drive PDF link' },
+    { key: 'alternativeTextbookPdfName', label: 'Other Alternative PDF Link', placeholder: 'Other Alternative Google Drive PDF link' },
+    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link", placeholder: "Teacher's Notes Google Drive PDF link" },
+  ];
 
   const fetchGrades = useCallback(async () => {
     setIsLoadingGrades(true);
@@ -90,19 +113,32 @@ export default function TeacherContentManagementPage() {
       delete newContent[pdfType]; 
       return newContent;
     });
-    toast({ title: "PDF Link Removed", description: `The link for ${pdfType.replace('PdfName',' PDF')} will be cleared upon saving.` });
+    toast({ title: "PDF Link Cleared", description: `The link for ${pdfConfig.find(p=>p.key === pdfType)?.label || pdfType} will be removed upon saving.` });
   };
 
   const handleAiGenerate = async () => {
-    const primaryPdfForAi = editableContent.teacherNotesPdfName || editableContent.sindhTextbookPdfName || editableContent.alternativeTextbookPdfName;
-    if (!primaryPdfForAi || !primaryPdfForAi.startsWith('http')) { // Basic check for a link
-      toast({ title: "No PDF Link for AI", description: "Please provide a valid Google Drive PDF link (e.g., Teacher Notes or Sindh Textbook) to generate content from.", variant: "destructive" });
+    const potentialPdfSources: (PdfTypeKey)[] = [
+        'teacherNotesPdfName', 
+        'sindhTextbookPdfName', 
+        'ziauddinBoardPdfName',
+        'punjabBoardPdfName',
+        'nationalSyllabusPdfName',
+        'alternativeTextbookPdfName'
+    ];
+    let primaryPdfForAi: string | undefined;
+    for (const key of potentialPdfSources) {
+        if (editableContent[key]?.trim()) {
+            primaryPdfForAi = editableContent[key];
+            break;
+        }
+    }
+
+    if (!primaryPdfForAi || !primaryPdfForAi.startsWith('http')) {
+      toast({ title: "No PDF Link for AI", description: "Please provide at least one valid Google Drive PDF link (e.g., Teacher Notes or Sindh Textbook) to generate content from.", variant: "destructive" });
       return;
     }
     setIsGeneratingAiContent(true);
     try {
-      // For AI, we pass the LINK itself, conceptualizing that the AI can access/process it.
-      // The current `extractChapterContent` flow simulates this by using the link as a "filename" for mock data.
       const result: ExtractedChapterContentOutput = await extractChapterContent({ 
         pdfTextContent: `Content from PDF link: ${primaryPdfForAi}`, 
         chapterName: studyGrades.find(g=>g.id === selectedGradeId)?.chapters.find(c=>c.id === selectedChapterId)?.name || "Selected Chapter"
@@ -129,8 +165,12 @@ export default function TeacherContentManagementPage() {
       const updatedContent = { ...prev };
       if ((field === 'mcqs' || field === 'shortAnswers' || field === 'longAnswers') && typeof index === 'number' && subField) {
         const items = [...(updatedContent[field as 'mcqs' | 'shortAnswers' | 'longAnswers'] || [])] as any[];
+        if(items[index] === undefined && (field === 'mcqs' || field === 'shortAnswers' || field === 'longAnswers')) {
+             // This case might not be needed if add functions always initialize objects correctly
+             items[index] = field === 'mcqs' ? { id: `new-${Date.now()}`, question: "", options: ["", "", "", ""], correctAnswerIndex: 0, explanation: "" } : { id: `new-${Date.now()}`, question: "", answer: "" };
+        }
         if (field === 'mcqs' && subField === 'options') {
-            const options = [...(items[index].options || [])];
+            const options = [...(items[index].options || ["", "", "", ""])]; // Ensure options array exists
             options[value.optionIndex] = value.optionValue; 
             items[index] = { ...items[index], options };
         } else if (field === 'mcqs' && subField === 'correctAnswerIndex') {
@@ -181,13 +221,12 @@ export default function TeacherContentManagementPage() {
       
       const contentToSave: Partial<ChapterContent> = { ...editableContent };
       // Clean up empty PDF links before saving
-      if (!contentToSave.sindhTextbookPdfName?.trim()) delete contentToSave.sindhTextbookPdfName;
-      if (!contentToSave.alternativeTextbookPdfName?.trim()) delete contentToSave.alternativeTextbookPdfName;
-      if (!contentToSave.teacherNotesPdfName?.trim()) delete contentToSave.teacherNotesPdfName;
-
+      pdfConfig.forEach(pdf => {
+        if (!contentToSave[pdf.key]?.trim()) delete contentToSave[pdf.key];
+      });
 
       allOverrides[selectedChapterId] = {
-        ...contentToSave, // This now contains the PDF links
+        ...contentToSave,
         chapterId: selectedChapterId, 
         gradeId: selectedGradeId,    
         lastUpdated: new Date().toISOString(),
@@ -202,7 +241,6 @@ export default function TeacherContentManagementPage() {
             ...g,
             chapters: g.chapters.map(c => {
               if (c.id === selectedChapterId) {
-                // Merge existing content with the new override
                 const baseContent = c.content || {};
                 const updatedChapterContent = { ...baseContent, ...allOverrides[selectedChapterId] };
                 return { ...c, content: updatedChapterContent };
@@ -224,12 +262,6 @@ export default function TeacherContentManagementPage() {
 
   if (isLoadingGrades) return <div className="flex justify-center items-center p-10"><Loader2 className="h-10 w-10 animate-spin"/></div>;
   if (gradesError) return <Alert variant="destructive"><AlertTriangle className="h-4 w-4"/><AlertDescription>{gradesError}</AlertDescription></Alert>;
-
-  const pdfConfig: { key: PdfTypeKey, label: string }[] = [
-    { key: 'sindhTextbookPdfName', label: 'Sindh Textbook PDF Link' },
-    { key: 'alternativeTextbookPdfName', label: 'Alternative Textbook PDF Link' },
-    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link" },
-  ];
 
   return (
     <div className="space-y-6">
@@ -281,7 +313,7 @@ export default function TeacherContentManagementPage() {
                             <Input 
                               id={`${pdf.key}-input`} 
                               type="url" 
-                              placeholder="Paste Google Drive PDF link here" 
+                              placeholder={pdf.placeholder} 
                               value={editableContent[pdf.key] || ""}
                               onChange={(e) => handlePdfLinkChange(pdf.key, e.target.value)}
                               className="flex-grow"
@@ -293,7 +325,7 @@ export default function TeacherContentManagementPage() {
                       ))}
                     </div>
 
-                    <Button onClick={handleAiGenerate} disabled={isGeneratingAiContent || !(editableContent.teacherNotesPdfName || editableContent.sindhTextbookPdfName || editableContent.alternativeTextbookPdfName)} className="w-full">
+                    <Button onClick={handleAiGenerate} disabled={isGeneratingAiContent || !pdfConfig.some(pdf => !!editableContent[pdf.key]?.trim())} className="w-full">
                       {isGeneratingAiContent ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
                       Generate Key Points & Exercises (AI - Simulated)
                     </Button>

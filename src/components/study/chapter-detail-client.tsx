@@ -3,10 +3,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw, BookOpen, Notebook, User, WifiOff, DownloadCloud } from "lucide-react"; // Added WifiOff, DownloadCloud
+import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw, BookOpen, Notebook, User, WifiOff, DownloadCloud, BookCopy, Landmark, Globe } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Removed Image from 'next/image' as we are using iframe or placeholder text
 import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade, Chapter, ChapterContent, MCQ as MCQType, QuestionAnswer, TeacherChapterOverrides } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -20,7 +19,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const TEACHER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides';
 const PDF_CACHE_KEY_PREFIX = 'physicsLabPdfCache_';
 
-type PdfSourceType = 'sindh' | 'alternative' | 'teacher';
+type PdfSourceKey = keyof Pick<ChapterContent, 
+  'sindhTextbookPdfName' | 
+  'ziauddinBoardPdfName' |
+  'punjabBoardPdfName' |
+  'nationalSyllabusPdfName' |
+  'alternativeTextbookPdfName' | 
+  'teacherNotesPdfName'
+>;
+
+interface PdfSourceInfo {
+  key: PdfSourceKey;
+  displayName: string;
+  icon: React.ElementType;
+  link?: string | null;
+}
 
 interface ChapterDetailClientProps {
   initialGradeData: StudyGrade;
@@ -33,10 +46,10 @@ interface ChapterDetailClientProps {
 
 interface CachedPdf {
   url: string;
-  blobUrl: string; // Object URL for the cached blob
+  blobUrl: string; 
   fileName: string;
-  fileSize?: number; // Optional: store file size for update checks
-  lastFetched?: string; // Optional: store last fetched date for update checks
+  fileSize?: number;
+  lastFetched?: string;
 }
 
 export default function ChapterDetailClient({ initialGradeData, initialChapterData, params }: ChapterDetailClientProps) {
@@ -44,15 +57,18 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   const [gradeData, setGradeData] = useState<StudyGrade | null>(initialGradeData);
   const [chapterData, setChapterData] = useState<Chapter | null>(initialChapterData);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOnline, setIsOnline] = useState(true); // For online status
-  const [isCachingPdf, setIsCachingPdf] = useState(false); // For PDF caching activity
+  const [isOnline, setIsOnline] = useState(true);
+  const [isCachingPdf, setIsCachingPdf] = useState(false);
 
   const [mcqAttempts, setMcqAttempts] = useState<Record<string, { selectedOptionIndex: number | null; isCorrect: boolean | null; revealed: boolean }>>({});
   
-  const [activePdfSource, setActivePdfSource] = useState<PdfSourceType | null>(null);
-  const [activePdfLink, setActivePdfLink] = useState<string | null>(null); // Direct Google Drive Link
-  const [activePdfDisplayUrl, setActivePdfDisplayUrl] = useState<string | null>(null); // Could be Object URL or Google Drive Embed Link
-  const [cachedPdfInfo, setCachedPdfInfo] = useState<CachedPdf | null>(null);
+  const [activePdfSourceKey, setActivePdfSourceKey] = useState<PdfSourceKey | null>(null);
+  const [activePdfGLink, setActivePdfGLink] = useState<string | null>(null);
+  const [activePdfEmbedUrl, setActivePdfEmbedUrl] = useState<string | null>(null);
+  const [currentCachedPdfDetails, setCurrentCachedPdfDetails] = useState<CachedPdf | null>(null);
+  const [pdfCacheStatus, setPdfCacheStatus] = useState<'idle' | 'cached' | 'not_cached' | 'error_caching'>('idle');
+
+  const [availablePdfSources, setAvailablePdfSources] = useState<PdfSourceInfo[]>([]);
 
 
   useEffect(() => {
@@ -69,32 +85,45 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     }
   }, []);
 
+  const getGoogleDriveEmbedUrl = (gDriveLink: string | null | undefined): string | null => {
+    if (!gDriveLink || !gDriveLink.includes('drive.google.com')) return null;
+    try {
+      const url = new URL(gDriveLink);
+      const fileIdMatch = url.pathname.match(/file\/d\/([^/]+)/);
+      if (fileIdMatch && fileIdMatch[1]) {
+        return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+      }
+    } catch (e) {
+      console.error("Error parsing GDrive link for embed:", e);
+    }
+    return null; 
+  };
+
   const getPdfCacheKey = (url: string | null | undefined): string | null => {
     if (!url) return null;
     try {
       const urlObj = new URL(url);
-      // Try to extract a file ID from common Google Drive link patterns
       const pathSegments = urlObj.pathname.split('/');
       const dIndex = pathSegments.indexOf('d');
       if (dIndex !== -1 && dIndex < pathSegments.length - 1) {
         return `${PDF_CACHE_KEY_PREFIX}${pathSegments[dIndex + 1]}`;
       }
     } catch (e) { /* Invalid URL, fall through */ }
-    // Fallback for non-standard URLs, use a hash or the full URL (might be too long for localStorage key)
-    // For simplicity, just use the prefix and a truncated/hashed URL if it's not a recognizable GDrive link
     return `${PDF_CACHE_KEY_PREFIX}${url.slice(-50).replace(/[^a-zA-Z0-9]/g, '')}`;
   };
   
-  const loadCachedPdf = useCallback(async (sourceLink: string | null): Promise<CachedPdf | null> => {
-    if (!sourceLink) return null;
-    const cacheKey = getPdfCacheKey(sourceLink);
+  const loadCachedPdf = useCallback(async (sourceGLink: string | null): Promise<CachedPdf | null> => {
+    if (!sourceGLink) return null;
+    const cacheKey = getPdfCacheKey(sourceGLink);
     if (!cacheKey) return null;
 
     try {
       const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) {
         const cached: { data: string; type: string; originalUrl: string; fileName: string, fileSize?: number, lastFetched?: string } = JSON.parse(cachedRaw);
-        // Convert base64 back to blob
+        if (cached.originalUrl !== sourceGLink) { // Ensure cache is for the correct URL
+             localStorage.removeItem(cacheKey); return null;
+        }
         const byteCharacters = atob(cached.data);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -107,19 +136,21 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
       }
     } catch (e) {
       console.error("Error loading cached PDF:", e);
-      localStorage.removeItem(cacheKey); // Clear corrupted cache
+      localStorage.removeItem(cacheKey);
     }
     return null;
   }, []);
 
-  const cachePdf = useCallback(async (sourceLink: string, fileName: string) => {
-    if (!isOnline || !sourceLink.startsWith('http')) { // Basic check for valid link
+  const cachePdf = useCallback(async (sourceGLink: string, fileName: string) => {
+    if (!isOnline || !sourceGLink.startsWith('http')) {
         toast({ title: "Cannot Cache PDF", description: "Offline or invalid PDF link provided.", variant: "destructive" });
+        setPdfCacheStatus('error_caching');
         return;
     }
-    const cacheKey = getPdfCacheKey(sourceLink);
+    const cacheKey = getPdfCacheKey(sourceGLink);
     if (!cacheKey) {
         toast({ title: "Cannot Cache PDF", description: "Could not generate a key for this PDF link.", variant: "destructive" });
+        setPdfCacheStatus('error_caching');
         return;
     }
 
@@ -127,33 +158,30 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     toast({ title: "Caching PDF...", description: `Downloading ${fileName} for offline viewing.` });
 
     try {
-      // IMPORTANT: Direct fetching from Google Drive links can be blocked by CORS.
-      // This fetch will likely fail for most Google Drive links unless they are specifically set up for direct download
-      // and allow CORS. A backend proxy would be needed for robust fetching.
-      // For this simulation, we'll assume a direct-downloadable, CORS-friendly link or a placeholder that works.
-      const response = await fetch(sourceLink); 
+      const response = await fetch(sourceGLink); 
       if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.statusText}`);
       
       const blob = await response.blob();
       if (blob.type !== 'application/pdf') {
-        throw new Error("Downloaded file is not a PDF.");
+        throw new Error("Downloaded file is not a PDF. It might be an HTML page (Google Drive viewer). Ensure the link is a direct PDF link or use sharing settings that allow direct download.");
       }
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64data = (reader.result as string).split(',')[1]; // Get base64 part
+        const base64data = (reader.result as string).split(',')[1];
         const itemToCache = { 
             data: base64data, 
             type: blob.type, 
-            originalUrl: sourceLink, 
+            originalUrl: sourceGLink, 
             fileName,
             fileSize: blob.size,
             lastFetched: new Date().toISOString()
         };
         localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
         const blobUrl = URL.createObjectURL(blob);
-        setCachedPdfInfo({ url: sourceLink, blobUrl, fileName, fileSize: blob.size, lastFetched: itemToCache.lastFetched });
-        setActivePdfDisplayUrl(blobUrl); // Display the cached version
+        setCurrentCachedPdfDetails({ url: sourceGLink, blobUrl, fileName, fileSize: blob.size, lastFetched: itemToCache.lastFetched });
+        setActivePdfEmbedUrl(blobUrl);
+        setPdfCacheStatus('cached');
         toast({ title: "PDF Cached!", description: `${fileName} is now available offline.` });
       };
       reader.onerror = () => { throw new Error("Failed to read PDF blob."); };
@@ -161,11 +189,42 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
 
     } catch (e) {
       console.error("Error caching PDF:", e);
-      toast({ title: "PDF Caching Failed", description: e instanceof Error ? e.message : "Could not download or cache the PDF.", variant: "destructive" });
+      toast({ title: "PDF Caching Failed", description: e instanceof Error ? e.message : "Could not download or cache the PDF. This often happens if the link is not a direct PDF link but a Google Drive viewer page.", variant: "destructive" });
+      setPdfCacheStatus('error_caching');
     } finally {
       setIsCachingPdf(false);
     }
   }, [isOnline, toast]);
+
+  const updateDisplayedPdf = useCallback(async (gLink: string | null, sourceName: string) => {
+    setActivePdfGLink(gLink);
+    if (!gLink) {
+      setActivePdfEmbedUrl(null);
+      setCurrentCachedPdfDetails(null);
+      setPdfCacheStatus('idle');
+      return;
+    }
+
+    const loadedCache = await loadCachedPdf(gLink);
+    if (loadedCache) {
+      setCurrentCachedPdfDetails(loadedCache);
+      setActivePdfEmbedUrl(loadedCache.blobUrl);
+      setPdfCacheStatus('cached');
+      toast({ title: "Loaded Cached PDF", description: `Displaying offline version of ${sourceName}.`});
+    } else {
+      setCurrentCachedPdfDetails(null);
+      if (isOnline) {
+        const embedUrl = getGoogleDriveEmbedUrl(gLink);
+        setActivePdfEmbedUrl(embedUrl);
+        setPdfCacheStatus(embedUrl ? 'not_cached' : 'error_caching');
+         if(!embedUrl) toast({ title: "Online View Issue", description: "Could not generate an embeddable link. The PDF might not display directly. Try caching it if possible.", variant: "default" });
+      } else {
+        setActivePdfEmbedUrl(null);
+        setPdfCacheStatus('not_cached');
+        toast({ title: "Offline", description: `${sourceName} is not available offline. Connect to view or cache it.`, variant:"default" });
+      }
+    }
+  }, [loadCachedPdf, isOnline, toast]);
 
 
   const loadChapterWithOverrides = useCallback(async () => {
@@ -178,12 +237,15 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
             const allOverrides: TeacherChapterOverrides = JSON.parse(overridesRaw);
             const chapterOverride = allOverrides[finalChapterData.id];
             if (chapterOverride) {
-                const mergedContent: ChapterContent = { // Ensure ChapterContent type
+                const mergedContent: ChapterContent = { 
                   ...(finalChapterData.content || {}),
                   ...chapterOverride,
                   sindhTextbookPdfName: chapterOverride.sindhTextbookPdfName || finalChapterData.content?.sindhTextbookPdfName,
                   alternativeTextbookPdfName: chapterOverride.alternativeTextbookPdfName || finalChapterData.content?.alternativeTextbookPdfName,
                   teacherNotesPdfName: chapterOverride.teacherNotesPdfName || finalChapterData.content?.teacherNotesPdfName,
+                  punjabBoardPdfName: chapterOverride.punjabBoardPdfName || finalChapterData.content?.punjabBoardPdfName,
+                  nationalSyllabusPdfName: chapterOverride.nationalSyllabusPdfName || finalChapterData.content?.nationalSyllabusPdfName,
+                  ziauddinBoardPdfName: chapterOverride.ziauddinBoardPdfName || finalChapterData.content?.ziauddinBoardPdfName,
                   keyPoints: chapterOverride.keyPoints || finalChapterData.content?.keyPoints,
                   mcqs: chapterOverride.mcqs || finalChapterData.content?.mcqs || [],
                   shortAnswers: chapterOverride.shortAnswers || finalChapterData.content?.shortAnswers || [],
@@ -205,99 +267,33 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     setChapterData(finalChapterData);
     setGradeData(initialGradeData); 
 
-    // Determine initial PDF to show and attempt to load from cache
     const content = finalChapterData.content || {};
-    let initialSource: PdfSourceType | null = null;
-    let initialLink: string | null = null;
-    let initialFileName: string | null = null;
-
-    if (content.sindhTextbookPdfName) {
-        initialSource = 'sindh';
-        initialLink = content.sindhTextbookPdfName;
-        initialFileName = "Sindh Textbook";
-    } else if (content.alternativeTextbookPdfName) {
-        initialSource = 'alternative';
-        initialLink = content.alternativeTextbookPdfName;
-        initialFileName = "Alternative Textbook";
-    } else if (content.teacherNotesPdfName) {
-        initialSource = 'teacher';
-        initialLink = content.teacherNotesPdfName;
-        initialFileName = "Teacher's Notes";
-    }
+    const pdfSourceCandidates: PdfSourceInfo[] = [
+        { key: 'sindhTextbookPdfName', displayName: "Sindh Textbook", link: content.sindhTextbookPdfName, icon: BookCopy },
+        { key: 'teacherNotesPdfName', displayName: "Teacher's Notes", link: content.teacherNotesPdfName, icon: Notebook },
+        { key: 'ziauddinBoardPdfName', displayName: "Ziauddin Board", link: content.ziauddinBoardPdfName, icon: Landmark },
+        { key: 'punjabBoardPdfName', displayName: "Punjab Board", link: content.punjabBoardPdfName, icon: BookCopy },
+        { key: 'nationalSyllabusPdfName', displayName: "National Syllabus", link: content.nationalSyllabusPdfName, icon: Globe },
+        { key: 'alternativeTextbookPdfName', displayName: "Alternative Book", link: content.alternativeTextbookPdfName, icon: BookOpen },
+    ];
     
-    setActivePdfSource(initialSource);
-    setActivePdfLink(initialLink);
+    const validSources = pdfSourceCandidates.filter(s => s.link && s.link.trim() !== "");
+    setAvailablePdfSources(validSources);
 
-    if (initialLink && initialFileName) {
-        const loadedCache = await loadCachedPdf(initialLink);
-        if (loadedCache) {
-            setCachedPdfInfo(loadedCache);
-            setActivePdfDisplayUrl(loadedCache.blobUrl);
-            toast({ title: "Loaded Cached PDF", description: `Displaying offline version of ${loadedCache.fileName}.`});
-        } else if (isOnline) {
-            // If not cached, and online, use a Google Drive embed link if it's a GDrive URL
-            // This is a simplified embed. Robust embedding might need `uc?export=embed&id=FILE_ID`
-             if (initialLink.includes('drive.google.com')) {
-                const fileIdMatch = initialLink.match(/[\w-]{25,}/); // Common GDrive file ID pattern
-                if (fileIdMatch) {
-                    setActivePdfDisplayUrl(`https://drive.google.com/file/d/${fileIdMatch[0]}/preview`);
-                } else {
-                    setActivePdfDisplayUrl(null); // Or a direct link if it's not a GDrive one
-                     // toast({ title: "Note", description: "Could not form embed link. PDF might not display correctly.", variant: "default"});
-                }
-            } else {
-                 setActivePdfDisplayUrl(null); // Not a GDrive link, can't embed this way
-            }
-        } else {
-            setActivePdfDisplayUrl(null); // Offline and not cached
-        }
+    if (validSources.length > 0) {
+        setActivePdfSourceKey(validSources[0].key);
+        await updateDisplayedPdf(validSources[0].link!, validSources[0].displayName);
     } else {
-        setActivePdfDisplayUrl(null);
-        setCachedPdfInfo(null);
+        setActivePdfSourceKey(null);
+        await updateDisplayedPdf(null, "No Source");
     }
 
     setIsLoading(false);
-  }, [initialChapterData, initialGradeData, toast, loadCachedPdf, isOnline]);
+  }, [initialChapterData, initialGradeData, toast, updateDisplayedPdf]);
 
   useEffect(() => {
     loadChapterWithOverrides();
   }, [loadChapterWithOverrides]);
-
-  const handlePdfSourceChange = async (source: PdfSourceType, link: string | null | undefined, fileName: string) => {
-    if (!link) {
-        setActivePdfSource(source);
-        setActivePdfLink(null);
-        setActivePdfDisplayUrl(null);
-        setCachedPdfInfo(null);
-        return;
-    }
-    setActivePdfSource(source);
-    setActivePdfLink(link);
-    
-    const loadedCache = await loadCachedPdf(link);
-    if (loadedCache) {
-        setCachedPdfInfo(loadedCache);
-        setActivePdfDisplayUrl(loadedCache.blobUrl);
-        toast({ title: "Loaded Cached PDF", description: `Displaying offline version of ${fileName}.`});
-    } else if (isOnline) {
-        if (link.includes('drive.google.com')) {
-            const fileIdMatch = link.match(/[\w-]{25,}/);
-            if (fileIdMatch) {
-                setActivePdfDisplayUrl(`https://drive.google.com/file/d/${fileIdMatch[0]}/preview`);
-            } else {
-                setActivePdfDisplayUrl(null);
-                // toast({ title: "Note", description: "Could not form embed link for new selection.", variant: "default"});
-            }
-        } else {
-            setActivePdfDisplayUrl(null);
-        }
-        setCachedPdfInfo(null); // Clear old cache info if viewing online link
-    } else {
-        setActivePdfDisplayUrl(null); // Offline and not cached for this new source
-        setCachedPdfInfo(null);
-        toast({ title: "Offline", description: `${fileName} is not available offline. Connect to view or cache it.`, variant:"default" });
-    }
-  };
 
 
   const handleMcqOptionChange = (mcqId: string, optionIndex: number) => {
@@ -317,7 +313,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
       }));
       toast({
         title: correct ? "Correct!" : "Incorrect",
-        description: correct ? "Well done!" : `The correct answer was option ${mcq.options[mcq.correctAnswerIndex]}. Check the explanation.`,
+        description: correct ? "Well done!" : `The correct answer was: "${mcq.options[mcq.correctAnswerIndex]}". Check the explanation.`,
         variant: correct ? "default" : "destructive",
         className: correct ? "bg-green-500 text-white dark:text-white" : "",
       });
@@ -334,13 +330,17 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   };
 
   const handleForceCacheActivePdf = () => {
-    if (activePdfLink && chapterData?.content) {
-        let fileName = "Selected PDF";
-        if (activePdfSource === 'sindh' && chapterData.content.sindhTextbookPdfName) fileName = "Sindh Textbook";
-        else if (activePdfSource === 'alternative' && chapterData.content.alternativeTextbookPdfName) fileName = "Alternative Textbook";
-        else if (activePdfSource === 'teacher' && chapterData.content.teacherNotesPdfName) fileName = "Teacher's Notes";
-        cachePdf(activePdfLink, fileName);
+    if (activePdfGLink && activePdfSourceKey) {
+        const sourceInfo = availablePdfSources.find(s => s.key === activePdfSourceKey);
+        if (sourceInfo) {
+            cachePdf(activePdfGLink, sourceInfo.displayName);
+        }
     }
+  };
+  
+  const handleSourceButtonClick = async (source: PdfSourceInfo) => {
+    setActivePdfSourceKey(source.key);
+    await updateDisplayedPdf(source.link!, source.displayName);
   };
 
   if (isLoading || !gradeData || !chapterData) { 
@@ -359,18 +359,8 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   
   const content: ChapterContent = chapterData.content || {};
   const lastUpdatedByTeacher = content.lastUpdated ? new Date(content.lastUpdated).toLocaleDateString() : null;
-
-  const availablePdfSources: { type: PdfSourceType, name: string, link?: string, icon: React.ElementType }[] = [];
-  if (content.sindhTextbookPdfName) availablePdfSources.push({ type: 'sindh', name: "Sindh Textbook", link: content.sindhTextbookPdfName, icon: BookOpen });
-  if (content.alternativeTextbookPdfName) availablePdfSources.push({ type: 'alternative', name: "Alternative Book", link: content.alternativeTextbookPdfName, icon: BookOpen });
-  if (content.teacherNotesPdfName) availablePdfSources.push({ type: 'teacher', name: "Teacher's Notes", link: content.teacherNotesPdfName, icon: Notebook });
-
-  const currentActiveFileName = 
-    activePdfSource === 'sindh' ? "Sindh Textbook" :
-    activePdfSource === 'alternative' ? "Alternative Textbook" :
-    activePdfSource === 'teacher' ? "Teacher's Notes" : 
-    "Chapter Notes";
-
+  
+  const currentActiveDisplayName = availablePdfSources.find(s => s.key === activePdfSourceKey)?.displayName || "Chapter Notes";
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -399,8 +389,8 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
               <Card>
                 <CardHeader>
                   <div className="flex flex-wrap justify-between items-center gap-2">
-                    <CardTitle>{currentActiveFileName}</CardTitle>
-                    {isOnline && activePdfLink && (!cachedPdfInfo || cachedPdfInfo.url !== activePdfLink) && (
+                    <CardTitle>{currentActiveDisplayName}</CardTitle>
+                    {isOnline && activePdfGLink && pdfCacheStatus === 'not_cached' && (
                        <Button onClick={handleForceCacheActivePdf} size="sm" variant="outline" disabled={isCachingPdf}>
                          {isCachingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <DownloadCloud className="mr-2 h-4 w-4"/>}
                          Cache for Offline
@@ -412,50 +402,51 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
                         <Label className="text-sm font-medium mr-2 self-center">View Source:</Label>
                         {availablePdfSources.map(src => (
                             <Button 
-                                key={src.type} 
-                                variant={activePdfSource === src.type ? "default" : "outline"}
+                                key={src.key} 
+                                variant={activePdfSourceKey === src.key ? "default" : "outline"}
                                 size="sm"
-                                onClick={() => handlePdfSourceChange(src.type, src.link, src.name)}
+                                onClick={() => handleSourceButtonClick(src)}
                                 className="text-xs"
                                 disabled={isCachingPdf}
                             >
                                 <src.icon className="mr-1 h-3 w-3" />
-                                {src.name}
+                                {src.displayName}
                             </Button>
                         ))}
                     </div>
                    )}
                   <CardDescription>
-                    {activePdfDisplayUrl ? `Displaying: ${currentActiveFileName}. ` : "No document selected or available. "}
-                    Scroll to view the material.
-                    {cachedPdfInfo && activePdfLink === cachedPdfInfo.url && <span className="text-xs text-green-600 dark:text-green-400 block">(Available Offline)</span>}
+                    {activePdfEmbedUrl ? `Displaying: ${currentActiveDisplayName}. ` : "No document selected or available. "}
+                    {pdfCacheStatus === 'cached' && <span className="text-xs text-green-600 dark:text-green-400 block">(Available Offline)</span>}
+                    {pdfCacheStatus === 'error_caching' && <span className="text-xs text-red-600 dark:text-red-400 block">(Error: Could not display or cache)</span>}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {!isOnline && !activePdfDisplayUrl && (
+                  {!isOnline && !activePdfEmbedUrl && (
                     <Alert variant="destructive">
                         <WifiOff className="h-4 w-4" />
                         <AlertTitle>You are Offline</AlertTitle>
                         <AlertDescription>This document is not cached for offline viewing. Please connect to the internet to view or cache it.</AlertDescription>
                     </Alert>
                   )}
-                  {isOnline && !activePdfDisplayUrl && activePdfLink && (
+                  {isOnline && !activePdfEmbedUrl && activePdfGLink && pdfCacheStatus !== 'cached' && (
                      <Alert variant="default">
-                        <AlertDescription>Attempting to load document. If it doesn't appear, the link might be invalid or requires specific permissions. You can try caching it for offline use.</AlertDescription>
+                        <AlertTitle>Loading Document...</AlertTitle>
+                        <AlertDescription>Attempting to load document. If it doesn't appear, the link might be invalid, require specific permissions, or not be directly embeddable. You can try caching it for offline use if available.</AlertDescription>
                     </Alert>
                   )}
-                  {activePdfDisplayUrl ? (
+                  {activePdfEmbedUrl ? (
                     <iframe 
-                        src={activePdfDisplayUrl} 
-                        className="w-full h-[600px] md:h-[800px] border rounded-md bg-muted" 
-                        title={`${currentActiveFileName} Document`}
-                        // sandbox="allow-scripts allow-same-origin" // Consider sandbox attributes for security if GDrive links are direct
+                        src={activePdfEmbedUrl} 
+                        className="w-full h-[70vh] min-h-[500px] md:min-h-[700px] border rounded-md bg-muted" 
+                        title={`${currentActiveDisplayName} Document`}
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms" // More permissive for Google Drive embeds
                     ></iframe>
-                  ) : !activePdfLink && (
-                    <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4 text-center">
+                  ) : !activePdfGLink && (
+                    <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4 text-center min-h-[300px]">
                         <FileText className="h-16 w-16 text-muted-foreground mb-2"/>
                         <p className="text-sm text-muted-foreground">No document source selected or available for this chapter.</p>
-                        <p className="text-xs text-muted-foreground mt-1">Teacher can add Google Drive PDF links via Content Management.</p>
+                        <p className="text-xs text-muted-foreground mt-1">The teacher can add PDF links via the Content Management panel.</p>
                     </div>
                   )}
                 </CardContent>
