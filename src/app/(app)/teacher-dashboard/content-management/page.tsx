@@ -13,10 +13,10 @@ import { Loader2, AlertTriangle, FileEdit, UploadCloud, Trash2, Bot, PlusCircle,
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { StudyGrade, Chapter, TeacherChapterOverrides, ChapterContent, MCQ, QuestionAnswer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-// Placeholder for the AI flow
 import { extractChapterContent, type ExtractedChapterContentOutput } from '@/ai/flows/extractChapterContentFlow';
 
 const TEACHER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides';
+type PdfTypeKey = 'sindhTextbookPdfName' | 'alternativeTextbookPdfName' | 'teacherNotesPdfName';
 
 export default function TeacherContentManagementPage() {
   const { toast } = useToast();
@@ -81,29 +81,33 @@ export default function TeacherContentManagementPage() {
   }, [selectedChapterId, selectedGradeId, loadChapterContentForEditing]);
 
 
-  const handlePdfUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = (event: React.ChangeEvent<HTMLInputElement>, pdfType: PdfTypeKey) => {
     const file = event.target.files?.[0];
     if (file) {
-      setEditableContent(prev => ({ ...prev, pdfName: file.name }));
-      toast({ title: "PDF Selected", description: `${file.name} is ready to be associated upon saving.` });
+      setEditableContent(prev => ({ ...prev, [pdfType]: file.name }));
+      toast({ title: "PDF Selected", description: `${file.name} is ready to be associated with ${pdfType.replace('PdfName','')} upon saving.` });
     }
   };
 
-  const handleRemovePdf = () => {
-    setEditableContent(prev => ({ ...prev, pdfName: undefined }));
-    toast({ title: "PDF Removed", description: "The PDF association will be cleared upon saving." });
+  const handleRemovePdf = (pdfType: PdfTypeKey) => {
+    setEditableContent(prev => {
+      const newContent = {...prev};
+      delete newContent[pdfType]; // Or set to undefined if you prefer
+      return newContent;
+    });
+    toast({ title: "PDF Removed", description: `The PDF association for ${pdfType.replace('PdfName','')} will be cleared upon saving.` });
   };
 
   const handleAiGenerate = async () => {
-    if (!editableContent.pdfName) {
-      toast({ title: "No PDF", description: "Please 'upload' (associate a name) a PDF first.", variant: "destructive" });
+    const primaryPdfForAi = editableContent.teacherNotesPdfName || editableContent.sindhTextbookPdfName || editableContent.alternativeTextbookPdfName;
+    if (!primaryPdfForAi) {
+      toast({ title: "No PDF for AI", description: "Please associate at least one PDF (e.g., Teacher Notes or Sindh Textbook) to generate content from.", variant: "destructive" });
       return;
     }
     setIsGeneratingAiContent(true);
     try {
-      // Simulate passing PDF content (just the name for now)
       const result: ExtractedChapterContentOutput = await extractChapterContent({ 
-        pdfTextContent: `Simulated content from ${editableContent.pdfName}`, // In real app, pass actual text
+        pdfTextContent: `Simulated content from ${primaryPdfForAi}`,
         chapterName: studyGrades.find(g=>g.id === selectedGradeId)?.chapters.find(c=>c.id === selectedChapterId)?.name || "Selected Chapter"
       });
       
@@ -123,28 +127,23 @@ export default function TeacherContentManagementPage() {
     }
   };
   
-  const handleContentChange = (field: keyof ChapterContent, value: any, index?: number, subField?: keyof MCQ | keyof QuestionAnswer | 'options') => {
+  const handleContentChange = (field: keyof ChapterContent | 'mcqs' | 'shortAnswers' | 'longAnswers', value: any, index?: number, subField?: keyof MCQ | keyof QuestionAnswer | 'options') => {
     setEditableContent(prev => {
       const updatedContent = { ...prev };
-      if (field === 'mcqs' && typeof index === 'number' && subField) {
-        const mcqs = [...(updatedContent.mcqs || [])];
-        if (subField === 'options') { // options is an array
-            const options = [...(mcqs[index].options || [])];
-            options[value.optionIndex] = value.optionValue; // value = { optionIndex, optionValue }
-            mcqs[index] = { ...mcqs[index], options };
-        } else if (subField === 'correctAnswerIndex') {
-            mcqs[index] = { ...mcqs[index], correctAnswerIndex: parseInt(value, 10) };
+      if ((field === 'mcqs' || field === 'shortAnswers' || field === 'longAnswers') && typeof index === 'number' && subField) {
+        const items = [...(updatedContent[field as 'mcqs' | 'shortAnswers' | 'longAnswers'] || [])] as any[];
+        if (field === 'mcqs' && subField === 'options') {
+            const options = [...(items[index].options || [])];
+            options[value.optionIndex] = value.optionValue; 
+            items[index] = { ...items[index], options };
+        } else if (field === 'mcqs' && subField === 'correctAnswerIndex') {
+            items[index] = { ...items[index], correctAnswerIndex: parseInt(value, 10) };
+        } else {
+            items[index] = { ...items[index], [subField]: value };
         }
-         else {
-            mcqs[index] = { ...mcqs[index], [subField]: value };
-        }
-        return { ...updatedContent, mcqs };
-      } else if ((field === 'shortAnswers' || field === 'longAnswers') && typeof index === 'number' && subField) {
-        const qas = [...(updatedContent[field] || [])] as QuestionAnswer[];
-        qas[index] = { ...qas[index], [subField]: value };
-        return { ...updatedContent, [field]: qas };
+        return { ...updatedContent, [field]: items };
       }
-      return { ...updatedContent, [field]: value };
+      return { ...updatedContent, [field as keyof ChapterContent]: value };
     });
   };
 
@@ -183,25 +182,30 @@ export default function TeacherContentManagementPage() {
       const overridesRaw = localStorage.getItem(TEACHER_OVERRIDES_STORAGE_KEY);
       const allOverrides: TeacherChapterOverrides = overridesRaw ? JSON.parse(overridesRaw) : {};
       
+      const contentToSave: Partial<ChapterContent> = { ...editableContent };
+      // Clean up empty PDF names before saving
+      if (!contentToSave.sindhTextbookPdfName?.trim()) delete contentToSave.sindhTextbookPdfName;
+      if (!contentToSave.alternativeTextbookPdfName?.trim()) delete contentToSave.alternativeTextbookPdfName;
+      if (!contentToSave.teacherNotesPdfName?.trim()) delete contentToSave.teacherNotesPdfName;
+
+
       allOverrides[selectedChapterId] = {
-        ...editableContent,
-        chapterId: selectedChapterId,
-        gradeId: selectedGradeId,
+        ...contentToSave,
+        chapterId: selectedChapterId, // Ensure these are present
+        gradeId: selectedGradeId,     //
         lastUpdated: new Date().toISOString(),
       };
       
       localStorage.setItem(TEACHER_OVERRIDES_STORAGE_KEY, JSON.stringify(allOverrides));
       toast({ title: "Content Saved!", description: `Changes for chapter ${selectedChapterId} saved locally.` });
 
-      // Optimistically update studyGrades state if needed, or trigger a re-fetch
-      // For simplicity, let's just update the local state for immediate reflection if the structure matches
        setStudyGrades(prevGrades => prevGrades.map(g => {
         if (g.id === selectedGradeId) {
           return {
             ...g,
             chapters: g.chapters.map(c => {
               if (c.id === selectedChapterId) {
-                return { ...c, content: { ...c.content, ...allOverrides[selectedChapterId]} };
+                return { ...c, content: { ...(c.content || {}), ...allOverrides[selectedChapterId]} };
               }
               return c;
             })
@@ -209,7 +213,6 @@ export default function TeacherContentManagementPage() {
         }
         return g;
       }));
-
 
     } catch (e) {
       console.error("Failed to save overrides:", e);
@@ -222,12 +225,18 @@ export default function TeacherContentManagementPage() {
   if (isLoadingGrades) return <div className="flex justify-center items-center p-10"><Loader2 className="h-10 w-10 animate-spin"/></div>;
   if (gradesError) return <Alert variant="destructive"><AlertTriangle className="h-4 w-4"/><AlertDescription>{gradesError}</AlertDescription></Alert>;
 
+  const pdfConfig: { key: PdfTypeKey, label: string }[] = [
+    { key: 'sindhTextbookPdfName', label: 'Sindh Textbook PDF' },
+    { key: 'alternativeTextbookPdfName', label: 'Alternative Textbook PDF (e.g., Ziauddin)' },
+    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF" },
+  ];
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileEdit className="h-6 w-6 text-primary"/>Content Management</CardTitle>
-          <CardDescription>Manage chapter content, including PDFs, key points, and exercises. Changes are saved to your browser's local storage.</CardDescription>
+          <CardDescription>Manage chapter content, including multiple PDF sources, key points, and exercises. Changes are saved to your browser's local storage.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
@@ -236,7 +245,7 @@ export default function TeacherContentManagementPage() {
               <Card>
                 <CardHeader><CardTitle className="text-lg">Select Chapter</CardTitle></CardHeader>
                 <CardContent>
-                  <Select onValueChange={setSelectedGradeId} value={selectedGradeId || undefined}>
+                  <Select onValueChange={(value) => {setSelectedGradeId(value); setSelectedChapterId(null); setEditableContent({});}} value={selectedGradeId || undefined}>
                     <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
                     <SelectContent>
                       {studyGrades.map(grade => <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>)}
@@ -266,24 +275,29 @@ export default function TeacherContentManagementPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* PDF Management */}
-                    <div className="space-y-2 p-4 border rounded-md">
-                      <h3 className="font-semibold">PDF Document</h3>
-                      {editableContent.pdfName && <p className="text-sm text-muted-foreground">Current PDF: {editableContent.pdfName}</p>}
-                      <div className="flex gap-2 items-center">
-                        <Label htmlFor="pdf-upload" className="flex-grow">
-                            <Button asChild variant="outline" className="w-full">
-                                <span><UploadCloud className="mr-2 h-4 w-4"/> {editableContent.pdfName ? "Change PDF" : "Upload PDF"}</span>
-                            </Button>
-                        </Label>
-                        <Input id="pdf-upload" type="file" accept=".pdf" onChange={handlePdfUpload} className="hidden"/>
-                        {editableContent.pdfName && <Button variant="ghost" size="icon" onClick={handleRemovePdf}><Trash2 className="h-4 w-4 text-destructive"/></Button>}
-                      </div>
+                    <div className="space-y-4 p-4 border rounded-md">
+                      <h3 className="font-semibold text-lg">Chapter PDFs</h3>
+                      {pdfConfig.map(pdf => (
+                        <div key={pdf.key} className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
+                          <Label htmlFor={`${pdf.key}-upload`} className="font-medium">{pdf.label}</Label>
+                          {editableContent[pdf.key] && <p className="text-xs text-muted-foreground">Current: {editableContent[pdf.key]}</p>}
+                          <div className="flex gap-2 items-center">
+                            <Label htmlFor={`${pdf.key}-upload`} className="flex-grow">
+                                <Button asChild variant="outline" className="w-full text-xs">
+                                    <span><UploadCloud className="mr-1 h-3 w-3"/> {editableContent[pdf.key] ? "Change" : "Upload"}</span>
+                                </Button>
+                            </Label>
+                            <Input id={`${pdf.key}-upload`} type="file" accept=".pdf" onChange={(e) => handlePdfUpload(e, pdf.key)} className="hidden"/>
+                            {editableContent[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemovePdf(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
+                          </div>
+                        </div>
+                      ))}
                     </div>
 
                     {/* AI Generation Button */}
-                    <Button onClick={handleAiGenerate} disabled={isGeneratingAiContent || !editableContent.pdfName} className="w-full">
+                    <Button onClick={handleAiGenerate} disabled={isGeneratingAiContent || !(editableContent.teacherNotesPdfName || editableContent.sindhTextbookPdfName || editableContent.alternativeTextbookPdfName)} className="w-full">
                       {isGeneratingAiContent ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
-                      Generate Key Points & Exercises from PDF (AI - Simulated)
+                      Generate Key Points & Exercises (AI - Simulated)
                     </Button>
                     
                     {/* Key Points */}
@@ -292,7 +306,7 @@ export default function TeacherContentManagementPage() {
                       <Textarea 
                         value={editableContent.keyPoints || ""}
                         onChange={(e) => handleContentChange('keyPoints', e.target.value)}
-                        placeholder="Enter key points and summary for this chapter..."
+                        placeholder="Enter key points and summary for this chapter... (AI can help generate this)"
                         rows={6}
                       />
                     </div>
@@ -305,7 +319,7 @@ export default function TeacherContentManagementPage() {
                           {(editableContent.mcqs || []).map((mcq, index) => (
                             <Card key={mcq.id || index} className="p-3 bg-secondary/50">
                               <Label>MCQ {index + 1}:</Label>
-                              <Input placeholder="Question" value={mcq.question} onChange={e => handleContentChange('mcqs', e.target.value, index, 'question')} className="mb-1"/>
+                              <Textarea placeholder="Question" value={mcq.question} onChange={e => handleContentChange('mcqs', e.target.value, index, 'question')} className="mb-1" rows={2}/>
                               {mcq.options.map((opt, optIndex) => (
                                 <Input key={optIndex} placeholder={`Option ${optIndex + 1}`} value={opt} onChange={e => handleContentChange('mcqs', {optionIndex: optIndex, optionValue: e.target.value}, index, 'options')} className="mb-1 text-sm"/>
                               ))}
@@ -332,7 +346,7 @@ export default function TeacherContentManagementPage() {
                           {(editableContent.shortAnswers || []).map((qa, index) => (
                             <Card key={qa.id || index} className="p-3 bg-secondary/50">
                               <Label>Short Question {index + 1}:</Label>
-                              <Input placeholder="Question" value={qa.question} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'question')} className="mb-1"/>
+                              <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'question')} className="mb-1" rows={2}/>
                               <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'answer')} className="text-sm" rows={3}/>
                               <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('shortAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10"><Trash2 className="mr-1 h-3 w-3"/>Remove Short Q</Button>
                             </Card>
@@ -350,7 +364,7 @@ export default function TeacherContentManagementPage() {
                            {(editableContent.longAnswers || []).map((qa, index) => (
                             <Card key={qa.id || index} className="p-3 bg-secondary/50">
                               <Label>Long Question {index + 1}:</Label>
-                              <Input placeholder="Question" value={qa.question} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'question')} className="mb-1"/>
+                              <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'question')} className="mb-1" rows={3}/>
                               <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'answer')} className="text-sm" rows={5}/>
                                <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('longAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10"><Trash2 className="mr-1 h-3 w-3"/>Remove Long Q</Button>
                             </Card>
@@ -363,7 +377,7 @@ export default function TeacherContentManagementPage() {
                     <Button onClick={saveChapterContent} className="w-full mt-6">
                       <Save className="mr-2 h-4 w-4"/> Save Chapter Content
                     </Button>
-                    {editableContent.lastUpdated && <p className="text-xs text-muted-foreground text-center mt-1">Last saved by teacher: {new Date(editableContent.lastUpdated).toLocaleString()}</p>}
+                    {editableContent.lastUpdated && <p className="text-xs text-muted-foreground text-center mt-1">Teacher content last saved: {new Date(editableContent.lastUpdated).toLocaleString()}</p>}
                   </CardContent>
                 </Card>
               ) : (

@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw, BookOpen, Notebook, User } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
@@ -19,6 +19,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const TEACHER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides';
 
+type PdfSourceType = 'sindh' | 'alternative' | 'teacher';
+
 interface ChapterDetailClientProps {
   initialGradeData: StudyGrade;
   initialChapterData: Chapter;
@@ -32,9 +34,12 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   const { toast } = useToast();
   const [gradeData, setGradeData] = useState<StudyGrade | null>(initialGradeData);
   const [chapterData, setChapterData] = useState<Chapter | null>(initialChapterData);
-  const [isLoading, setIsLoading] = useState(false); // Initial data is passed as props, so not loading initially. Could be used for refresh.
+  const [isLoading, setIsLoading] = useState(false);
   
   const [mcqAttempts, setMcqAttempts] = useState<Record<string, { selectedOptionIndex: number | null; isCorrect: boolean | null; revealed: boolean }>>({});
+  const [currentPdfSource, setCurrentPdfSource] = useState<PdfSourceType | null>(null);
+  const [currentPdfFileName, setCurrentPdfFileName] = useState<string | null>(null);
+
 
   const loadChapterWithOverrides = useCallback(() => {
     setIsLoading(true);
@@ -46,15 +51,14 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
             const allOverrides: TeacherChapterOverrides = JSON.parse(overridesRaw);
             const chapterOverride = allOverrides[finalChapterData.id];
             if (chapterOverride) {
-                // Ensure mcqs, shortAnswers, longAnswers are initialized as arrays if they exist in override but not in base
                 const mergedContent = {
-                  ...finalChapterData.content,
+                  ...(finalChapterData.content || {}), // Ensure base content exists
                   ...chapterOverride,
                   mcqs: chapterOverride.mcqs || finalChapterData.content?.mcqs || [],
                   shortAnswers: chapterOverride.shortAnswers || finalChapterData.content?.shortAnswers || [],
                   longAnswers: chapterOverride.longAnswers || finalChapterData.content?.longAnswers || [],
                 };
-                finalChapterData.content = mergedContent;
+                finalChapterData.content = mergedContent as ChapterContent;
             }
           }
       }
@@ -67,13 +71,38 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
       })
     }
     setChapterData(finalChapterData);
-    setGradeData(initialGradeData); // Grade data doesn't change based on overrides
+    setGradeData(initialGradeData); 
+
+    // Determine initial PDF to show
+    const content = finalChapterData.content || {};
+    if (content.sindhTextbookPdfName) {
+        setCurrentPdfSource('sindh');
+        setCurrentPdfFileName(content.sindhTextbookPdfName);
+    } else if (content.alternativeTextbookPdfName) {
+        setCurrentPdfSource('alternative');
+        setCurrentPdfFileName(content.alternativeTextbookPdfName);
+    } else if (content.teacherNotesPdfName) {
+        setCurrentPdfSource('teacher');
+        setCurrentPdfFileName(content.teacherNotesPdfName);
+    } else {
+        setCurrentPdfSource(null);
+        setCurrentPdfFileName(null);
+    }
+
     setIsLoading(false);
   }, [initialChapterData, initialGradeData, toast]);
 
   useEffect(() => {
     loadChapterWithOverrides();
   }, [loadChapterWithOverrides]);
+
+  const handlePdfSourceChange = (source: PdfSourceType) => {
+    setCurrentPdfSource(source);
+    const content = chapterData?.content || {};
+    if (source === 'sindh') setCurrentPdfFileName(content.sindhTextbookPdfName || null);
+    else if (source === 'alternative') setCurrentPdfFileName(content.alternativeTextbookPdfName || null);
+    else if (source === 'teacher') setCurrentPdfFileName(content.teacherNotesPdfName || null);
+  };
 
 
   const handleMcqOptionChange = (mcqId: string, optionIndex: number) => {
@@ -109,7 +138,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     }));
   };
 
-  if (isLoading || !gradeData || !chapterData) { // Check for isLoading too
+  if (isLoading || !gradeData || !chapterData) { 
     return (
       <div className="space-y-6 p-4">
         <Skeleton className="h-8 w-48" />
@@ -125,6 +154,12 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   
   const content: ChapterContent = chapterData.content || {};
   const lastUpdatedByTeacher = content.lastUpdated ? new Date(content.lastUpdated).toLocaleDateString() : null;
+
+  const availablePdfSources: { type: PdfSourceType, name: string, fileName?: string, icon: React.ElementType }[] = [];
+  if (content.sindhTextbookPdfName) availablePdfSources.push({ type: 'sindh', name: "Sindh Textbook", fileName: content.sindhTextbookPdfName, icon: BookOpen });
+  if (content.alternativeTextbookPdfName) availablePdfSources.push({ type: 'alternative', name: "Alternative Book", fileName: content.alternativeTextbookPdfName, icon: BookOpen });
+  if (content.teacherNotesPdfName) availablePdfSources.push({ type: 'teacher', name: "Teacher's Notes", fileName: content.teacherNotesPdfName, icon: Notebook });
+
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -153,32 +188,57 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
               <Card>
                 <CardHeader>
                   <CardTitle>Chapter Notes</CardTitle>
+                   {availablePdfSources.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 border-b pb-2 mb-2">
+                        <Label className="text-sm font-medium mr-2 self-center">View Source:</Label>
+                        {availablePdfSources.map(src => (
+                            <Button 
+                                key={src.type} 
+                                variant={currentPdfSource === src.type ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => handlePdfSourceChange(src.type)}
+                                className="text-xs"
+                            >
+                                <src.icon className="mr-1 h-3 w-3" />
+                                {src.name}
+                            </Button>
+                        ))}
+                    </div>
+                   )}
                   <CardDescription>
-                    {content.pdfName ? `Reference: ${content.pdfName}. ` : "Notes for this chapter will appear here. "}
+                    {currentPdfFileName ? `Displaying: ${currentPdfFileName}. ` : "No PDF selected or available. "}
                     Scroll to view the material.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4">
-                     <Image src="https://placehold.co/800x600.png" alt={`${chapterData.name} Notes Preview`} width={800} height={600} data-ai-hint="document textbook" className="max-w-full max-h-full object-contain"/>
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      Interactive notes viewer placeholder.
-                    </p>
-                  </div>
+                  {currentPdfFileName ? (
+                    <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4">
+                        <Image src="https://placehold.co/800x600.png" alt={`${currentPdfFileName} Preview`} width={800} height={600} data-ai-hint="document textbook" className="max-w-full max-h-full object-contain"/>
+                        <p className="mt-4 text-sm text-muted-foreground">
+                        Interactive notes viewer placeholder for: {currentPdfFileName}
+                        </p>
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] bg-muted rounded-lg flex flex-col items-center justify-center p-4">
+                        <FileText className="h-16 w-16 text-muted-foreground mb-2"/>
+                        <p className="text-sm text-muted-foreground">No PDF content to display for this selection.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Teacher can upload PDFs via Content Management.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400"/>Key Points & Summary</CardTitle>
-                  <CardDescription>Quickly review the most important concepts, definitions, and formulas from this chapter.</CardDescription>
+                  <CardDescription>Quickly review the most important concepts, definitions, and formulas from this chapter. (Generated by AI, approved by teacher)</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px] space-y-4 whitespace-pre-wrap">
                     {content.keyPoints ? (
                       <p className="text-sm">{content.keyPoints}</p>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No key points available for this chapter yet. Teacher can add these via the Content Management panel.</p>
+                      <p className="text-sm text-muted-foreground">No key points available for this chapter yet. Teacher can add or generate these via the Content Management panel.</p>
                     )}
                   </div>
                 </CardContent>
@@ -186,7 +246,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
             </TabsContent>
 
             <TabsContent value="chapter-exercise" className="mt-4 space-y-6">
-              <p className="text-sm text-muted-foreground">All exercises are based on the syllabus.</p>
+              <p className="text-sm text-muted-foreground">All exercises are based on the syllabus. (Content generated by AI, approved by teacher)</p>
               
               <Card>
                 <CardHeader>

@@ -14,7 +14,9 @@ export interface QuestionAnswer {
 }
 
 export interface ChapterContent {
-  pdfName?: string;
+  sindhTextbookPdfName?: string;
+  alternativeTextbookPdfName?: string;
+  teacherNotesPdfName?: string;
   keyPoints?: string;
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[]; // CRQs
