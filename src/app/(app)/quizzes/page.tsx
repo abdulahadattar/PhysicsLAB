@@ -35,7 +35,7 @@ export default function QuizzesPage() {
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl">Quizzes and Self-Assessment</CardTitle>
           <CardDescription>Sharpen your knowledge with daily challenges, topic-specific quizzes, and track your performance.</CardDescription>
@@ -43,8 +43,12 @@ export default function QuizzesPage() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {quizSections.map((section) => (
-          <Card key={section.title} className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+        {quizSections.map((section, index) => (
+          <Card 
+            key={section.title} 
+            className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
              <div className="relative h-48 w-full bg-secondary/30 flex items-center justify-center" data-ai-hint={section.aiHint}>
                 {section.image.startsWith("https://placehold.co") ? (
                   <section.icon className="h-20 w-20 text-primary/70" strokeWidth={1.5}/>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SIMULATION_TOPICS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
-import { Search, Orbit } from "lucide-react"; // Added Orbit for default icon
+import { Search, Orbit } from "lucide-react"; 
 import Image from "next/image";
 
 export default function SimulationsPage() {
@@ -17,7 +17,7 @@ export default function SimulationsPage() {
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl">Interactive Physics Simulations</CardTitle>
           <CardDescription>Explore various physics concepts through hands-on simulations. Adjust parameters and observe the outcomes.</CardDescription>
@@ -36,11 +36,15 @@ export default function SimulationsPage() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {SIMULATION_TOPICS.map((topic) => {
-          const IconComponent = topic.icon || Orbit; // Fallback to Orbit icon
+        {SIMULATION_TOPICS.map((topic, index) => {
+          const IconComponent = topic.icon || Orbit; 
           const isPlaceholderImage = !topic.image || topic.image.startsWith("https://placehold.co");
           return (
-            <Card key={topic.id} className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+            <Card 
+              key={topic.id} 
+              className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
               <div className="relative h-40 bg-secondary/30 flex items-center justify-center" data-ai-hint={topic.aiHint || "physics diagram"}>
                 {isPlaceholderImage ? (
                   <IconComponent className="h-16 w-16 text-primary/70" strokeWidth={1.5}/>

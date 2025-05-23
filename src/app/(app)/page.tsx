@@ -13,7 +13,7 @@ export default function DashboardPage() {
       description: "Visualize physics concepts with dynamic simulations.",
       href: "/simulations",
       icon: FlaskConical,
-      image: "https://placehold.co/600x400.png", // Placeholder
+      image: "https://placehold.co/600x400.png", 
       aiHint: "physics simulation"
     },
     {
@@ -21,7 +21,7 @@ export default function DashboardPage() {
       description: "Access chapter-wise notes and MCQs for grades 9-12.",
       href: "/study-material",
       icon: BookOpen,
-      image: "https://placehold.co/600x400.png", // Placeholder
+      image: "https://placehold.co/600x400.png", 
       aiHint: "textbooks study"
     },
     {
@@ -29,14 +29,14 @@ export default function DashboardPage() {
       description: "Test your knowledge with daily and topic-wise quizzes.",
       href: "/quizzes",
       icon: ListChecks,
-      image: "https://placehold.co/600x400.png", // Placeholder
+      image: "https://placehold.co/600x400.png", 
       aiHint: "quiz test"
     },
   ];
 
   return (
     <div className="flex flex-col gap-8">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Welcome to {APP_NAME}!</CardTitle>
           <CardDescription>Your interactive guide to mastering physics, by {APP_AUTHOR}.</CardDescription>
@@ -50,8 +50,12 @@ export default function DashboardPage() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {features.map((feature) => (
-          <Card key={feature.title} className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+        {features.map((feature, index) => (
+          <Card 
+            key={feature.title} 
+            className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
             <div className="relative h-48 w-full bg-secondary/30 flex items-center justify-center" data-ai-hint={feature.aiHint}>
               {feature.image.startsWith("https://placehold.co") ? (
                 <feature.icon className="h-20 w-20 text-primary/70" strokeWidth={1.5}/>
@@ -82,7 +86,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out" style={{ animationDelay: `${features.length * 100}ms` }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-2xl">
             <Lightbulb className="h-6 w-6 text-yellow-400" />

@@ -125,7 +125,7 @@ export default function StudyMaterialPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <Card>
+        <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
           <CardHeader>
             <CardTitle className="text-3xl">Study Materials</CardTitle>
             <CardDescription>Loading study materials...</CardDescription>
@@ -144,7 +144,7 @@ export default function StudyMaterialPage() {
   if (error && !isCacheWarning && studyGrades.length === 0) { 
     return (
       <div className="space-y-8">
-        <Card>
+        <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
           <CardHeader>
             <CardTitle className="text-3xl">Study Materials</CardTitle>
           </CardHeader>
@@ -162,7 +162,7 @@ export default function StudyMaterialPage() {
   if (!isLoading && !error && studyGrades.length === 0) {
      return (
       <div className="space-y-8">
-        <Card>
+        <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
           <CardHeader>
             <CardTitle className="text-3xl">Study Materials</CardTitle>
             <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. App by {APP_AUTHOR}.</CardDescription>
@@ -176,7 +176,7 @@ export default function StudyMaterialPage() {
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl">Study Materials</CardTitle>
           <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. App by {APP_AUTHOR}.</CardDescription>
@@ -193,8 +193,12 @@ export default function StudyMaterialPage() {
       )}
 
       <Accordion type="multiple" className="w-full space-y-4" defaultValue={studyGrades.length > 0 ? [`grade-${studyGrades[0].id}`] : undefined}>
-        {studyGrades.map((grade) => (
-          <Card key={grade.id} className="overflow-hidden shadow-md">
+        {studyGrades.map((grade, gradeIndex) => (
+          <Card 
+            key={grade.id} 
+            className="overflow-hidden shadow-md animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
+            style={{ animationDelay: `${gradeIndex * 100}ms` }}
+          >
             <AccordionItem value={`grade-${grade.id}`} className="border-none">
               <AccordionTrigger className="bg-secondary/30 hover:bg-secondary/50 px-6 py-4 text-xl font-semibold hover:no-underline">
                 <div className="flex items-center justify-between w-full">
@@ -229,7 +233,7 @@ export default function StudyMaterialPage() {
               <AccordionContent className="p-0">
                 <ul className="divide-y divide-border">
                   {grade.chapters.map((chapter) => (
-                    <li key={chapter.id}>
+                    <li key={chapter.id} className="transition-colors hover:bg-muted/30">
                       <Link href={`/study-material/${grade.id}/${chapter.id}`} passHref>
                         <Button variant="ghost" className="w-full justify-between rounded-none px-6 py-4 h-auto">
                           <span className="text-left">{chapter.name}</span>
