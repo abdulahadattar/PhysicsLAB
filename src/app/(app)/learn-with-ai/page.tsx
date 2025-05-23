@@ -8,12 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Brain, Camera, FileImage, Send, Sparkles, Loader2, WifiOff, MessageCircleQuestion, Lightbulb } from "lucide-react";
+import { Brain, Camera, FileImage, Send, Sparkles, Loader2, WifiOff, MessageCircleQuestion, Lightbulb, GraduationCap, AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import Image from 'next/image';
 import { aiLearningAssistant, type AiLearningAssistantInput, type AiLearningAssistantOutput } from '@/ai/flows/ai-learning-assistant-flow';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import type { StudyGrade } from '@/lib/types';
 
 export default function LearnWithAiPage() {
   const { toast } = useToast();
@@ -26,6 +28,11 @@ export default function LearnWithAiPage() {
   const [aiResponse, setAiResponse] = useState<AiLearningAssistantOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+
+  const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
+  const [selectedGradeId, setSelectedGradeId] = useState<string | undefined>(undefined);
+  const [isLoadingGrades, setIsLoadingGrades] = useState(true);
+  const [gradesError, setGradesError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -40,6 +47,30 @@ export default function LearnWithAiPage() {
       };
     }
   }, []);
+
+  useEffect(() => {
+    async function fetchGrades() {
+      setIsLoadingGrades(true);
+      setGradesError(null);
+      try {
+        const res = await fetch('/api/study-materials');
+        if (!res.ok) throw new Error(`Failed to fetch grades: ${res.statusText}`);
+        const data: StudyGrade[] = await res.json();
+        setStudyGrades(data);
+        // Optionally set a default grade if needed, e.g., the first one
+        // if (data.length > 0) setSelectedGradeId(data[0].id); 
+      } catch (error) {
+        console.error("Error fetching study grades:", error);
+        const errorMsg = error instanceof Error ? error.message : "Could not load grade information.";
+        setGradesError(errorMsg);
+        toast({ variant: "destructive", title: "Error loading grades", description: errorMsg });
+      } finally {
+        setIsLoadingGrades(false);
+      }
+    }
+    fetchGrades();
+  }, [toast]);
+
 
   const getCameraPermission = useCallback(async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -133,10 +164,13 @@ export default function LearnWithAiPage() {
     setIsLoading(true);
     setAiResponse(null);
 
+    const gradeLevelNumber = selectedGradeId ? parseInt(selectedGradeId, 10) : undefined;
+
     try {
       const input: AiLearningAssistantInput = {
         userQuery: textQuery,
         imageDataUri: uploadedImage || undefined,
+        gradeLevel: gradeLevelNumber,
       };
       const response = await aiLearningAssistant(input);
       setAiResponse(response);
@@ -161,7 +195,7 @@ export default function LearnWithAiPage() {
           </div>
           <CardTitle className="text-3xl">Learn with AI</CardTitle>
           <CardDescription>
-            Ask physics questions, get explanations, analyze images, and explore topics further with our AI assistant.
+            Ask physics questions, get explanations, analyze images, and explore topics further with our AI assistant. Select your grade for tailored help!
           </CardDescription>
         </CardHeader>
       </Card>
@@ -175,6 +209,39 @@ export default function LearnWithAiPage() {
           </AlertDescription>
         </Alert>
       )}
+      
+      <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary"/>Your Grade Level</CardTitle>
+            <CardDescription>Selecting your grade helps the AI provide more relevant explanations.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {isLoadingGrades ? (
+                <div className="flex items-center space-x-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" /> <span>Loading grades...</span>
+                </div>
+            ) : gradesError ? (
+                <Alert variant="destructive" className="w-full">
+                    <AlertTriangle className="h-4 w-4" /> <AlertTitle>Error</AlertTitle> <AlertDescription>{gradesError}</AlertDescription>
+                </Alert>
+            ) : (
+                <Select onValueChange={setSelectedGradeId} value={selectedGradeId}>
+                    <SelectTrigger className="w-full md:w-[280px]">
+                        <SelectValue placeholder="Select your grade (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Grades</SelectLabel>
+                            {studyGrades.map((grade) => (
+                                <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            )}
+        </CardContent>
+      </Card>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
