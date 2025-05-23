@@ -23,7 +23,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserCog, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen, ListChecks, Settings as SettingsIcon } from 'lucide-react';
+import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserCog, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen, ListChecks, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -76,7 +76,7 @@ interface SearchResult {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, isLoading: isSessionLoading } = useUserSession();
+  const { currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, isLoading: isSessionLoading, isFirebaseConfigured } = useUserSession();
   const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(true);
@@ -105,7 +105,7 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   const fetchStudyGradesForSearch = useCallback(async () => {
-    if (studyGradesData.length > 0) return; // Already fetched
+    if (studyGradesData.length > 0 || isLoadingSearchData) return; 
     setIsLoadingSearchData(true);
     try {
       const res = await fetch('/api/study-materials');
@@ -119,10 +119,9 @@ export function AppShell({ children }: AppShellProps) {
       console.warn("Search: Error fetching study materials for indexing:", e);
     }
     setIsLoadingSearchData(false);
-  }, [studyGradesData.length]);
+  }, [studyGradesData.length, isLoadingSearchData]);
 
   useEffect(() => {
-    // Pre-fetch study grades data for search on mount or when search becomes active
     if (isSearchOpen || searchTerm.length > 0) {
       fetchStudyGradesForSearch();
     }
@@ -138,6 +137,11 @@ export function AppShell({ children }: AppShellProps) {
     setIsSearchOpen(true);
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
+
+    // Client-side search. For a production app with large amounts of text content,
+    // a dedicated search index (e.g., Algolia, MeiliSearch, or client-side Lunr.js)
+    // would be much more performant and support advanced features like fuzzy matching
+    // or typo tolerance. This current implementation is based on direct substring matching.
 
     // Search Nav Items
     NAV_ITEMS.forEach(item => {
@@ -165,7 +169,7 @@ export function AppShell({ children }: AppShellProps) {
       }
     });
     
-    // Search Study Materials (Grades and Chapters)
+    // Search Study Materials (Grades, Chapters, and basic content)
     studyGradesData.forEach(grade => {
       if (grade.name.toLowerCase().includes(lowerQuery)) {
         results.push({ id: `grade-${grade.id}`, label: grade.name, href: `/study-material`, category: 'Study Grade', icon: BookOpen });
@@ -174,8 +178,6 @@ export function AppShell({ children }: AppShellProps) {
         if (chapter.name.toLowerCase().includes(lowerQuery)) {
           results.push({ id: `chapter-${chapter.id}`, label: `${grade.name} > ${chapter.name}`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Chapter', icon: FileText });
         }
-        // Basic search within chapter content (Key Points and Question titles for now)
-        // This is a simplified version. Full-text search across all content is complex client-side.
         const content = chapter.content;
         if (content) {
             if (content.keyPoints && content.keyPoints.toLowerCase().includes(lowerQuery)) {
@@ -203,27 +205,22 @@ export function AppShell({ children }: AppShellProps) {
     // Search Settings Keywords
     SETTINGS_SEARCHABLE_KEYWORDS.forEach(setting => {
         if(setting.term.toLowerCase().includes(lowerQuery) || setting.label.toLowerCase().includes(lowerQuery)) {
-            // Avoid duplicates if multiple terms match the same setting
             if (!results.find(r => r.href === setting.href && r.category === 'Settings')) {
                  results.push({ id: `setting-${setting.term}`, label: setting.label, href: setting.href, category: 'Settings', icon: SettingsIcon });
             }
         }
     });
 
-
-    // Deduplicate results based on href and label, preferring more specific categories
     const uniqueResults = results.reduce((acc, current) => {
         const x = acc.find(item => item.href === current.href && item.label === current.label);
         if (!x) {
             return acc.concat([current]);
         } else {
-            // Potentially prioritize more specific category if needed, or just keep first found
             return acc;
         }
     }, [] as SearchResult[]);
 
-
-    setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
+    setSearchResults(uniqueResults.slice(0, 10));
   }, [studyGradesData]);
 
   useEffect(() => {
@@ -234,7 +231,7 @@ export function AppShell({ children }: AppShellProps) {
         setSearchResults([]);
         setIsSearchOpen(false);
       }
-    }, 300); // Debounce search
+    }, 300); 
 
     return () => {
       clearTimeout(handler);
@@ -272,20 +269,23 @@ export function AppShell({ children }: AppShellProps) {
                 className={cn(
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center",
                    isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
+                   // Remove explicit ChevronDown from here, AccordionTrigger adds its own
                 )}
                 asChild 
               >
                  <SidebarMenuButton
                     asChild={true} 
                     className="w-full"
-                    isActive={isActive && !isParentActive && !isSubMenu} // This isActive seems correct for the button part
+                    isActive={isActive && !isParentActive && !isSubMenu} 
                     tooltip={item.label}
                   >
+                    {/* Wrap children in a single span to ensure asChild works correctly */}
                     <span className="flex w-full items-center justify-between">
                         <span className="flex items-center gap-2">
                             <item.icon />
                             <span>{item.label}</span>
                         </span>
+                        {/* ChevronDown is now part of AccordionTrigger by default */}
                     </span>
                   </SidebarMenuButton>
               </AccordionTrigger>
@@ -431,14 +431,14 @@ export function AppShell({ children }: AppShellProps) {
             </Popover>
           </div>
 
-          <div className="flex items-center gap-2 ml-auto"> {/* ml-auto pushes this group to the right */}
+          <div className="flex items-center gap-2 ml-auto">
             {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center"><WifiOff className="mr-1 h-3 w-3"/>Offline</Badge>}
             {isSessionLoading ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : !isLoggedIn ? (
               isLoginFlowActive ? (
                 <div className="flex items-center gap-2 flex-wrap justify-end">
-                  {!isOnline && (
+                 { (!isOnline && !isFirebaseConfigured) && (
                     <Card className="p-3 w-full md:w-auto shadow-md">
                         <CardHeader className="p-0 mb-2">
                             <CardTitle className="text-sm flex items-center"><KeyRound className="mr-1 h-4 w-4"/> Offline Debug Login</CardTitle>
@@ -446,17 +446,17 @@ export function AppShell({ children }: AppShellProps) {
                         <CardContent className="p-0 space-y-2">
                             <div>
                                 <Label htmlFor="debugUser" className="text-xs">Debug Username</Label>
-                                <Input id="debugUser" value={debugUsername} onChange={(e) => setDebugUsername(e.target.value)} placeholder="debug_user" size="sm" className="h-8"/>
+                                <Input id="debugUser" value={debugUsername} onChange={(e) => setDebugUsername(e.target.value)} placeholder="debug_user" size={3} className="h-8"/>
                             </div>
                             <div>
                                 <Label htmlFor="debugPass" className="text-xs">Debug Password</Label>
-                                <Input id="debugPass" type="password" value={debugPassword} onChange={(e) => setDebugPassword(e.target.value)} placeholder="debug_pass" size="sm" className="h-8"/>
+                                <Input id="debugPass" type="password" value={debugPassword} onChange={(e) => setDebugPassword(e.target.value)} placeholder="debug_pass" size={3} className="h-8"/>
                             </div>
                             <Button size="sm" onClick={handleDebugLogin} className="w-full h-8">Login (Debug)</Button>
                         </CardContent>
                     </Card>
                   )}
-                   <Button variant="default" size="sm" onClick={async () => { await signInWithGoogle(); setIsLoginFlowActive(false); }} disabled={!isOnline || !currentUser /* Firebase not configured */}>
+                   <Button variant="default" size="sm" onClick={async () => { if(isFirebaseConfigured) {await signInWithGoogle();} setIsLoginFlowActive(false); }} disabled={!isOnline && !isFirebaseConfigured}>
                     <UserCircle className="mr-2 h-4 w-4" /> Login with Google
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setIsLoginFlowActive(false)}>Cancel</Button>

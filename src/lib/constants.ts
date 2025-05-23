@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Sigma, BatteryCharging, Waves, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText, SearchIcon, Timer, Weight, Replace, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Sigma, BatteryCharging, Waves, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText, SearchIcon, Timer, Weight, Replace, HelpCircle, MoveVertical } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -69,7 +69,7 @@ export const SIMULATION_TOPICS: SimulationTopic[] = [
   { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: "11", description: "Simulate a spring-mass system and observe Simple Harmonic Motion.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation" },
   { id: "sig-figs-practice-g11", name: "Significant Figures Practice", grade: "11", description: "Practice identifying and using significant figures.", icon: Sigma, image: "https://placehold.co/400x200.png", aiHint: "significant figures numbers" },
   { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: "11", description: "Visualize RC circuit charging and discharging.", icon: BatteryCharging, image: "https://placehold.co/400x200.png", aiHint: "capacitor circuit graph" },
-  { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum and observe SHM.", icon: Timer, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
+  { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum and observe SHM.", icon: MoveVertical, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
 ];
 
 
@@ -88,7 +88,7 @@ export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: s
     {term: "notifications", label: "Notification Settings (Coming Soon)", href: "/settings"},
     {term: "offline", label: "Offline Data & Sync Settings", href: "/settings"},
     {term: "sync", label: "Online MCQ Sync Settings", href: "/settings"},
-    {term: "update", label: "Check for App Updates Setting", href: "/settings"},
+    // {term: "update", label: "Check for App Updates Setting", href: "/settings"}, // Removed as update is more of an action
     {term: "login", label: "Login/Account Settings", href: "/settings"},
     {term: "account", label: "Login/Account Settings", href: "/settings"},
 ];
