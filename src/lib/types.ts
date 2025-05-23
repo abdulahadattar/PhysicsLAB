@@ -1,5 +1,4 @@
 
-
 export interface MCQ {
   id: string;
   question: string;
@@ -20,7 +19,7 @@ export interface QuestionAnswer {
  * @property {string} [hint] - An optional hint to guide student thinking.
  */
 export interface PhilosophicalQuestionItem {
-  id: string; // Added for unique key in lists
+  id: string;
   question: string;
   hint?: string;
 }
@@ -31,7 +30,7 @@ export interface PhilosophicalQuestionItem {
  * @property {PhilosophicalQuestionItem[]} questions - An array of philosophical questions for this branch.
  */
 export interface PhilosophicalBranch {
-  id: string; // Added for unique key
+  id: string;
   branchName: string;
   questions: PhilosophicalQuestionItem[];
 }
@@ -46,7 +45,7 @@ export interface PhilosophicalBranch {
  * @property {string} websiteUrl - The official website URL.
  */
 export interface ResearchCenter {
-  id: string; // Added for unique key
+  id: string;
   name: string;
   location: string;
   primaryFocus: string;
@@ -64,7 +63,7 @@ export interface ResearchCenter {
  * @property {string} departmentUrl - The URL to the physics department or relevant faculty page.
  */
 export interface UniversityProgram {
-  id: string; // Added for unique key
+  id: string;
   name: string;
   city: string;
   type: 'Public' | 'Private';
@@ -79,15 +78,15 @@ export interface UniversityProgram {
  * @property {string} purpose - A brief description of what the equipment is used for.
  * @property {string} principle - A concise explanation of its working principle.
  * @property {string[]} typicalExperiments - Examples of experiments where this equipment is used.
- * @property {string} [imagePlaceholderText] - Text for an image placeholder if no actual image is available.
+ * @property {string} [imagePath] - Relative path to an image in `public/images/labs/`.
  */
 export interface LabEquipmentItem {
-  id: string; // Added for unique key
+  id: string;
   name: string;
   purpose: string;
   principle: string;
   typicalExperiments: string[];
-  imagePlaceholderText?: string; // To use if actual images aren't available
+  imagePath?: string;
 }
 
 
@@ -104,7 +103,7 @@ export interface ChapterContent {
   longAnswers?: QuestionAnswer[];
   philosophicalQuestions?: PhilosophicalQuestionItem[];
   dailyLifeExamples?: string[];
-  suggestedSimulations?: string[]; // Array of simulation IDs
+  suggestedSimulations?: string[]; // Array of simulation IDs that are relevant
   lastUpdated?: string;
 }
 
@@ -175,4 +174,25 @@ export interface Submission {
   status: 'pending_review' | 'graded' | 'rejected';
   rejectionReason?: string;
 }
-    
+
+/**
+ * Defines the structure for a simulation topic.
+ * @property {string} id - Unique identifier, often used in the route.
+ * @property {string} name - Display name of the simulation.
+ * @property {string} grade - Target grade level(s).
+ * @property {string} description - Brief description of what the simulation covers.
+ * @property {LucideIcon} icon - Icon to represent the simulation.
+ * @property {string[]} [categories] - Array of category names the simulation belongs to.
+ * @property {string} [image] - Optional URL for a thumbnail image.
+ * @property {string} [aiHint] - Optional hint for AI image generation tools if placeholders are used.
+ */
+export interface SimulationTopic {
+  id: string;
+  name: string;
+  grade: string;
+  description: string;
+  icon: React.ElementType; // Changed from LucideIcon to React.ElementType for flexibility
+  categories?: string[];
+  image?: string;
+  aiHint?: string;
+}
