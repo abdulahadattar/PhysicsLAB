@@ -1,0 +1,25 @@
+
+{
+  "name": "PhysicsLab by Sir Abdul Ahad",
+  "short_name": "PhysicsLab",
+  "description": "Interactive Physics Demonstrations and Study Material for Grades 9-12, Sindh Textbook Board. Notes by Abdul Ahad Attar.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E0F7FA",
+  "theme_color": "#29ABE2",
+  "scope": "/"
+}

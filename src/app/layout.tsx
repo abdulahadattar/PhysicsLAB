@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'PhysicsLab by Sir Abdul Ahad',
   description: 'Interactive Physics Demonstrations and Study Material for Grades 9-12, Sindh Textbook Board. Notes by Abdul Ahad Attar.',
+  manifest: '/manifest.json', // Link to the manifest file
 };
 
 export default function RootLayout({
@@ -28,6 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* You might also want to add specific PWA meta tags here if needed, e.g., for iOS splash screens, though manifest covers a lot. */}
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TeacherModeProvider>
           <ThemeProvider
