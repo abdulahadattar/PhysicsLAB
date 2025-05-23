@@ -12,15 +12,11 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-// Removed StudyGrade import as getStudyMaterialTool is being removed.
-// Removed path and fs/promises imports as they were for getStudyMaterialTool.
-
 
 // Input and Output Schemas
 const GenerateFunContentInputSchema = z.object({
   topic: z.string().describe('The current physics topic or simulation being interacted with.'),
   gradeLevel: z.number().min(9).max(12).describe('The grade level of the student (9-12).'),
-  // chapterId is removed as per user request to undo chapter-specific fun facts.
 });
 export type GenerateFunContentInput = z.infer<typeof GenerateFunContentInputSchema>;
 
@@ -36,9 +32,6 @@ const GenerateFunContentOutputSchema = z.object({
 });
 export type GenerateFunContentOutput = z.infer<typeof GenerateFunContentOutputSchema>;
 
-
-// Tool to get study material context and related functions (getStudyGradesData, getStudyMaterialTool) are removed.
-
 export async function generateFunContentBatch(input: GenerateFunContentInput): Promise<GenerateFunContentOutput> {
   return generateFunContentFlow(input);
 }
@@ -47,7 +40,6 @@ const prompt = ai.definePrompt({
   name: 'generateFunContentPrompt',
   input: {schema: GenerateFunContentInputSchema},
   output: {schema: GenerateFunContentOutputSchema},
-  // tools array is removed as getStudyMaterialTool is removed.
   prompt: `You are a physics content generator. Your goal is to provide a diverse list of 3 to 5 engaging items suitable for the specified grade level and general topic.
 These items can be:
 - Fun physics facts.
@@ -56,7 +48,7 @@ These items can be:
 - Concise summaries of famous physics experiments and their significance.
 
 Each item must have a primary statement (the 'content') and a short 'explanation' providing context or further detail.
-Ensure variety in the types of items you generate in the list.
+Ensure variety in the types of items you generate in the list. Tailor the variety and specificity of the items to the provided \`gradeLevel\` and \`topic\` to make them maximally engaging.
 
 Context:
 Topic: {{{topic}}}
@@ -94,4 +86,3 @@ const generateFunContentFlow = ai.defineFlow(
     return output;
   }
 );
-

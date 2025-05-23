@@ -37,7 +37,7 @@ export type MindMapNode = z.infer<typeof MindMapNodeSchema>;
 
 const GenerateMindMapOutputSchema = z.object({
   mindMapTitle: z.string().describe('A title for the mind map, e.g., "Grade 9 Physics Overview".'),
-  nodes: z.array(MindMapNodeSchema).describe('An array of nodes representing the mind map structure. Each node must have an id, label, and optionally a parentId to define hierarchy.'),
+  nodes: z.array(MindMapNodeSchema).describe('An array of nodes representing the mind map structure. Each node must have an id, label, and optionally a parentId to define hierarchy. Aim for a detailed and nuanced structure, reflecting key concepts and their relationships.'),
 });
 export type GenerateMindMapOutput = z.infer<typeof GenerateMindMapOutputSchema>;
 
@@ -51,12 +51,13 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateMindMapInputSchema },
   output: { schema: GenerateMindMapOutputSchema },
   prompt: `You are an AI assistant specialized in creating structured educational content for physics students.
-Your task is to generate data for a mind map for '{{{gradeName}}}'.
+Your task is to generate data for a rich and detailed mind map for '{{{gradeName}}}'.
 The output MUST be a JSON object adhering to the provided output schema.
 
 The mind map should have a root node representing the grade itself.
 Each chapter for '{{{gradeName}}}' should be a direct child node of the grade.
-For each chapter, suggest 2-3 plausible key sub-topics or core concepts as child nodes of that chapter.
+For each chapter, generate a comprehensive set of 2-4 plausible key sub-topics or core concepts as child nodes of that chapter.
+If appropriate, some sub-topics can themselves have 1-2 further sub-sub-topics to show more nuanced relationships. Make the structure as detailed as helpful for understanding the chapter's scope.
 
 Instructions for Node Generation:
 - Root Node (Grade Level):
@@ -67,20 +68,21 @@ Instructions for Node Generation:
   - id: Use a format like "g{{{gradeId}}}-ch-{chapter_index_or_sanitized_name}" (e.g., "g9-ch1", "g11-kinematics"). Ensure IDs are unique.
   - label: The full chapter name (e.g., "{{{chapters.0.name}}}").
   - parentId: The id of the root grade node (e.g., "grade-{{{gradeId}}}").
-- Sub-Topic Nodes:
-  - id: Use a format like "{chapter_node_id}-sub-{sub_topic_index}" (e.g., "g9-ch1-sub1"). Ensure IDs are unique.
-  - label: A concise name for the sub-topic (e.g., "S.I. Units", "Newton's Laws").
-  - parentId: The id of the parent chapter node.
+- Sub-Topic Nodes (and Sub-Sub-Topic Nodes):
+  - id: Use a format like "{parent_node_id}-sub-{sub_topic_index}" (e.g., "g9-ch1-sub1", "g9-ch1-sub1-detail1"). Ensure IDs are unique.
+  - label: A concise yet descriptive name for the sub-topic or concept (e.g., "S.I. Units", "Newton's First Law", "Types of Collisions").
+  - parentId: The id of the parent chapter node or parent sub-topic node.
 
-Example Node Structure:
+Example Node Structure (illustrative, be more detailed):
 {
-  "mindMapTitle": "{{{gradeName}}} Physics Mind Map",
+  "mindMapTitle": "{{{gradeName}}} Physics - Detailed Overview",
   "nodes": [
     { "id": "grade-{{{gradeId}}}", "label": "{{{gradeName}}} Physics" },
     { "id": "g{{{gradeId}}}-ch1", "label": "{{{chapters.0.name}}}", "parentId": "grade-{{{gradeId}}}" },
-    { "id": "g{{{gradeId}}}-ch1-sub1", "label": "Key Concept A for Chapter 1", "parentId": "g{{{gradeId}}}-ch1" },
-    { "id": "g{{{gradeId}}}-ch1-sub2", "label": "Key Concept B for Chapter 1", "parentId": "g{{{gradeId}}}-ch1" }
-    // ... more chapters and sub-topics
+    { "id": "g{{{gradeId}}}-ch1-sub1", "label": "Core Concept A for Chapter 1", "parentId": "g{{{gradeId}}}-ch1" },
+    { "id": "g{{{gradeId}}}-ch1-sub1-detail1", "label": "Detail of Concept A.1", "parentId": "g{{{gradeId}}}-ch1-sub1" },
+    { "id": "g{{{gradeId}}}-ch1-sub2", "label": "Core Concept B for Chapter 1 (with further breakdown if logical)", "parentId": "g{{{gradeId}}}-ch1" }
+    // ... more chapters and sub-topics, aiming for a rich, hierarchical structure.
   ]
 }
 
@@ -89,7 +91,7 @@ Chapters for {{{gradeName}}}:
 - {{{this.id}}}: {{{this.name}}}
 {{/each}}
 
-Generate the mind map data now. Ensure valid JSON output.
+Generate the mind map data now. Ensure valid JSON output and a comprehensive, nuanced hierarchy of nodes.
 Do not include any preamble or concluding remarks, only the JSON object.
 `,
 });

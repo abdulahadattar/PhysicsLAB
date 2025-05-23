@@ -195,7 +195,7 @@ export default function LearnWithAiPage() {
           </div>
           <CardTitle className="text-3xl">Learn with AI</CardTitle>
           <CardDescription>
-            Ask physics questions, get explanations, analyze images, and explore topics further with our AI assistant. Select your grade for tailored help!
+            Ask physics questions, get explanations, analyze images, explore "what if" scenarios, or get hints for problems. Select your grade for tailored help!
           </CardDescription>
         </CardHeader>
       </Card>
@@ -299,7 +299,7 @@ export default function LearnWithAiPage() {
               <Label htmlFor="ai-query">Your Question or Prompt</Label>
               <Textarea
                 id="ai-query"
-                placeholder="Ask about a physics concept, explain this diagram, what formula applies here?..."
+                placeholder="Ask about a physics concept, explain this diagram, what if the Earth had two moons?, or paste a problem for hints..."
                 rows={5}
                 value={textQuery}
                 onChange={(e) => setTextQuery(e.target.value)}
