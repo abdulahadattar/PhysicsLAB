@@ -1,3 +1,11 @@
+
+/*
+  TODO: Uncomment the line below once the @xyflow/react package installs correctly.
+  The "Module not found" error indicates that the package (and thus its CSS) is not being installed.
+  You may need to clean your npm cache, delete node_modules and package-lock.json, and try `npm install` again.
+*/
+/* @import '@xyflow/react/dist/style.css'; */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -47,6 +55,13 @@ body {
     --sidebar-accent-foreground: 190 67% 93%;
     --sidebar-border: 200 30% 10%;
     --sidebar-ring: 197 71% 52%;
+
+    /* Chart colors */
+    --chart-1: 197 71% 52%; /* Primary Blue */
+    --chart-2: 120 60% 65%; /* Accent Green */
+    --chart-3: 40 90% 60%;  /* Orange/Yellow for contrast */
+    --chart-4: 260 70% 60%; /* Purple for another distinct color */
+    --chart-5: 0 70% 60%;   /* Red for contrast or highlighting */
   }
 
   .dark {
@@ -87,6 +102,13 @@ body {
     --sidebar-accent-foreground: 190 67% 93%;
     --sidebar-border: 200 30% 5%;
     --sidebar-ring: 197 71% 52%;
+
+     /* Chart colors for dark theme */
+    --chart-1: 197 71% 62%; /* Lighter Primary Blue */
+    --chart-2: 120 50% 65%; /* Lighter Accent Green */
+    --chart-3: 40 80% 70%;  /* Lighter Orange/Yellow */
+    --chart-4: 260 60% 70%; /* Lighter Purple */
+    --chart-5: 0 60% 70%;   /* Lighter Red */
   }
 }
 
