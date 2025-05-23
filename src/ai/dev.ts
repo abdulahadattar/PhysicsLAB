@@ -7,3 +7,4 @@ import '@/ai/flows/generate-fun-fact';
 import '@/ai/flows/ai-learning-assistant-flow';
 import '@/ai/flows/generate-mind-map-flow';
 import '@/ai/flows/extractChapterContentFlow';
+import '@/ai/flows/generate-lesson-plan-flow';
