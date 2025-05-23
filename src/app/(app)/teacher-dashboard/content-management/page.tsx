@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, FileEdit, UploadCloud, Trash2, Bot, PlusCircle, Save } from "lucide-react";
+import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save } from "lucide-react"; // Changed UploadCloud to Link2
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { StudyGrade, Chapter, TeacherChapterOverrides, ChapterContent, MCQ, QuestionAnswer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -80,34 +80,31 @@ export default function TeacherContentManagementPage() {
     loadChapterContentForEditing();
   }, [selectedChapterId, selectedGradeId, loadChapterContentForEditing]);
 
-
-  const handlePdfUpload = (event: React.ChangeEvent<HTMLInputElement>, pdfType: PdfTypeKey) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setEditableContent(prev => ({ ...prev, [pdfType]: file.name }));
-      toast({ title: "PDF Selected", description: `${file.name} is ready to be associated with ${pdfType.replace('PdfName','')} upon saving.` });
-    }
+  const handlePdfLinkChange = (pdfType: PdfTypeKey, link: string) => {
+    setEditableContent(prev => ({ ...prev, [pdfType]: link }));
   };
 
-  const handleRemovePdf = (pdfType: PdfTypeKey) => {
+  const handleRemovePdfLink = (pdfType: PdfTypeKey) => {
     setEditableContent(prev => {
       const newContent = {...prev};
-      delete newContent[pdfType]; // Or set to undefined if you prefer
+      delete newContent[pdfType]; 
       return newContent;
     });
-    toast({ title: "PDF Removed", description: `The PDF association for ${pdfType.replace('PdfName','')} will be cleared upon saving.` });
+    toast({ title: "PDF Link Removed", description: `The link for ${pdfType.replace('PdfName',' PDF')} will be cleared upon saving.` });
   };
 
   const handleAiGenerate = async () => {
     const primaryPdfForAi = editableContent.teacherNotesPdfName || editableContent.sindhTextbookPdfName || editableContent.alternativeTextbookPdfName;
-    if (!primaryPdfForAi) {
-      toast({ title: "No PDF for AI", description: "Please associate at least one PDF (e.g., Teacher Notes or Sindh Textbook) to generate content from.", variant: "destructive" });
+    if (!primaryPdfForAi || !primaryPdfForAi.startsWith('http')) { // Basic check for a link
+      toast({ title: "No PDF Link for AI", description: "Please provide a valid Google Drive PDF link (e.g., Teacher Notes or Sindh Textbook) to generate content from.", variant: "destructive" });
       return;
     }
     setIsGeneratingAiContent(true);
     try {
+      // For AI, we pass the LINK itself, conceptualizing that the AI can access/process it.
+      // The current `extractChapterContent` flow simulates this by using the link as a "filename" for mock data.
       const result: ExtractedChapterContentOutput = await extractChapterContent({ 
-        pdfTextContent: `Simulated content from ${primaryPdfForAi}`,
+        pdfTextContent: `Content from PDF link: ${primaryPdfForAi}`, 
         chapterName: studyGrades.find(g=>g.id === selectedGradeId)?.chapters.find(c=>c.id === selectedChapterId)?.name || "Selected Chapter"
       });
       
@@ -183,16 +180,16 @@ export default function TeacherContentManagementPage() {
       const allOverrides: TeacherChapterOverrides = overridesRaw ? JSON.parse(overridesRaw) : {};
       
       const contentToSave: Partial<ChapterContent> = { ...editableContent };
-      // Clean up empty PDF names before saving
+      // Clean up empty PDF links before saving
       if (!contentToSave.sindhTextbookPdfName?.trim()) delete contentToSave.sindhTextbookPdfName;
       if (!contentToSave.alternativeTextbookPdfName?.trim()) delete contentToSave.alternativeTextbookPdfName;
       if (!contentToSave.teacherNotesPdfName?.trim()) delete contentToSave.teacherNotesPdfName;
 
 
       allOverrides[selectedChapterId] = {
-        ...contentToSave,
-        chapterId: selectedChapterId, // Ensure these are present
-        gradeId: selectedGradeId,     //
+        ...contentToSave, // This now contains the PDF links
+        chapterId: selectedChapterId, 
+        gradeId: selectedGradeId,    
         lastUpdated: new Date().toISOString(),
       };
       
@@ -205,7 +202,10 @@ export default function TeacherContentManagementPage() {
             ...g,
             chapters: g.chapters.map(c => {
               if (c.id === selectedChapterId) {
-                return { ...c, content: { ...(c.content || {}), ...allOverrides[selectedChapterId]} };
+                // Merge existing content with the new override
+                const baseContent = c.content || {};
+                const updatedChapterContent = { ...baseContent, ...allOverrides[selectedChapterId] };
+                return { ...c, content: updatedChapterContent };
               }
               return c;
             })
@@ -226,9 +226,9 @@ export default function TeacherContentManagementPage() {
   if (gradesError) return <Alert variant="destructive"><AlertTriangle className="h-4 w-4"/><AlertDescription>{gradesError}</AlertDescription></Alert>;
 
   const pdfConfig: { key: PdfTypeKey, label: string }[] = [
-    { key: 'sindhTextbookPdfName', label: 'Sindh Textbook PDF' },
-    { key: 'alternativeTextbookPdfName', label: 'Alternative Textbook PDF (e.g., Ziauddin)' },
-    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF" },
+    { key: 'sindhTextbookPdfName', label: 'Sindh Textbook PDF Link' },
+    { key: 'alternativeTextbookPdfName', label: 'Alternative Textbook PDF Link' },
+    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link" },
   ];
 
   return (
@@ -236,11 +236,10 @@ export default function TeacherContentManagementPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileEdit className="h-6 w-6 text-primary"/>Content Management</CardTitle>
-          <CardDescription>Manage chapter content, including multiple PDF sources, key points, and exercises. Changes are saved to your browser's local storage.</CardDescription>
+          <CardDescription>Manage chapter content including PDF links, key points, and exercises. Changes are saved locally.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
-            {/* Grade and Chapter Selection */}
             <div className="md:col-span-1 space-y-4">
               <Card>
                 <CardHeader><CardTitle className="text-lg">Select Chapter</CardTitle></CardHeader>
@@ -265,7 +264,6 @@ export default function TeacherContentManagementPage() {
               </Card>
             </div>
 
-            {/* Content Editing Area */}
             <div className="md:col-span-2">
               {selectedChapterId && selectedChapterName ? (
                 <Card>
@@ -274,44 +272,42 @@ export default function TeacherContentManagementPage() {
                     <CardDescription>Grade: {studyGrades.find(g=>g.id === selectedGradeId)?.name}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* PDF Management */}
                     <div className="space-y-4 p-4 border rounded-md">
-                      <h3 className="font-semibold text-lg">Chapter PDFs</h3>
+                      <h3 className="font-semibold text-lg">Chapter PDF Links (Google Drive)</h3>
                       {pdfConfig.map(pdf => (
                         <div key={pdf.key} className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
-                          <Label htmlFor={`${pdf.key}-upload`} className="font-medium">{pdf.label}</Label>
-                          {editableContent[pdf.key] && <p className="text-xs text-muted-foreground">Current: {editableContent[pdf.key]}</p>}
-                          <div className="flex gap-2 items-center">
-                            <Label htmlFor={`${pdf.key}-upload`} className="flex-grow">
-                                <Button asChild variant="outline" className="w-full text-xs">
-                                    <span><UploadCloud className="mr-1 h-3 w-3"/> {editableContent[pdf.key] ? "Change" : "Upload"}</span>
-                                </Button>
-                            </Label>
-                            <Input id={`${pdf.key}-upload`} type="file" accept=".pdf" onChange={(e) => handlePdfUpload(e, pdf.key)} className="hidden"/>
-                            {editableContent[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemovePdf(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
+                          <Label htmlFor={`${pdf.key}-input`} className="font-medium">{pdf.label}</Label>
+                           <div className="flex gap-2 items-center">
+                            <Input 
+                              id={`${pdf.key}-input`} 
+                              type="url" 
+                              placeholder="Paste Google Drive PDF link here" 
+                              value={editableContent[pdf.key] || ""}
+                              onChange={(e) => handlePdfLinkChange(pdf.key, e.target.value)}
+                              className="flex-grow"
+                            />
+                            {editableContent[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemovePdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
                           </div>
+                          {editableContent[pdf.key] && <p className="text-xs text-muted-foreground">Current Link: {editableContent[pdf.key]}</p>}
                         </div>
                       ))}
                     </div>
 
-                    {/* AI Generation Button */}
                     <Button onClick={handleAiGenerate} disabled={isGeneratingAiContent || !(editableContent.teacherNotesPdfName || editableContent.sindhTextbookPdfName || editableContent.alternativeTextbookPdfName)} className="w-full">
                       {isGeneratingAiContent ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
                       Generate Key Points & Exercises (AI - Simulated)
                     </Button>
                     
-                    {/* Key Points */}
                     <div className="space-y-2 p-4 border rounded-md">
                       <h3 className="font-semibold">Key Points & Summary</h3>
                       <Textarea 
                         value={editableContent.keyPoints || ""}
                         onChange={(e) => handleContentChange('keyPoints', e.target.value)}
-                        placeholder="Enter key points and summary for this chapter... (AI can help generate this)"
+                        placeholder="Enter key points and summary... (AI can help generate this)"
                         rows={6}
                       />
                     </div>
 
-                    {/* MCQs */}
                     <Accordion type="single" collapsible className="w-full p-4 border rounded-md">
                       <AccordionItem value="mcqs">
                         <AccordionTrigger className="text-lg font-semibold">Multiple Choice Questions (MCQs)</AccordionTrigger>
@@ -338,7 +334,6 @@ export default function TeacherContentManagementPage() {
                       </AccordionItem>
                     </Accordion>
 
-                    {/* Short Answer Questions (CRQs) */}
                      <Accordion type="single" collapsible className="w-full p-4 border rounded-md">
                       <AccordionItem value="crqs">
                         <AccordionTrigger className="text-lg font-semibold">Short Answer Questions (CRQs)</AccordionTrigger>
@@ -356,7 +351,6 @@ export default function TeacherContentManagementPage() {
                       </AccordionItem>
                     </Accordion>
 
-                    {/* Long Answer Questions (ERQs) */}
                     <Accordion type="single" collapsible className="w-full p-4 border rounded-md">
                       <AccordionItem value="erqs">
                         <AccordionTrigger className="text-lg font-semibold">Long Answer Questions (ERQs)</AccordionTrigger>

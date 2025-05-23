@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { useState } from 'react'; // Added useState
+import React, { useState, useEffect } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -23,7 +23,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserPlus, UserCog } from 'lucide-react'; // Added UserCog
+import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, UserCog, KeyRound, WifiOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -33,7 +33,9 @@ import {
 } from "@/components/ui/accordion"
 import { useUserSession } from '@/contexts/user-session-context'; 
 import { cn } from "@/lib/utils"; 
-import { useToast } from '@/hooks/use-toast'; // Added useToast
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input'; // Added for debug login
+import { Label } from '@/components/ui/label'; // Added for debug login
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -60,13 +62,43 @@ SidebarInset.displayName = "SidebarInset"
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const { isLoggedIn, userRole, viewAsStudent, login, logout, toggleViewAsStudent, isLoading } = useUserSession();
+  const { currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, toggleViewAsStudent, isLoading } = useUserSession();
   const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
   const { toast } = useToast();
+  const [isOnline, setIsOnline] = useState(true);
+
+  const [debugUsername, setDebugUsername] = useState("");
+  const [debugPassword, setDebugPassword] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
+
+  const handleDebugLogin = async () => {
+    if (!debugUsername || !debugPassword) {
+        toast({ title: "Debug Login", description: "Please enter debug username and password.", variant: "destructive"});
+        return;
+    }
+    const success = await magicLogin(debugUsername, debugPassword);
+    if (success) {
+        setIsLoginFlowActive(false); // Close login flow on success
+        setDebugUsername("");
+        setDebugPassword("");
+    }
+  };
 
   const renderNavItems = (items: NavItem[], isSubMenu = false) => {
     return items.map((item) => {
-      // Conditionally render Teacher Panel
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || viewAsStudent)) {
         return null;
       }
@@ -81,21 +113,28 @@ export function AppShell({ children }: AppShellProps) {
               <AccordionTrigger 
                 className={cn(
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center",
-                  isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                   isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
+                   // Add asChild={true} here if SidebarMenuButton is the direct child for Radix to merge props
+                   // but since SidebarMenuButton itself can be a button or slot, this specific asChild on AccordionTrigger
+                   // refers to ITS direct child.
                 )}
-                asChild
+                asChild // This ensures AccordionTrigger renders its child as the button
               >
-                <SidebarMenuButton
-                  asChild={true}
-                  className="w-full"
-                  isActive={isActive && !isParentActive && !isSubMenu}
-                  tooltip={item.label}
-                >
-                  <span className="flex items-center gap-2">
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </span>
-                </SidebarMenuButton>
+                 <SidebarMenuButton
+                    asChild={true} // This is crucial. SidebarMenuButton will use Slot.
+                    className="w-full"
+                    isActive={isActive && !isParentActive && !isSubMenu}
+                    tooltip={item.label}
+                  >
+                    {/* Wrap children in a single element for Slot to work correctly */}
+                    <span className="flex w-full items-center justify-between">
+                        <span className="flex items-center gap-2">
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </span>
+                        {/* Chevron is provided by AccordionTrigger by default, no need to add it here */}
+                    </span>
+                  </SidebarMenuButton>
               </AccordionTrigger>
               <AccordionContent className="pb-0 group-data-[collapsible=icon]:hidden">
                  <SidebarMenuSub>
@@ -104,7 +143,7 @@ export function AppShell({ children }: AppShellProps) {
                       <Link href={subItem.href} passHref legacyBehavior>
                         <SidebarMenuSubButton
                           asChild={false}
-                          isActive={pathname.startsWith(subItem.href)} // Use startsWith for sub-items too
+                          isActive={pathname.startsWith(subItem.href)}
                         >
                           <subItem.icon />
                           <span>{subItem.label}</span>
@@ -136,8 +175,7 @@ export function AppShell({ children }: AppShellProps) {
     });
   };
 
-  if (isLoading) {
-    // Or a more sophisticated loading skeleton for the shell
+  if (isLoading && !currentUser) { // Show loading only if no user data yet (Firebase init)
     return <div className="flex items-center justify-center h-screen text-lg">Loading Application...</div>; 
   }
 
@@ -160,11 +198,13 @@ export function AppShell({ children }: AppShellProps) {
         <SidebarFooter className="p-4 mt-auto">
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
             <Avatar>
-              <AvatarImage src={isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST"} alt={isLoggedIn ? userRole || "User" : "Guest"} data-ai-hint="user avatar" />
-              <AvatarFallback>{isLoggedIn ? (userRole === 'teacher' ? 'TA' : 'ST') : 'GU'}</AvatarFallback>
+              <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? userRole || "User" : "Guest")} data-ai-hint="user avatar" />
+              <AvatarFallback>
+                {currentUser?.displayName ? currentUser.displayName.substring(0,2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? 'TA' : 'ST') : 'GU')}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-medium">{isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR : 'Student User') : 'Guest'}</p>
+              <p className="text-sm font-medium">{currentUser?.displayName || (isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR : 'Student User') : 'Guest')}</p>
               <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}</p>
             </div>
           </div>
@@ -177,26 +217,37 @@ export function AppShell({ children }: AppShellProps) {
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1">
-            {/* Breadcrumbs or page title can go here */}
+            {!isOnline && <Badge variant="destructive" className="ml-auto"><WifiOff className="mr-1 h-3 w-3"/>Offline Mode</Badge>}
           </div>
           <div className="flex items-center gap-2">
             {isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading user...</p>
+              <p className="text-sm text-muted-foreground">Loading session...</p>
             ) : !isLoggedIn ? (
               isLoginFlowActive ? (
-                <>
-                  <Button variant="default" size="sm" onClick={() => { 
-                    login('student'); 
-                    setIsLoginFlowActive(false);
-                    toast({ title: "Logged In as Student", description: "New student accounts require teacher approval for full features."});
-                  }}>
-                    <UserCircle className="mr-2 h-4 w-4" /> Proceed as Student
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { login('teacher'); setIsLoginFlowActive(false); }}>
-                    <UserCog className="mr-2 h-4 w-4" /> Proceed as Teacher
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {!isOnline && (
+                    <Card className="p-3 w-full md:w-auto shadow-md">
+                        <CardHeader className="p-0 mb-2">
+                            <CardTitle className="text-sm flex items-center"><KeyRound className="mr-1 h-4 w-4"/> Offline Debug Login</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0 space-y-2">
+                            <div>
+                                <Label htmlFor="debugUser" className="text-xs">Debug Username</Label>
+                                <Input id="debugUser" value={debugUsername} onChange={(e) => setDebugUsername(e.target.value)} placeholder="debug_user" size="sm"/>
+                            </div>
+                            <div>
+                                <Label htmlFor="debugPass" className="text-xs">Debug Password</Label>
+                                <Input id="debugPass" type="password" value={debugPassword} onChange={(e) => setDebugPassword(e.target.value)} placeholder="debug_pass" size="sm"/>
+                            </div>
+                            <Button size="sm" onClick={handleDebugLogin} className="w-full">Login (Debug)</Button>
+                        </CardContent>
+                    </Card>
+                  )}
+                   <Button variant="default" size="sm" onClick={async () => { await signInWithGoogle(); setIsLoginFlowActive(false); }} disabled={!isOnline}>
+                    <UserCircle className="mr-2 h-4 w-4" /> Login with Google
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setIsLoginFlowActive(false)}>Cancel</Button>
-                </>
+                </div>
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setIsLoginFlowActive(true)}>
                   <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
@@ -204,9 +255,9 @@ export function AppShell({ children }: AppShellProps) {
               )
             ) : (
               <>
-                <span className="text-sm text-muted-foreground">
-                  Logged in as: <span className="font-semibold capitalize">{userRole}</span>
-                  {userRole === 'teacher' && viewAsStudent && " (Student View)"}
+                <span className="text-sm text-muted-foreground hidden md:inline">
+                  {currentUser?.displayName || currentUser?.email || "User"} (<span className="font-semibold capitalize">{userRole}</span>
+                  {userRole === 'teacher' && viewAsStudent && " (Student View)"})
                 </span>
                 {userRole === 'teacher' && (
                   <Button variant="outline" size="sm" onClick={toggleViewAsStudent}>
@@ -214,7 +265,7 @@ export function AppShell({ children }: AppShellProps) {
                     {viewAsStudent ? "Teacher View" : "Student View"}
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => { logout(); setIsLoginFlowActive(false);}}>
+                <Button variant="ghost" size="sm" onClick={async () => { await signOutFirebase(); setIsLoginFlowActive(false);}}>
                   <LogOut className="mr-2 h-4 w-4" /> Logout
                 </Button>
               </>
