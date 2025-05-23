@@ -5,22 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BookText, ChevronRight, AlertTriangle, Loader2, FileText, Landmark, Globe, BookCopy as BookIcon } from "lucide-react";
+import { BookText, ChevronRight, AlertTriangle, Loader2, FileText, Landmark, Globe, BookCopy } from "lucide-react";
 import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade, TeacherGradeOverride } from '@/lib/types';
 import { useEffect, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge"; // Added Badge import
 
-interface FullTextbookLink {
+interface FullTextbookLinkConfig {
   key: keyof Pick<StudyGrade, 'completeTextbookPdfLink' | 'ziauddinBoardFullPdfLink' | 'punjabBoardFullPdfLink' | 'nationalSyllabusFullPdfLink'>;
   label: string;
   icon: React.ElementType;
 }
 
-const fullTextbookConfigs: FullTextbookLink[] = [
-  { key: 'completeTextbookPdfLink', label: "STBB Full Textbook", icon: BookIcon },
+const fullTextbookConfigs: FullTextbookLinkConfig[] = [
+  { key: 'completeTextbookPdfLink', label: "STBB Full Textbook", icon: BookCopy },
   { key: 'ziauddinBoardFullPdfLink', label: "Ziauddin Board Full Textbook", icon: Landmark },
-  { key: 'punjabBoardFullPdfLink', label: "Punjab Board Full Textbook", icon: BookIcon },
+  { key: 'punjabBoardFullPdfLink', label: "Punjab Board Full Textbook", icon: BookCopy },
   { key: 'nationalSyllabusFullPdfLink', label: "National Syllabus Full Textbook", icon: Globe },
 ];
 
@@ -82,7 +83,6 @@ export default function StudyMaterialPage() {
     let gradesToDisplay: StudyGrade[] = [];
     let teacherOverrides: Record<string, Partial<TeacherGradeOverride>> = {};
 
-    // 1. Try to load teacher overrides from localStorage
     if (typeof window !== 'undefined') {
       try {
         const overridesRaw = localStorage.getItem(TEACHER_GRADE_OVERRIDES_STORAGE_KEY);
@@ -92,48 +92,40 @@ export default function StudyMaterialPage() {
       } catch (e) {
         console.warn("Failed to parse teacher grade overrides from localStorage:", e);
       }
-    }
-    
-    // 2. Try to load cached data from localStorage
-    if (typeof window !== 'undefined') {
+      
       const cachedDataString = localStorage.getItem(STUDY_GRADES_CACHE_KEY);
       if (cachedDataString) {
         try {
           const cachedData = JSON.parse(cachedDataString);
           gradesToDisplay = applyGradeOverrides(cachedData, teacherOverrides);
           setStudyGrades(gradesToDisplay);
-          setInfoMessage("Displaying cached content. Checking for updates...");
+          setInfoMessage("Displaying cached content. Checking for updates if online...");
         } catch (e) {
           console.warn("Failed to parse cached study materials:", e);
-          localStorage.removeItem(STUDY_GRADES_CACHE_KEY); // Clear corrupted cache
+          localStorage.removeItem(STUDY_GRADES_CACHE_KEY); 
         }
       }
     }
 
-    // 3. If online, attempt to fetch fresh data from API
     if (isOnline) {
       const result = await fetchStudyGradesAPI();
       if (result.data) {
         gradesToDisplay = applyGradeOverrides(result.data, teacherOverrides);
         setStudyGrades(gradesToDisplay);
         setError(null);
-        setInfoMessage(null); // Clear "checking for updates" or cache message
+        setInfoMessage(null); 
         if (typeof window !== 'undefined') {
-          localStorage.setItem(STUDY_GRADES_CACHE_KEY, JSON.stringify(result.data)); // Cache the raw API data
+          localStorage.setItem(STUDY_GRADES_CACHE_KEY, JSON.stringify(result.data)); 
         }
       } else {
-        // API fetch failed
         if (gradesToDisplay.length > 0) {
-          // We have cached data, so it's a non-critical error
           setError(`Could not refresh study materials: ${result.error || 'Unknown API error'}. Displaying last available version.`);
           setInfoMessage(null);
         } else {
-          // No cached data and API failed
           setError(`Failed to load study materials: ${result.error || 'Unknown API error'}. Please check your connection or try again later.`);
         }
       }
     } else {
-      // Offline
       if (gradesToDisplay.length === 0) {
         setError("You are offline and no study materials are cached. Please connect to the internet to load them.");
       } else {
@@ -145,9 +137,9 @@ export default function StudyMaterialPage() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]); // loadData is memoized and its dependencies include isOnline
+  }, [loadData]); 
 
-  if (isLoading && studyGrades.length === 0) { // Show initial loader only if no data is displayed yet
+  if (isLoading && studyGrades.length === 0) { 
     return (
       <div className="space-y-8">
         <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
@@ -190,7 +182,7 @@ export default function StudyMaterialPage() {
         <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
           <CardHeader>
             <CardTitle className="text-3xl">Study Materials</CardTitle>
-            <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. App by {APP_AUTHOR}.</CardDescription>
+            <CardDescription>Chapter-wise notes and solved MCQs. App by {APP_AUTHOR}.</CardDescription>
           </CardHeader>
         </Card>
         <p className="text-center text-muted-foreground py-10">No study materials available at the moment. Please try again later.</p>
@@ -203,11 +195,11 @@ export default function StudyMaterialPage() {
       <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl">Study Materials</CardTitle>
-          <CardDescription>Chapter-wise notes and solved MCQs, aligned with the Sindh Textbook Board syllabus. App by {APP_AUTHOR}.</CardDescription>
+          <CardDescription>Chapter-wise notes and solved MCQs. App by {APP_AUTHOR}.</CardDescription>
         </CardHeader>
       </Card>
       
-      {isLoading && studyGrades.length > 0 && ( // Show subtle loading indicator if refreshing data
+      {isLoading && studyGrades.length > 0 && ( 
           <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             <span>Checking for updates...</span>
@@ -244,7 +236,7 @@ export default function StudyMaterialPage() {
                     </div>
                      <div className="flex items-center gap-1 flex-wrap justify-end max-w-[60%]">
                         {fullTextbookConfigs.map(config => {
-                            const link = grade[config.key];
+                            const link = grade[config.key as keyof StudyGrade] as string | undefined;
                             if (link) {
                                 return (
                                     <Button
@@ -253,7 +245,7 @@ export default function StudyMaterialPage() {
                                         asChild
                                         size="sm"
                                         className="text-primary hover:underline px-1.5 py-1 h-auto text-xs"
-                                        onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
+                                        onClick={(e) => e.stopPropagation()} 
                                     >
                                         <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                                         <config.icon className="h-3.5 w-3.5"/> {config.label.replace(" Full Textbook", "")}
@@ -272,7 +264,12 @@ export default function StudyMaterialPage() {
                     <li key={chapter.id} className="transition-colors hover:bg-muted/30">
                       <Link href={`/study-material/${grade.id}/${chapter.id}`} passHref>
                         <Button variant="ghost" className="w-full justify-between rounded-none px-6 py-4 h-auto">
-                          <span className="text-left">{chapter.name}</span>
+                          <div className="flex items-center gap-2 text-left">
+                            <span>{chapter.name}</span>
+                            {chapter.tags && chapter.tags.map(tag => (
+                              <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                            ))}
+                          </div>
                           <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </Button>
                       </Link>
@@ -290,4 +287,3 @@ export default function StudyMaterialPage() {
     </div>
   );
 }
-    

@@ -5,14 +5,60 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Settings as SettingsIcon, Palette, Bell, Download, UserCog } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Bell, Download, UserCog, DownloadCloud, Loader2, AlertTriangle } from "lucide-react";
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
 import { ThemeToggle } from '@/components/theme-toggle';
-// Removed useUserSession import as it's replaced by useUserSession
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
+import type { StudyGrade } from '@/lib/types';
+import React, { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 
 export default function SettingsPage() {
   const { isPanelVisible, togglePanelVisibility, isMounted: isFunFactsMounted } = useFunFactsSettings();
-  // const { isTeacherMode, toggleTeacherMode, isLoading: isTeacherModeLoading } = useTeacherMode(); // Removed
+  const { toast } = useToast();
+  const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
+  const [isLoadingGrades, setIsLoadingGrades] = useState(true);
+  const [gradesError, setGradesError] = useState<string | null>(null);
+  const [selectedGradeForDownload, setSelectedGradeForDownload] = useState<string | null>(null);
+
+  const fetchGrades = useCallback(async () => {
+    setIsLoadingGrades(true);
+    setGradesError(null);
+    try {
+      const res = await fetch('/api/study-materials');
+      if (!res.ok) throw new Error(`Failed to fetch grades: ${res.statusText}`);
+      const data: StudyGrade[] = await res.json();
+      setStudyGrades(data);
+    } catch (error) {
+      console.error("Error fetching study grades for settings:", error);
+      const errorMsg = error instanceof Error ? error.message : "Could not load grade information.";
+      setGradesError(errorMsg);
+      toast({ variant: "destructive", title: "Error loading grades", description: errorMsg });
+    } finally {
+      setIsLoadingGrades(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchGrades();
+  }, [fetchGrades]);
+
+  const handleDownloadAllForGrade = () => {
+    if (!selectedGradeForDownload) {
+      toast({ title: "Select Grade", description: "Please select a grade to download materials for.", variant: "destructive" });
+      return;
+    }
+    const gradeName = studyGrades.find(g => g.id === selectedGradeForDownload)?.name || "Selected Grade";
+    toast({
+      title: `Downloading Materials for ${gradeName}...`,
+      description: "(Simulated) Full background caching of all PDFs and content for this grade via IndexedDB is a future enhancement. This feature is currently a placeholder."
+    });
+    // In a real implementation, this would trigger a robust background caching process
+    // for all PDFs and possibly other content related to the selectedGradeForDownload.
+  };
+
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
@@ -81,17 +127,15 @@ export default function SettingsPage() {
               <span className="text-sm text-muted-foreground">
                 The app aims to automatically sync data (like pending feedback submissions and potentially future content updates) 
                 when an internet connection is available. This ensures your experience is as up-to-date as possible and offline work is saved.
-                PDFs and other large study materials may have manual caching options for offline use.
+                PDFs and other large study materials are managed via IndexedDB for robust offline access.
               </span>
             </Label>
-            {/* Manual Sync button removed, placeholder for future global sync status/action if needed */}
-            {/* <Button variant="outline" className="w-full mt-2" disabled>Check Sync Status (Coming Soon)</Button> */}
           </div>
           <div className="p-4 border rounded-lg">
             <Label className="flex flex-col gap-1">
               <span className="font-semibold">App Updates</span>
                 <span className="text-sm text-muted-foreground">
-                    This application is designed as a Progressive Web App (PWA). Updates are typically handled automatically by your browser when you re-open the app after an update has been deployed. You can also try a hard refresh (Ctrl+Shift+R or Cmd+Shift+R) if you suspect an update is available.
+                    This application is designed as a Progressive Web App (PWA). Updates are typically handled automatically by your browser when you re-open the app after an update has been deployed. You can also try a hard refresh.
                 </span>
             </Label>
             <Button variant="outline" className="w-full mt-2" onClick={() => window.location.reload(true)} >
@@ -100,6 +144,58 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2"><DownloadCloud className="h-5 w-5 text-primary"/>Offline Content Management</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            You can download all study materials (notes, exercises, etc.) for a specific grade to ensure full offline access. This may take some time and consume storage space.
+          </p>
+          {isLoadingGrades ? (
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading grades...</span>
+            </div>
+          ) : gradesError ? (
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{gradesError}</AlertDescription>
+            </Alert>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-2 items-end">
+              <div className="flex-grow">
+                <Label htmlFor="grade-download-select">Select Grade</Label>
+                <Select onValueChange={setSelectedGradeForDownload} value={selectedGradeForDownload || ""}>
+                  <SelectTrigger id="grade-download-select">
+                    <SelectValue placeholder="Select Grade to Download" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Grades</SelectLabel>
+                      {studyGrades.map((grade) => (
+                        <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={handleDownloadAllForGrade} 
+                disabled={!selectedGradeForDownload} 
+                className="w-full sm:w-auto"
+              >
+                Download Materials for {studyGrades.find(g => g.id === selectedGradeForDownload)?.name || "Grade"}
+              </Button>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Note: Full download functionality for all content types (beyond individual PDF caching on view) is a future enhancement. This button currently simulates the initiation.
+          </p>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

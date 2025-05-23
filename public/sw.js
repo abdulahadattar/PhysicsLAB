@@ -1,44 +1,67 @@
 
-const CACHE_NAME = 'physicslab-v1';
+// public/sw.js
+
+const CACHE_NAME = 'physicslab-v1.3-cache'; // Increment version to force update
 const urlsToCache = [
   '/',
-  // Add other critical paths/assets you want to pre-cache
-  // For example:
-  // '/offline.html', // A custom offline fallback page
-  // '/styles/globals.css', // if you had specific critical CSS not inlined
-  // '/img/logo.png'
+  '/manifest.json',
+  '/favicon.ico',
+  // Add other critical static assets here, e.g., logo, global CSS if not inlined
+  // Be careful with caching too many dynamic routes initially,
+  // as they might serve stale data if not handled with a network-first strategy.
+  '/api/study-materials' // Cache the API response for study materials structure
 ];
 
-self.addEventListener('install', (event) => {
+// Install service worker and cache static assets
+self.addEventListener('install', event => {
+  console.log('[Service Worker] Install event');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        // Pre-cache essential assets. Be mindful of what you add here.
-        // For a Next.js app, a lot of assets are dynamically named.
-        // A more sophisticated approach would use a build tool (like next-pwa)
-        // to generate this list. For now, we'll keep it minimal.
-        return cache.addAll(urlsToCache.filter(url => !url.startsWith('/_next/static/'))); // Avoid caching dev chunks
+      .then(cache => {
+        console.log('[Service Worker] Opened cache:', CACHE_NAME);
+        // Add core assets that make up the app shell
+        // For Next.js, these are often hashed, so dynamic caching during runtime is more effective
+        // This initial list is for very basic app shell components
+        return cache.addAll(urlsToCache)
+          .then(() => console.log('[Service Worker] Core assets cached.'))
+          .catch(error => console.error('[Service Worker] Failed to cache core assets:', error));
       })
-      .catch(err => {
-        console.error('Failed to open cache: ', err);
-      })
+      .then(() => self.skipWaiting()) // Activate new service worker immediately
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  // We only want to cache GET requests.
+// Activate service worker and clean up old caches
+self.addEventListener('activate', event => {
+  console.log('[Service Worker] Activate event');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log('[Service Worker] Deleting old cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim()) // Take control of all open clients
+  );
+});
+
+// Fetch event: Serve cached content when offline, or fetch from network
+self.addEventListener('fetch', event => {
+  // We only want to cache GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // For navigation requests, try network first, then cache, then fallback.
-  if (event.request.mode === 'navigate') {
+  // For API calls (like /api/study-materials), try network first, then cache.
+  // For other assets, try cache first, then network.
+  if (event.request.url.includes('/api/')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // If we get a valid response, cache it and return it.
-          if (response && response.status === 200) {
+          // If the response is valid, clone it and store it in the cache.
+          if (response && response.status === 200 && response.type === 'basic') {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME)
               .then(cache => {
@@ -48,60 +71,50 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // If network fails, try to get from cache.
+          // If network request fails, try to serve from cache.
           return caches.match(event.request)
-            .then(response => {
-              return response || caches.match('/'); // Fallback to homepage or an offline.html
+            .then(cachedResponse => {
+              return cachedResponse || new Response(JSON.stringify({ error: "Offline and data not cached" }), {
+                status: 503, // Service Unavailable
+                headers: { 'Content-Type': 'application/json' }
+              });
             });
         })
     );
-    return;
-  }
-
-  // For other requests (assets like CSS, JS, images), use cache-first strategy.
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Not in cache - fetch from network, cache, and return
-        return fetch(event.request).then(
-          (networkResponse) => {
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              // Don't cache opaque responses or errors
-              return networkResponse;
-            }
-
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-            return networkResponse;
+  } else {
+    // Cache-first strategy for static assets
+    event.respondWith(
+      caches.match(event.request)
+        .then(cachedResponse => {
+          // Cache hit - return response
+          if (cachedResponse) {
+            return cachedResponse;
           }
-        ).catch(() => {
-          // If fetch fails (e.g., offline, and not in cache)
-          // You might want to return a placeholder for images, etc.
-          // For now, it will just fail.
-        });
-      })
-  );
+
+          // Not in cache - fetch from network, then cache it
+          return fetch(event.request).then(
+            response => {
+              // Check if we received a valid response
+              if (!response || response.status !== 200 || response.type !== 'basic') {
+                return response;
+              }
+
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, responseToCache);
+                });
+              return response;
+            }
+          );
+        })
+    );
+  }
 });
 
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+// Basic message listener (can be expanded for PWA update notifications, etc.)
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
