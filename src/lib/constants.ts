@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, ClockIcon, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText, UploadCloud, SearchIcon, XCircle, Replace, Weight } from 'lucide-react'; // Added Replace, Weight
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Sigma, BatteryCharging, Waves, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileArchive, TestTubeDiagonal, Beaker, Edit, Link2, FileText, SearchIcon, Timer, Weight, Replace, HelpCircle } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -31,7 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/teacher-dashboard/announcements', label: 'Announcements', icon: MessageSquare },
       { href: '/teacher-dashboard/assignments', label: 'Manage Assignments', icon: Edit },
       { href: '/teacher-dashboard/content-management', label: 'Study Content', icon: FileEdit },
-      { href: '/teacher-dashboard/manage-model-papers', label: 'Model Papers', icon: FileArchive },
+      { href: '/teacher-dashboard/manage-model-papers', label: 'Manage Model Papers', icon: FileArchive },
       { href: '/teacher-dashboard/lesson-planner', label: 'Lesson Planner', icon: NotebookText },
       { href: '/teacher-dashboard/daily-diary', label: 'Daily Diary', icon: CalendarDays },
       { href: '/teacher-dashboard/scheme-of-study', label: 'Scheme of Study', icon: ClipboardList },
@@ -39,7 +39,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/teacher-dashboard/my-portfolio', label: 'My Portfolio', icon: UserCircle },
     ]
   },
-  { href: '/feedback', label: 'Feedback & Notes', icon: MessageSquare },
+  { href: '/feedback', label: 'Feedback & Questions', icon: HelpCircle },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
@@ -69,13 +69,26 @@ export const SIMULATION_TOPICS: SimulationTopic[] = [
   { id: "shm-spring-mass-g11", name: "SHM - Spring-Mass", grade: "11", description: "Simulate a spring-mass system and observe Simple Harmonic Motion.", icon: Waves, image: "https://placehold.co/400x200.png", aiHint: "spring mass oscillation" },
   { id: "sig-figs-practice-g11", name: "Significant Figures Practice", grade: "11", description: "Practice identifying and using significant figures.", icon: Sigma, image: "https://placehold.co/400x200.png", aiHint: "significant figures numbers" },
   { id: "capacitor-rc-circuit-g11", name: "Capacitor Charging/Discharging", grade: "11", description: "Visualize RC circuit charging and discharging.", icon: BatteryCharging, image: "https://placehold.co/400x200.png", aiHint: "capacitor circuit graph" },
-  { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum and observe SHM.", icon: MoveHorizontal, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
+  { id: "simple-pendulum-shm-g11", name: "Simple Pendulum SHM", grade: "11", description: "Simulate a simple pendulum and observe SHM.", icon: Timer, image: "https://placehold.co/400x200.png", aiHint: "pendulum swing motion" },
 ];
 
 
 export const QUIZ_TOPICS = [
-  { id: "kinematics", name: "Kinematics Quiz" },
-  { id: "dynamics", name: "Dynamics Quiz" },
-  { id: "electromagnetism", name: "Electromagnetism Quiz" },
+  { id: "kinematics", name: "Kinematics Quiz", description: "Test your knowledge on motion, speed, velocity, and acceleration." },
+  { id: "dynamics", name: "Dynamics Quiz", description: "Explore forces, Newton's laws, momentum, and energy." },
+  { id: "electromagnetism", name: "Electromagnetism Quiz", description: "Questions on electric and magnetic fields, circuits, and waves." },
 ];
 
+export const SETTINGS_SEARCHABLE_KEYWORDS: {term: string, label: string, href: string}[] = [
+    {term: "theme", label: "Appearance Theme (Light/Dark/System)", href: "/settings"},
+    {term: "dark mode", label: "Dark Mode Theme Setting", href: "/settings"},
+    {term: "light mode", label: "Light Mode Theme Setting", href: "/settings"},
+    {term: "fun facts", label: "Fun Physics Facts Panel Setting", href: "/settings"},
+    {term: "tidbits", label: "Fun Physics Tidbits Panel Setting", href: "/settings"},
+    {term: "notifications", label: "Notification Settings (Coming Soon)", href: "/settings"},
+    {term: "offline", label: "Offline Data & Sync Settings", href: "/settings"},
+    {term: "sync", label: "Online MCQ Sync Settings", href: "/settings"},
+    {term: "update", label: "Check for App Updates Setting", href: "/settings"},
+    {term: "login", label: "Login/Account Settings", href: "/settings"},
+    {term: "account", label: "Login/Account Settings", href: "/settings"},
+];
