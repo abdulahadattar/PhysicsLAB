@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, BarChart3, TrendingDown, TrendingUp, UserCheck, Percent, AlertTriangle, Loader2, BookOpen, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, BarChart3, TrendingDown, TrendingUp, UserCheck, Percent, AlertTriangle, Loader2, BookOpen, CheckCircle, Clock, Activity, History } from "lucide-react";
 import Link from "next/link";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer } from "recharts"
@@ -39,11 +39,11 @@ const quizPerformanceByTopicData = [
 ];
 
 const mockStudentData = [
-    { id: "s001", name: "Ahmed Ali", grade: "Grade 9", averageQuizScore: 85, lastActiveFeature: "Simulations (Projectile Motion)", avatar: "https://placehold.co/40x40.png?text=AA", strengths: ["Kinematics", "Dynamics"], weaknesses: ["Optics"], quizzesCompleted: 12, timeSpentInApp: "18h 45m", lastQuizTimestamp: "2024-05-21" },
-    { id: "s002", name: "Fatima Khan", grade: "Grade 10", averageQuizScore: 72, lastActiveFeature: "Study Material (Electromagnetism)", avatar: "https://placehold.co/40x40.png?text=FK", strengths: ["Electromagnetism"], weaknesses: ["Thermodynamics", "Optics"], quizzesCompleted: 8, timeSpentInApp: "12h 15m", lastQuizTimestamp: "2024-05-19" },
-    { id: "s003", name: "Bilal Hassan", grade: "Grade 9", averageQuizScore: 91, lastActiveFeature: "Quizzes (Daily Challenge)", avatar: "https://placehold.co/40x40.png?text=BH", strengths: ["All Topics"], weaknesses: ["None apparent"], quizzesCompleted: 15, timeSpentInApp: "22h 00m", lastQuizTimestamp: "2024-05-22" },
-    { id: "s004", name: "Aisha Rao", grade: "Grade 11", averageQuizScore: 68, lastActiveFeature: "Learn with AI", avatar: "https://placehold.co/40x40.png?text=AR", strengths: ["Capacitors"], weaknesses: ["Projectile Motion", "SHM"], quizzesCompleted: 5, timeSpentInApp: "9h 30m", lastQuizTimestamp: "2024-05-15" },
-    { id: "s005", name: "Usman Tariq", grade: "Grade 12", averageQuizScore: 78, lastActiveFeature: "Simulations (States of Matter)", avatar: "https://placehold.co/40x40.png?text=UT", strengths: ["Thermodynamics", "Modern Physics"], weaknesses: ["AC Circuits"], quizzesCompleted: 10, timeSpentInApp: "16h 50m", lastQuizTimestamp: "2024-05-20" },
+    { id: "s001", name: "Ahmed Ali", grade: "Grade 9", averageQuizScore: 85, quizzesCompleted: 12, timeSpentInApp: "18h 45m", lastQuizTimestamp: "2024-05-21", lastLogin: "2024-05-23 10:15 AM", averageSessionDuration: "42 min", totalSessions: 25, mostUsedFeature: "Simulations", lastActiveFeature: "Simulations (Projectile Motion)", avatar: "https://placehold.co/40x40.png?text=AA", strengths: ["Kinematics", "Dynamics"], weaknesses: ["Optics"] },
+    { id: "s002", name: "Fatima Khan", grade: "Grade 10", averageQuizScore: 72, quizzesCompleted: 8, timeSpentInApp: "12h 15m", lastQuizTimestamp: "2024-05-19", lastLogin: "2024-05-22 08:30 PM", averageSessionDuration: "55 min", totalSessions: 18, mostUsedFeature: "Study Material", lastActiveFeature: "Study Material (Electromagnetism)", avatar: "https://placehold.co/40x40.png?text=FK", strengths: ["Electromagnetism"], weaknesses: ["Thermodynamics", "Optics"] },
+    { id: "s003", name: "Bilal Hassan", grade: "Grade 9", averageQuizScore: 91, quizzesCompleted: 15, timeSpentInApp: "22h 00m", lastQuizTimestamp: "2024-05-22", lastLogin: "2024-05-23 01:00 PM", averageSessionDuration: "60 min", totalSessions: 30, mostUsedFeature: "Quizzes", lastActiveFeature: "Quizzes (Daily Challenge)", avatar: "https://placehold.co/40x40.png?text=BH", strengths: ["All Topics"], weaknesses: ["None apparent"] },
+    { id: "s004", name: "Aisha Rao", grade: "Grade 11", averageQuizScore: 68, quizzesCompleted: 5, timeSpentInApp: "9h 30m", lastQuizTimestamp: "2024-05-15", lastLogin: "2024-05-20 11:00 AM", averageSessionDuration: "30 min", totalSessions: 15, mostUsedFeature: "Learn with AI", lastActiveFeature: "Learn with AI", avatar: "https://placehold.co/40x40.png?text=AR", strengths: ["Capacitors"], weaknesses: ["Projectile Motion", "SHM"] },
+    { id: "s005", name: "Usman Tariq", grade: "Grade 12", averageQuizScore: 78, quizzesCompleted: 10, timeSpentInApp: "16h 50m", lastQuizTimestamp: "2024-05-20", lastLogin: "2024-05-21 09:00 AM", averageSessionDuration: "48 min", totalSessions: 22, mostUsedFeature: "Simulations", lastActiveFeature: "Simulations (States of Matter)", avatar: "https://placehold.co/40x40.png?text=UT", strengths: ["Thermodynamics", "Modern Physics"], weaknesses: ["AC Circuits"] },
 ];
 
 const mockFeatureUsageData = [
@@ -120,7 +120,6 @@ export default function TeacherAnalyticsPage() {
     fetchGradesForFilter();
   }, []);
 
-  // Filtered student data based on selectedGradeFilter
   const filteredStudentData = mockStudentData.filter(student => 
     selectedGradeFilter === "all" || studyGrades.find(sg => sg.id === selectedGradeFilter)?.name === student.grade
   );
@@ -175,10 +174,10 @@ export default function TeacherAnalyticsPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center gap-1"><Clock className="h-4 w-4 text-blue-500"/>Avg. Time in App</CardTitle>
+                        <CardTitle className="text-sm font-medium flex items-center gap-1"><History className="h-4 w-4 text-blue-500"/>Avg. Time in App</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">~15h 20m</p> {/* This would be calculated in a real scenario */}
+                        <p className="text-2xl font-bold">~15h 20m</p>
                         <p className="text-xs text-muted-foreground">Per active student (mock)</p>
                     </CardContent>
                 </Card>
@@ -301,14 +300,14 @@ export default function TeacherAnalyticsPage() {
                                     <Cell key={`cell-feature-${index}`} fill={entry.fill} />
                                 ))}
                             </Pie>
-                            <ChartLegend content={<ChartLegendContent nameKey="name" />} className="text-xs [&_button]:p-0 [&_button]:text-xs" />
+                             <ChartLegend content={<ChartLegendContent nameKey="name" />} className="text-xs [&_button]:p-0 [&_button]:text-xs" />
                         </PieChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
             <Card className="xl:col-span-1">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-1"><CheckCircle className="h-5 w-5 text-indigo-500"/>Quiz Engagement</CardTitle>
+                    <CardTitle className="flex items-center gap-1"><Activity className="h-5 w-5 text-indigo-500"/>Quiz Engagement</CardTitle>
                     <CardDescription>Attempts and average scores for different quiz categories.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -374,8 +373,12 @@ export default function TeacherAnalyticsPage() {
                                 <TableHead>Grade</TableHead>
                                 <TableHead>Avg. Score</TableHead>
                                 <TableHead>Quizzes Done</TableHead>
-                                <TableHead>Time in App</TableHead>
-                                <TableHead>Last Quiz Date</TableHead>
+                                <TableHead>Total Time in App</TableHead>
+                                <TableHead>Last Quiz</TableHead>
+                                <TableHead>Last Login</TableHead>
+                                <TableHead>Avg. Session</TableHead>
+                                <TableHead>Total Sessions</TableHead>
+                                <TableHead>Most Used Feature</TableHead>
                                 <TableHead>Last Active Feature</TableHead>
                                 <TableHead>Strengths</TableHead>
                                 <TableHead>Weaknesses</TableHead>
@@ -398,6 +401,10 @@ export default function TeacherAnalyticsPage() {
                                     <TableCell>{student.quizzesCompleted}</TableCell>
                                     <TableCell>{student.timeSpentInApp}</TableCell>
                                     <TableCell>{student.lastQuizTimestamp}</TableCell>
+                                    <TableCell>{student.lastLogin}</TableCell>
+                                    <TableCell>{student.averageSessionDuration}</TableCell>
+                                    <TableCell>{student.totalSessions}</TableCell>
+                                    <TableCell><Badge variant="secondary">{student.mostUsedFeature}</Badge></TableCell>
                                     <TableCell className="text-xs">{student.lastActiveFeature}</TableCell>
                                     <TableCell>
                                         {student.strengths.map(s => <Badge key={s} variant="secondary" className="mr-1 mb-1 bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100">{s}</Badge>)}
@@ -421,3 +428,5 @@ export default function TeacherAnalyticsPage() {
   );
 }
       
+
+    
