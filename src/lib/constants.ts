@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -30,6 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/teacher-dashboard/daily-diary', label: 'Daily Diary', icon: CalendarDays },
       { href: '/teacher-dashboard/scheme-of-study', label: 'Scheme of Study', icon: ClipboardList },
       { href: '/teacher-dashboard/timetable', label: 'Timetable', icon: BookCopy },
+      { href: '/teacher-dashboard/my-portfolio', label: 'My Portfolio', icon: UserCircle },
     ]
   },
   { href: '/feedback', label: 'Feedback', icon: MessageSquare },
@@ -61,3 +62,4 @@ export const QUIZ_TOPICS = [
   { id: "dynamics", name: "Dynamics Quiz" },
   { id: "electromagnetism", name: "Electromagnetism Quiz" },
 ];
+
