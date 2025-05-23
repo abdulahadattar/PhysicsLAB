@@ -23,7 +23,7 @@ import {
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Atom }  from 'lucide-react';
+import { Atom, LogIn, LogOut, UserCircle, Eye, EyeOff }  from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -31,15 +31,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { useTeacherMode } from '@/contexts/teacher-mode-context'; // Import the hook
-import { cn } from "@/lib/utils"; // <-- ADDED THIS IMPORT
+import { useUserSession } from '@/contexts/user-session-context'; 
+import { cn } from "@/lib/utils"; 
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
-// Re-define SidebarInset here as it was removed from ui/sidebar to avoid SlotClone error
-// This is a simplified version for direct use in AppShell.
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"main">
@@ -49,7 +47,6 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background",
-        // These classes are specific to how sidebar variant="inset" interacts
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
         className
       )}
@@ -62,12 +59,12 @@ SidebarInset.displayName = "SidebarInset"
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const { isTeacherMode, isLoading: isTeacherModeLoading } = useTeacherMode(); // Use the hook
+  const { isLoggedIn, userRole, viewAsStudent, login, logout, toggleViewAsStudent, isLoading } = useUserSession();
 
   const renderNavItems = (items: NavItem[], isSubMenu = false) => {
     return items.map((item) => {
-      // Conditionally render Teacher Panel based on isTeacherMode
-      if (item.href === '/teacher-dashboard' && !isTeacherMode) {
+      // Conditionally render Teacher Panel
+      if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || viewAsStudent)) {
         return null;
       }
 
@@ -80,9 +77,10 @@ export function AppShell({ children }: AppShellProps) {
             <AccordionItem value={item.href} className="border-none">
               <AccordionTrigger 
                 className={`w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180 group-data-[collapsible=icon]:justify-center ${isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
+                asChild
               >
                 <SidebarMenuButton
-                  asChild={true}
+                  asChild={false} // Let trigger be the button
                   className="w-full"
                   isActive={isActive && !isParentActive && !isSubMenu} 
                   tooltip={item.label}
@@ -132,8 +130,9 @@ export function AppShell({ children }: AppShellProps) {
     });
   };
 
-  if (isTeacherModeLoading) {
-    return <div>Loading application state...</div>; // Or a proper loading skeleton for the shell
+  if (isLoading) {
+    // Or a more sophisticated loading skeleton for the shell
+    return <div className="flex items-center justify-center h-screen text-lg">Loading Application...</div>; 
   }
 
   return (
@@ -152,18 +151,18 @@ export function AppShell({ children }: AppShellProps) {
             </SidebarMenu>
           </SidebarContent>
         </ScrollArea>
-        <SidebarFooter className="p-4 mt-auto group-data-[collapsible=icon]:justify-center">
+        <SidebarFooter className="p-4 mt-auto">
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
             <Avatar>
-              <AvatarImage src="https://placehold.co/40x40.png" alt={APP_AUTHOR} data-ai-hint="scientist portrait" />
-              <AvatarFallback>{APP_AUTHOR.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST"} alt={isLoggedIn ? userRole || "User" : "Guest"} data-ai-hint="user avatar" />
+              <AvatarFallback>{isLoggedIn ? (userRole === 'teacher' ? 'TA' : 'ST') : 'GU'}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-medium">{APP_AUTHOR}</p>
-              <p className="text-xs text-muted-foreground">Teacher</p>
+              <p className="text-sm font-medium">{isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR : 'Student User') : 'Guest'}</p>
+              <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? 'Teacher' : 'Student') : 'Not Logged In'}</p>
             </div>
           </div>
-          <div className="group-data-[collapsible=icon]:hidden text-center text-xs text-muted-foreground mt-2">
+           <div className="group-data-[collapsible=icon]:hidden text-center text-xs text-muted-foreground mt-2">
             &copy; {new Date().getFullYear()} {APP_NAME}
           </div>
         </SidebarFooter>
@@ -174,8 +173,37 @@ export function AppShell({ children }: AppShellProps) {
           <div className="flex-1">
             {/* Breadcrumbs or page title can go here */}
           </div>
-          <ThemeToggle />
-          {/* Optional User Dropdown if login is implemented */}
+          <div className="flex items-center gap-2">
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading user...</p>
+            ) : !isLoggedIn ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => login('student')}>
+                  <UserCircle className="mr-2 h-4 w-4" /> Login as Student
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => login('teacher')}>
+                  <UserCircle className="mr-2 h-4 w-4" /> Login as Teacher
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  Logged in as: <span className="font-semibold capitalize">{userRole}</span>
+                  {userRole === 'teacher' && viewAsStudent && " (Viewing as Student)"}
+                </span>
+                {userRole === 'teacher' && (
+                  <Button variant="outline" size="sm" onClick={toggleViewAsStudent}>
+                    {viewAsStudent ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                    {viewAsStudent ? "Teacher View" : "Student View"}
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" /> Logout
+                </Button>
+              </>
+            )}
+            <ThemeToggle />
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
           {children}

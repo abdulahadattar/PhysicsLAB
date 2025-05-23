@@ -4,8 +4,8 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
-import { TeacherModeProvider } from '@/contexts/teacher-mode-context';
-import Script from 'next/script'; // Import Script
+import { UserSessionProvider } from '@/contexts/user-session-context'; // Updated import
+import Script from 'next/script';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'PhysicsLab by Sir Abdul Ahad',
   description: 'Interactive Physics Demonstrations and Study Material for Grades 9-12, Sindh Textbook Board. Notes by Abdul Ahad Attar.',
-  manifest: '/manifest.json', // Link to the manifest file
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -31,10 +31,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* You might also want to add specific PWA meta tags here if needed, e.g., for iOS splash screens, though manifest covers a lot. */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <TeacherModeProvider>
+        <UserSessionProvider> {/* Updated Provider */}
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -44,7 +43,7 @@ export default function RootLayout({
             {children}
             <Toaster />
           </ThemeProvider>
-        </TeacherModeProvider>
+        </UserSessionProvider>
         <Script id="service-worker-registration" strategy="lazyOnload">
           {`
             if ('serviceWorker' in navigator) {

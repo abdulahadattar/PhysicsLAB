@@ -8,14 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Palette, Bell, Download, UserCog } from "lucide-react";
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { useTeacherMode } from "@/contexts/teacher-mode-context"; // Import teacher mode hook
+// Removed useTeacherMode import as it's replaced by useUserSession
 
 export default function SettingsPage() {
   const { isPanelVisible, togglePanelVisibility, isMounted: isFunFactsMounted } = useFunFactsSettings();
-  const { isTeacherMode, toggleTeacherMode, isLoading: isTeacherModeLoading } = useTeacherMode();
-
-  // Optional: Handle online sync toggle
-  // const [onlineSyncEnabled, setOnlineSyncEnabled] = useState(false);
+  // const { isTeacherMode, toggleTeacherMode, isLoading: isTeacherModeLoading } = useTeacherMode(); // Removed
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
@@ -41,7 +38,7 @@ export default function SettingsPage() {
             </Label>
             <ThemeToggle />
           </div>
-          {isFunFactsMounted && ( // Only render switch when client-side mounted to avoid hydration mismatch
+          {isFunFactsMounted && (
             <div className="flex items-center justify-between p-4 border rounded-lg">
                 <Label htmlFor="fun-facts-toggle" className="flex flex-col gap-1">
                 <span className="font-semibold">Fun Physics Facts Panel</span>
@@ -85,9 +82,7 @@ export default function SettingsPage() {
             </Label>
             <Switch 
               id="online-sync-toggle" 
-              // checked={onlineSyncEnabled} 
-              // onCheckedChange={setOnlineSyncEnabled}
-              disabled // Placeholder
+              disabled 
               aria-label="Toggle online MCQ sync"
             />
           </div>
@@ -98,32 +93,16 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Removed Access Mode Card as login is now handled in AppShell header 
       <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2"><UserCog className="h-5 w-5 text-primary"/>Access Mode</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isTeacherModeLoading && (
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-                <Label htmlFor="teacher-mode-toggle" className="flex flex-col gap-1">
-                <span className="font-semibold">Enable Teacher Mode</span>
-                <span className="text-sm text-muted-foreground">Access teacher-specific tools and analytics.</span>
-                </Label>
-                <Switch
-                id="teacher-mode-toggle"
-                checked={isTeacherMode}
-                onCheckedChange={toggleTeacherMode}
-                aria-label="Toggle Teacher Mode"
-                />
-            </div>
-          )}
-           {isTeacherMode && (
-            <p className="text-sm text-green-600 dark:text-green-400 p-2 bg-green-50 dark:bg-green-900/30 rounded-md">
-              Teacher Mode is currently ACTIVE. You can see the Teacher Panel in the sidebar.
-            </p>
-          )}
+          // Content removed
         </CardContent>
       </Card>
+      */}
     </div>
   );
 }

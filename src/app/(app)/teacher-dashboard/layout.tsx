@@ -3,25 +3,21 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTeacherMode } from '@/contexts/teacher-mode-context';
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import { useUserSession } from '@/contexts/user-session-context'; // Updated import
+import { Skeleton } from '@/components/ui/skeleton'; 
 
 export default function TeacherDashboardLayout({ children }: { children: ReactNode }) {
-  const { isTeacherMode, isLoading } = useTeacherMode();
+  const { isLoggedIn, userRole, isLoading } = useUserSession(); // Updated hook
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isTeacherMode) {
-      // User is not in teacher mode and loading is complete, redirect them.
-      // Display a message or redirect immediately.
-      // For now, redirecting immediately.
-      console.log("Access denied: Not in teacher mode. Redirecting to dashboard.");
+    if (!isLoading && (!isLoggedIn || userRole !== 'teacher')) {
+      console.log("Access denied: Not logged in as teacher. Redirecting to dashboard.");
       router.replace('/'); 
     }
-  }, [isTeacherMode, isLoading, router]);
+  }, [isLoggedIn, userRole, isLoading, router]);
 
   if (isLoading) {
-    // Show a loading state while teacher mode is being determined
     return (
         <div className="p-6 space-y-4">
             <Skeleton className="h-12 w-1/3" />
@@ -31,9 +27,7 @@ export default function TeacherDashboardLayout({ children }: { children: ReactNo
     );
   }
 
-  if (!isTeacherMode) {
-    // This content might flash briefly before redirection or if redirection fails.
-    // Or, if preferred, return null here as well to avoid flashing content.
+  if (!isLoggedIn || userRole !== 'teacher') {
     return (
         <div className="p-6 text-center">
             <p>Redirecting...</p>
@@ -41,6 +35,5 @@ export default function TeacherDashboardLayout({ children }: { children: ReactNo
     ); 
   }
 
-  // If in teacher mode and not loading, render the children (teacher dashboard pages)
   return <>{children}</>;
 }
