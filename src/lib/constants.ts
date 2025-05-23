@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileQuestion, TestTubeDiagonal } from 'lucide-react';
+import { LayoutDashboard, Orbit, BookOpen, ListChecks, Users, MessageSquare, Settings as SettingsIcon, UserCog, Lightbulb, Brain, Map, Ruler, Thermometer, Scale, Clock, Waves, Heater, Sigma, BatteryCharging, MoveHorizontal, TrendingUp, Atom, FileEdit, CalendarDays, ClipboardList, BookCopy, NotebookText, UserCircle, FileQuestion, TestTubeDiagonal, Beaker, FileArchive } from 'lucide-react';
 
 export type NavItem = {
   href: string;
@@ -17,7 +17,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/quizzes', label: 'Quizzes', icon: ListChecks },
   { href: '/learn-with-ai', label: 'Learn with AI', icon: Brain },
   { href: '/mind-maps', label: 'Mind Maps', icon: Map },
-  { href: '/model-papers', label: 'Model Papers', icon: FileQuestion },
+  { href: '/model-papers', label: 'Model Papers', icon: FileArchive },
+  { href: '/practicals', label: 'Practicals', icon: Beaker },
   { href: '/mdcat-preparation', label: 'MDCAT Prep', icon: TestTubeDiagonal },
   {
     href: '/teacher-dashboard',
@@ -27,7 +28,8 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/teacher-dashboard/accounts', label: 'Student Accounts', icon: Users },
       { href: '/teacher-dashboard/analytics', label: 'Analytics', icon: LayoutDashboard },
       { href: '/teacher-dashboard/announcements', label: 'Announcements', icon: MessageSquare },
-      { href: '/teacher-dashboard/content-management', label: 'Content Management', icon: FileEdit },
+      { href: '/teacher-dashboard/content-management', label: 'Study Content', icon: FileEdit },
+      { href: '/teacher-dashboard/manage-model-papers', label: 'Model Papers', icon: FileArchive },
       { href: '/teacher-dashboard/lesson-planner', label: 'Lesson Planner', icon: NotebookText },
       { href: '/teacher-dashboard/daily-diary', label: 'Daily Diary', icon: CalendarDays },
       { href: '/teacher-dashboard/scheme-of-study', label: 'Scheme of Study', icon: ClipboardList },
@@ -35,7 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/teacher-dashboard/my-portfolio', label: 'My Portfolio', icon: UserCircle },
     ]
   },
-  { href: '/feedback', label: 'Feedback', icon: MessageSquare },
+  { href: '/feedback', label: 'Feedback & Notes', icon: MessageSquare },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 

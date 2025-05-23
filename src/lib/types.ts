@@ -14,9 +14,12 @@ export interface QuestionAnswer {
 }
 
 export interface ChapterContent {
-  stbbChapterPdfLink?: string; // Renamed for clarity (Sindh Textbook Board Chapter PDF)
+  stbbChapterPdfLink?: string;
   teacherNotesPdfName?: string;
-  alternativeChapterPdfLink?: string; // Renamed for clarity
+  alternativeChapterPdfLink?: string;
+  punjabBoardPdfName?: string;
+  nationalSyllabusPdfName?: string;
+  ziauddinBoardPdfName?: string;
   keyPoints?: string;
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[]; // CRQs
@@ -34,10 +37,10 @@ export interface StudyGrade {
   id: string;
   name: string;
   chapters: Chapter[];
-  completeTextbookPdfLink?: string; // This will represent the STBB full book
+  completeTextbookPdfLink?: string;
   ziauddinBoardFullPdfLink?: string;
   punjabBoardFullPdfLink?: string;
-  nationalSyllabusFullPdfLink?: string; // For "Pakistan National Syllabus"
+  nationalSyllabusFullPdfLink?: string;
 }
 
 export interface TeacherChapterOverride extends ChapterContent {
@@ -45,10 +48,8 @@ export interface TeacherChapterOverride extends ChapterContent {
   gradeId: string;
 }
 
-// This type will store all chapter overrides, keyed by chapterId
 export type TeacherChapterOverrides = Record<string, TeacherChapterOverride>;
 
-// New Type for Grade-Level Teacher Overrides (for full textbook links)
 export interface TeacherGradeOverride {
   gradeId: string;
   completeTextbookPdfLink?: string;
@@ -59,3 +60,10 @@ export interface TeacherGradeOverride {
 }
 
 export type TeacherGradeOverrides = Record<string, TeacherGradeOverride>;
+
+export interface ModelPaper {
+  id: string;
+  title: string;
+  description?: string;
+  url: string;
+}
