@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BookText, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
+import { BookText, ChevronRight, AlertTriangle, Loader2, FileText } from "lucide-react";
 import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade } from '@/lib/types';
 import { useEffect, useState } from "react";
@@ -105,9 +105,6 @@ export default function StudyMaterialPage() {
     );
   }
   
-  // Error display logic:
-  // If error is the specific cache refresh warning, show it as default/yellow.
-  // Otherwise, show it as destructive.
   const isCacheWarning = error && error.startsWith("Could not refresh study materials");
 
   if (error && !isCacheWarning && studyGrades.length === 0) { 
@@ -166,9 +163,24 @@ export default function StudyMaterialPage() {
           <Card key={grade.id} className="overflow-hidden shadow-md">
             <AccordionItem value={`grade-${grade.id}`} className="border-none">
               <AccordionTrigger className="bg-secondary/30 hover:bg-secondary/50 px-6 py-4 text-xl font-semibold hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <BookText className="h-6 w-6 text-primary" />
-                  {grade.name}
+                <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                        <BookText className="h-6 w-6 text-primary" />
+                        {grade.name}
+                    </div>
+                    {grade.completeTextbookPdfLink && (
+                      <Button
+                        variant="link"
+                        asChild
+                        size="sm"
+                        className="text-primary hover:underline px-2 py-1 h-auto mr-2"
+                        onClick={(e) => e.stopPropagation()} // Prevents accordion toggle
+                      >
+                        <a href={grade.completeTextbookPdfLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                          <FileText className="h-4 w-4"/> Full Textbook
+                        </a>
+                      </Button>
+                    )}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-0">

@@ -34,6 +34,7 @@ export interface StudyGrade {
   id: string;
   name: string;
   chapters: Chapter[];
+  completeTextbookPdfLink?: string; // New field for complete textbook link
 }
 
 export interface TeacherChapterOverride extends ChapterContent {

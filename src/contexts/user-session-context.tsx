@@ -26,6 +26,7 @@ interface UserSessionContextType {
   signOutFirebase: () => Promise<void>;
   toggleViewAsStudent: () => void;
   isLoading: boolean;
+  isFirebaseConfigured: boolean;
 }
 
 const UserSessionContext = createContext<UserSessionContextType | undefined>(undefined);
@@ -36,42 +37,59 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [viewAsStudent, setViewAsStudent] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isFirebaseConfigured, setIsFirebaseConfigured] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        const appUser: AppUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-        };
-        setCurrentUser(appUser);
-        setIsLoggedIn(true);
-        const teacherEmail = process.env.NEXT_PUBLIC_TEACHER_EMAIL;
-        if (appUser.email === teacherEmail) {
-          setUserRole('teacher');
+    if (auth) { // Check if Firebase auth is initialized
+      setIsFirebaseConfigured(true);
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          const appUser: AppUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          };
+          setCurrentUser(appUser);
+          setIsLoggedIn(true);
+          const teacherEmail = process.env.NEXT_PUBLIC_TEACHER_EMAIL;
+          if (appUser.email === teacherEmail) {
+            setUserRole('teacher');
+          } else {
+            setUserRole('student');
+          }
         } else {
-          setUserRole('student');
-          // toast({ title: "Logged In as Student", description: "Some features may require teacher verification in a full system." });
+          setCurrentUser(null);
+          setIsLoggedIn(false);
+          setUserRole(null);
+          setViewAsStudent(false);
         }
-      } else {
-        setCurrentUser(null);
-        setIsLoggedIn(false);
-        setUserRole(null);
-        setViewAsStudent(false);
-      }
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
+        setIsLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // Firebase is not configured, proceed with app in a non-Firebase auth state
+      console.warn("Firebase auth is not configured. Google Sign-In will be disabled. Using offline mode for auth simulation.");
+      setIsFirebaseConfigured(false);
+      setIsLoading(false); // No Firebase auth state to wait for
+      // Keep isLoggedIn false and currentUser null, magicLogin can still work
+    }
   }, [toast]);
 
   const signInWithGoogle = useCallback(async () => {
+    if (!auth || !isFirebaseConfigured) {
+      toast({
+        title: "Google Login Unavailable",
+        description: "Firebase is not configured correctly. Please check environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider as any); // Cast to any if googleProvider can be {}
       // onAuthStateChanged will handle setting user state
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
@@ -82,11 +100,11 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
       });
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, isFirebaseConfigured]);
 
   const magicLogin = useCallback(async (username: string, pass: string): Promise<boolean> => {
-    if (typeof window !== 'undefined' && navigator.onLine) {
-        toast({ title: "Magic Login Disabled", description: "This login method is for offline testing only.", variant: "destructive" });
+    if (typeof window !== 'undefined' && navigator.onLine && isFirebaseConfigured) {
+        toast({ title: "Magic Login Disabled", description: "This login method is for offline testing when Firebase is not available.", variant: "destructive" });
         return false;
     }
 
@@ -126,31 +144,31 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
         return false;
     }
-  }, [toast]);
+  }, [toast, isFirebaseConfigured]);
 
 
   const signOutFirebase = useCallback(async () => {
     setIsLoading(true);
-    try {
-      await signOut(auth);
-      // onAuthStateChanged will handle clearing user state
-    } catch (error: any) {
-      console.error("Sign Out Error:", error);
-      toast({
-        title: "Logout Failed",
-        description: error.message || "Could not sign out. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      // Even if Firebase signout fails, clear client-side state for consistency
-      // though onAuthStateChanged should ideally handle this if it was a firebase session
-      setCurrentUser(null);
-      setIsLoggedIn(false);
-      setUserRole(null);
-      setViewAsStudent(false);
-      setIsLoading(false);
+    if (auth && isFirebaseConfigured && currentUser && !currentUser.uid.startsWith('debug-teacher-')) { // Only sign out from firebase if it was a firebase session
+      try {
+        await signOut(auth);
+      } catch (error: any) {
+        console.error("Sign Out Error:", error);
+        toast({
+          title: "Logout Failed",
+          description: error.message || "Could not sign out. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [toast]);
+    // Always clear client-side state for both Firebase and magic logins
+    setCurrentUser(null);
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setViewAsStudent(false);
+    setIsLoading(false);
+    toast({ title: "Logged Out", description: "You have been successfully logged out." });
+  }, [toast, isFirebaseConfigured, currentUser]);
 
   const toggleViewAsStudent = useCallback(() => {
     if (isLoggedIn && userRole === 'teacher') {
@@ -159,7 +177,7 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
   }, [isLoggedIn, userRole]);
 
   return (
-    <UserSessionContext.Provider value={{ currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, toggleViewAsStudent, isLoading }}>
+    <UserSessionContext.Provider value={{ currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, toggleViewAsStudent, isLoading, isFirebaseConfigured }}>
       {children}
     </UserSessionContext.Provider>
   );
