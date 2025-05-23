@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SIMULATION_TOPICS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
-import { Search, Orbit, Ruler, Weight, LineChart, Move, Atom, Waves, Projector, Zap, Network, Binary, RefreshCw, Anchor, BatteryCharging, MoveVertical, Sigma, Replace, Timer, Thermometer, Magnet, GitCommitHorizontal, Sun, Pipette, Archive } from "lucide-react"; // Added Archive
+import { Search, Orbit, Ruler, Weight, LineChart, Move, Atom, Waves, Projector, Zap, Network, Binary, RefreshCw, Anchor, BatteryCharging, MoveVertical, Sigma, Replace, Timer, Thermometer, Magnet, GitCommitHorizontal, Sun, Pipette, Archive, Radiation, Activity } from "lucide-react"; 
 import Image from "next/image";
 
 export default function SimulationsPage() {

@@ -46,7 +46,7 @@ export default function SimulationTopicPage({ params }: SimulationPageProps) {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-3xl">{topic.name}</CardTitle>
-              <CardDescription>Interactive simulation for Grade {topic.grade}. Aligned with Sindh Textbook Board.</CardDescription>
+              <CardDescription>Interactive simulation for Grade {topic.grade}.</CardDescription>
             </div>
             <Button variant="outline" size="icon" aria-label="Fullscreen">
               <Maximize className="h-5 w-5" />
@@ -106,8 +106,7 @@ export default function SimulationTopicPage({ params }: SimulationPageProps) {
                 </p>
               </CardContent>
                <CardFooter>
-                {/* <p className="text-xs text-muted-foreground">Notes by Abdul Ahad Attar</p> */}
-              </CardFooter>
+               </CardFooter>
             </Card>
           </div>
         </CardContent>

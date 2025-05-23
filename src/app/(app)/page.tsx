@@ -44,7 +44,7 @@ export default function DashboardPage() {
         <CardContent>
           <p>
             Explore simulations, dive into study materials, test your knowledge with quizzes, and discover fun facts about the world of physics.
-            This platform is designed to help students from grades 9 to 12 align with the Sindh Textbook Board curriculum.
+            This platform is designed to help students from grades 9 to 12.
           </p>
         </CardContent>
       </Card>
