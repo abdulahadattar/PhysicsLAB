@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Palette, Bell, Download, UserCog } from "lucide-react";
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
 import { ThemeToggle } from '@/components/theme-toggle';
-// Removed useTeacherMode import as it's replaced by useUserSession
+// Removed useUserSession import as it's replaced by useUserSession
 
 export default function SettingsPage() {
   const { isPanelVisible, togglePanelVisibility, isMounted: isFunFactsMounted } = useFunFactsSettings();
@@ -75,32 +75,31 @@ export default function SettingsPage() {
           <CardTitle className="text-xl flex items-center gap-2"><Download className="h-5 w-5 text-primary"/>Data & Sync</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-           <div className="flex items-center justify-between p-4 border rounded-lg">
-            <Label htmlFor="online-sync-toggle" className="flex flex-col gap-1">
-              <span className="font-semibold">Online MCQ Sync</span>
-              <span className="text-sm text-muted-foreground">Periodically fetch updated MCQs from online sources. Requires internet.</span>
+           <div className="p-4 border rounded-lg">
+            <Label className="flex flex-col gap-1">
+              <span className="font-semibold">Automatic Data Sync</span>
+              <span className="text-sm text-muted-foreground">
+                The app aims to automatically sync data (like pending feedback submissions and potentially future content updates) 
+                when an internet connection is available. This ensures your experience is as up-to-date as possible and offline work is saved.
+                PDFs and other large study materials may have manual caching options for offline use.
+              </span>
             </Label>
-            <Switch 
-              id="online-sync-toggle" 
-              disabled 
-              aria-label="Toggle online MCQ sync"
-            />
+            {/* Manual Sync button removed, placeholder for future global sync status/action if needed */}
+            {/* <Button variant="outline" className="w-full mt-2" disabled>Check Sync Status (Coming Soon)</Button> */}
           </div>
-          <Button variant="outline" className="w-full" disabled>Sync Now (Fetch MCQs)</Button>
-          {/* Removed the note about offline-capability and optional sync */}
+          <div className="p-4 border rounded-lg">
+            <Label className="flex flex-col gap-1">
+              <span className="font-semibold">App Updates</span>
+                <span className="text-sm text-muted-foreground">
+                    This application is designed as a Progressive Web App (PWA). Updates are typically handled automatically by your browser when you re-open the app after an update has been deployed. You can also try a hard refresh (Ctrl+Shift+R or Cmd+Shift+R) if you suspect an update is available.
+                </span>
+            </Label>
+            <Button variant="outline" className="w-full mt-2" onClick={() => window.location.reload(true)} >
+               Force Reload App
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Removed Access Mode Card as login is now handled in AppShell header 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2"><UserCog className="h-5 w-5 text-primary"/>Access Mode</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          // Content removed
-        </CardContent>
-      </Card>
-      */}
     </div>
   );
 }
