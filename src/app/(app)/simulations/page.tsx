@@ -2,12 +2,12 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"; // Added CardFooter
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SIMULATION_TOPICS, SIMULATION_CATEGORIES } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
-import { Search, Orbit, ChevronDown } from "lucide-react"; 
+import { Search, Orbit, LineChart, Move, Archive, Atom, Waves, Projector, Zap, Network, Binary, Ruler, Weight, Replace, Sigma, BatteryCharging, MoveVertical, Timer, PersonStanding, Bug, Droplets, GripVertical, RefreshCw, Anchor, Pipette, Magnet, Activity, Radiation, SigmaSquare, Route, Combine, TestTube, RadioTower, Wind, Cable, Cog, Aperture, BrainCircuit, AlignCenter, Album, BookKey, FunctionSquare, Sparkles, Rocket, DraftingCompass, Microscope, SlidersHorizontal, Recycle, Milestone, SquareAsterisk, Dna, Bot, GitFork, BinaryIcon, AreaChart, ArrowDown, Box, Car, CircleDot, Hand, Heater, Leaf, Layers, Music2, MinusSquare, Plug, Radio, Satellite, BatteryWarning, Square, SquareRadical, StretchHorizontal, ThermometerSnowflake, Triangle, Users as UsersIcon, Scale } from "lucide-react";
 import Image from "next/image";
 import {
   Select,
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { SimulationTopic } from '@/lib/types';
 
 
 export default function SimulationsPage() {
@@ -29,15 +30,26 @@ export default function SimulationsPage() {
 
   useEffect(() => {
     // Extract unique grades from SIMULATION_TOPICS for the filter
-    const uniqueGrades = Array.from(new Set(SIMULATION_TOPICS.map(topic => topic.grade.split('/')[0].trim())))
-                             .sort((a,b) => parseInt(a) - parseInt(b)) // Sort numerically
-                             .map(g => ({ id: g, name: `Grade ${g}` }));
-    // Add "Advanced" if present
-    if (SIMULATION_TOPICS.some(topic => topic.grade.toLowerCase().includes('advanced'))) {
-        if (!uniqueGrades.find(ug => ug.id.toLowerCase() === 'advanced')) {
-            uniqueGrades.push({id: "Advanced", name: "Advanced"});
-        }
-    }
+    // Ensure "Advanced" is handled correctly if present and that sorting is numerical where possible
+    const gradeOrder = ["9", "10", "11", "12", "Advanced"];
+    const uniqueGrades = Array.from(new Set(SIMULATION_TOPICS.map(topic => {
+        // Handle multi-grade strings like "9/10" or "11 / 12 / Advanced"
+        const parts = topic.grade.split('/').map(g => g.trim());
+        return parts;
+    }).flat())).sort((a, b) => {
+        const indexA = gradeOrder.indexOf(a);
+        const indexB = gradeOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        const numA = parseInt(a);
+        const numB = parseInt(b);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        if (!isNaN(numA)) return -1;
+        if (!isNaN(numB)) return 1;
+        return a.localeCompare(b);
+    }).map(g => ({ id: g, name: g.toLowerCase() === 'advanced' ? "Advanced" : `Grade ${g}` }));
+    
     setStudyGrades(uniqueGrades);
   }, []);
 
@@ -45,23 +57,28 @@ export default function SimulationsPage() {
   const filteredSimulations = useMemo(() => {
     return SIMULATION_TOPICS.filter(topic => {
       const matchesSearchTerm = topic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                topic.description.toLowerCase().includes(searchTerm.toLowerCase());
+                                topic.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (topic.categories && topic.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())));
       
-      // Grade filtering logic needs to handle "9/10" or "11 / 12" style strings
       const topicGrades = topic.grade.split('/').map(g => g.trim().toLowerCase());
       const matchesGrade = selectedGrade === "all" || 
-                           topicGrades.some(tg => tg === selectedGrade.toLowerCase()) ||
-                           (selectedGrade.toLowerCase() === 'advanced' && topic.grade.toLowerCase().includes('advanced'));
+                           topicGrades.some(tg => tg === selectedGrade.toLowerCase());
 
       const matchesCategory = selectedCategory === "all" || 
                               (topic.categories && topic.categories.includes(selectedCategory));
       
       return matchesSearchTerm && matchesGrade && matchesCategory;
-    }).sort((a,b) => { // Sort primarily by grade, then by name
+    }).sort((a,b) => { 
         const gradeA = parseInt(a.grade.split('/')[0].trim());
         const gradeB = parseInt(b.grade.split('/')[0].trim());
-        if (gradeA !== gradeB) {
+        if (!isNaN(gradeA) && !isNaN(gradeB) && gradeA !== gradeB) {
             return gradeA - gradeB;
+        }
+        if(!isNaN(gradeA) && isNaN(gradeB)) return -1; // Numbers before "Advanced"
+        if(isNaN(gradeA) && !isNaN(gradeB)) return 1;  // "Advanced" after numbers
+        if(isNaN(gradeA) && isNaN(gradeB)) { // Both might be "Advanced" or other non-numeric
+            if (a.grade.toLowerCase().includes('advanced') && !b.grade.toLowerCase().includes('advanced')) return 1;
+            if (!a.grade.toLowerCase().includes('advanced') && b.grade.toLowerCase().includes('advanced')) return -1;
         }
         return a.name.localeCompare(b.name);
     });
@@ -78,7 +95,8 @@ export default function SimulationsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search simulations by topic or keyword..."
+              type="search"
+              placeholder="Search simulations by topic, keyword, or category..."
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -94,7 +112,7 @@ export default function SimulationsPage() {
                   <SelectLabel>Grade Level</SelectLabel>
                   <SelectItem value="all">All Grades</SelectItem>
                   {studyGrades.map(grade => (
-                    <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>
+                    <SelectItem key={grade.id} value={grade.id.toLowerCase()}>{grade.name}</SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
@@ -118,14 +136,14 @@ export default function SimulationsPage() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredSimulations.map((topic, index) => {
+        {filteredSimulations.map((topic: SimulationTopic, index: number) => {
           const IconComponent = topic.icon || Orbit; 
           const isPlaceholderImage = !topic.image || topic.image.startsWith("https://placehold.co");
           return (
             <Card 
               key={topic.id} 
               className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
-              style={{ animationDelay: `${index * 50}ms` }} // Reduced delay
+              style={{ animationDelay: `${index * 50}ms` }} 
             >
               <div className="relative h-40 bg-secondary/30 flex items-center justify-center" data-ai-hint={topic.aiHint || "physics diagram"}>
                 {isPlaceholderImage ? (
@@ -135,23 +153,21 @@ export default function SimulationsPage() {
                 )}
               </div>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg"> {/* Smaller title */}
+                <CardTitle className="flex items-center gap-2 text-lg"> 
                    <IconComponent className="h-5 w-5 text-primary flex-shrink-0"/>
                    <span className="truncate">{topic.name}</span>
                 </CardTitle>
                 <CardDescription className="text-xs">Grade(s): {topic.grade}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <ScrollArea className="h-[60px] pr-3"> {/* Fixed height for description */}
+                <ScrollArea className="h-[60px] pr-3"> 
                   <p className="text-xs text-muted-foreground">{topic.description}</p>
                 </ScrollArea>
                 <div className="mt-2 flex flex-wrap gap-1">
-                    {topic.categories?.slice(0,2).map(cat => ( // Show max 2 categories initially
-                        <Link key={cat} href={`/simulations?category=${encodeURIComponent(cat)}`} passHref>
-                           <Button variant="outline" size="xs" className="text-xs px-1.5 py-0.5 h-auto rounded-sm" onClick={(e) => { e.stopPropagation(); setSelectedCategory(cat); setSelectedGrade("all"); setSearchTerm("");}}>
-                                {cat}
-                           </Button>
-                        </Link>
+                    {topic.categories?.slice(0,2).map(cat => ( 
+                       <Button key={cat} variant="outline" size="xs" className="text-xs px-1.5 py-0.5 h-auto rounded-sm cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedCategory(cat); setSelectedGrade("all"); setSearchTerm("");}}>
+                            {cat}
+                       </Button>
                     ))}
                 </div>
               </CardContent>
@@ -163,14 +179,9 @@ export default function SimulationsPage() {
             </Card>
           );
         })}
-         {filteredSimulations.length === 0 && searchTerm && (
+         {filteredSimulations.length === 0 && (
           <p className="md:col-span-2 lg:col-span-3 xl:col-span-4 text-center text-muted-foreground py-10">
-            No simulations found matching "{searchTerm}" for the selected filters.
-          </p>
-        )}
-        {filteredSimulations.length === 0 && !searchTerm && (
-          <p className="md:col-span-2 lg:col-span-3 xl:col-span-4 text-center text-muted-foreground py-10">
-            No simulations found for the selected grade and category.
+            No simulations found matching your criteria.
           </p>
         )}
       </div>
