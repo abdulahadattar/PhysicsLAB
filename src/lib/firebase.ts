@@ -1,12 +1,13 @@
 /**
  * @fileOverview Firebase SDK Initialization.
  * This file configures and initializes the Firebase app using environment variables.
- * It provides the `auth` and `googleProvider` instances for Firebase Authentication.
+ * It provides the `auth`, `googleProvider`, and `db` (Firestore) instances.
  * Includes checks for missing environment variables and handles initialization errors gracefully
  * to prevent app crashes if Firebase is not configured, allowing other app features to function.
  */
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Firebase configuration object, populated from environment variables.
 const firebaseConfig = {
@@ -34,6 +35,7 @@ for (const key of requiredConfigKeys) {
 
 let app: FirebaseApp | undefined = undefined;
 let auth: Auth | undefined = undefined;
+let db: Firestore | undefined = undefined; // Firestore database instance
 let googleProvider: GoogleAuthProvider | {} = {}; // Use {} as a fallback if Firebase doesn't init
 
 if (!allKeysPresent) {
@@ -50,25 +52,26 @@ This file MUST be in the root directory of your project.
 
 After creating or modifying .env.local, you MUST RESTART your Next.js development server.
 Firebase will NOT initialize correctly until this is resolved.
-See .env.example (if provided) or Firebase project settings for these values.
-Firebase features like Google Sign-In will be disabled.
+Firebase features like Google Sign-In and Firestore integration will be disabled.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 `;
-  console.warn(errorMessage); // Changed from console.error to console.warn to be less intrusive on Next.js overlay
-  // app and auth will remain undefined, preventing initialization attempts
+  console.warn(errorMessage);
+  // app, auth, and db will remain undefined, preventing initialization attempts
 } else {
   // All required keys are present, attempt to initialize Firebase.
   if (getApps().length === 0) { // Check if Firebase app hasn't been initialized yet
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
+      db = getFirestore(app); // Initialize Firestore
       googleProvider = new GoogleAuthProvider();
-      console.log("Firebase initialized successfully.");
+      console.log("Firebase app, auth, and Firestore initialized successfully.");
     } catch (error) {
       console.error("Error initializing Firebase app (even after config check):", error);
-      // Ensure auth and app are undefined if initialization fails catastrophically
+      // Ensure auth, app, and db are undefined if initialization fails catastrophically
       auth = undefined;
       app = undefined;
+      db = undefined;
     }
   } else {
     // Firebase app already initialized, get existing instance.
@@ -76,13 +79,15 @@ Firebase features like Google Sign-In will be disabled.
     if (app) {
       try {
         auth = getAuth(app); // Get auth instance from existing app
+        db = getFirestore(app); // Get Firestore instance from existing app
         googleProvider = new GoogleAuthProvider();
       } catch (error){
-        console.error("Error getting Auth instance from existing Firebase app:", error);
-        auth = undefined; // Ensure auth is undefined on error
+        console.error("Error getting Auth or Firestore instance from existing Firebase app:", error);
+        auth = undefined; // Ensure auth and db are undefined on error
+        db = undefined;
       }
     }
   }
 }
 
-export { app, auth, googleProvider };
+export { app, auth, db, googleProvider };

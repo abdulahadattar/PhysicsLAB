@@ -1,4 +1,3 @@
-
 "use client";
 import { NAV_ITEMS, APP_NAME, APP_AUTHOR, SIMULATION_TOPICS, QUIZ_TOPICS, SETTINGS_SEARCHABLE_KEYWORDS, CURRICULUM_BOARDS } from '@/lib/constants';
 import type { NavItem } from '@/lib/types';
@@ -20,6 +19,12 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen,
   ListChecks, Settings as SettingsIcon, UserCog, Bug, ChevronDown, UsersRoundIcon, BarChart3, MessageSquare,
   FileEdit, FileArchive, NotebookText, CalendarDays, ClipboardList, BookCopy, Info, HelpCircle, Map,
@@ -30,15 +35,63 @@ import {
   Plug, Radio, Satellite, Ship, BatteryWarning,
   Square, SquareRadical, StretchHorizontal, ThermometerSnowflake, Triangle,
   Users as UsersIcon,
-  Loader2,
+  Loader2, // Ensured Loader2 is imported for other uses
+  Radiation, // Added from a previous step
+  Archive, // Added from a previous step
+  Replace, // Added from a previous step
+  Activity, // Added from a previous step
+  GitCommitHorizontal, // Added from a previous step
+  Sun, // Added from a previous step
+  RefreshCw, // Added from a previous step
+  MoveVertical, // Added from a previous step
+  Speaker, // Added from a previous step
+  Projector, // Added from a previous step
+  Zap, // Added from a previous step
+  Network, // Added from a previous step
+  Binary, // Added from a previous step
+  Pipette, // Added from a previous step
+  Magnet, // Added from a previous step
+  LineChart, // Added from a previous step
+  Move, // Added from a previous step
+  Anchor, // Added from a previous step
+  Target, // Added from a previous step
+  PersonStanding, // Added from a previous step
+  Droplets, // Added from a previous step
+  GripVertical, // Added from a previous step
+  BrainCircuit, // Added from a previous step
+  TestTubeDiagonal, // Added from a previous step
+  Beaker, // Added from a previous step
+  FlaskConical, // Added from a previous step
+  Telescope, // Added from a previous step
+  GraduationCap, // Added from a previous step
+  Globe, // Added from a previous step
+  Landmark, // Added from a previous step
+  BookMarked, // Added from a previous step
+  Percent, // Added from a previous step
+  CheckCircle, // Added from a previous step
+  History, // Added from a previous step
+  Smartphone, // Added from a previous step
+  Laptop, // Added from a previous step
+  Signal, // Added from a previous step
+  DownloadCloud, // Added from a previous step
+  Notebook as NotebookIcon, // Added from a previous step
+  Share2, // Added from a previous step
+  LocateIcon, // Added from a previous step
+  ZoomInIcon, // Added from a previous step
+  ZoomOutIcon, // Added from a previous step
+  Send, // Added from a previous step
+  Save, // Added from a previous step
+  PlusCircle, // Added from a previous step
+  Trash2, // Added from a previous step
+  CalendarIcon, // Added from a previous step
+  Link2, // Added from a previous step
+  Printer, // Added from a previous step
+  RotateCcw, // Added from a previous step
+  Users, // For Student Account Approvals
+  Paperclip, // For file attachments in assignments
+  Maximize // For simulation fullscreen
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserSession, type UserRole } from '@/contexts/user-session-context';
 import { cn } from "@/lib/utils";
@@ -47,22 +100,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
 import type { StudyGrade, Chapter } from '@/lib/types';
-import { Badge } from '../ui/badge';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from "@/components/ui/dropdown-menu";
 
 /**
  * @fileOverview The main application shell component.
  * Renders the sidebar, header, main content area, and footer.
- * Manages global search functionality and simulated user login UI.
- * Provides the core layout structure including a collapsible sidebar, a fixed header,
- * a main content area for routing, and a footer. It also integrates
- * authentication status display and a global search bar.
+ * Manages global search functionality, user login UI (Firebase-integrated and simulated offline debug),
+ * and provides the core layout structure including a collapsible sidebar, a fixed header,
+ * a main content area for routing, and a footer.
  */
 
 interface AppShellProps {
@@ -89,8 +142,8 @@ const SidebarInset = React.forwardRef<
       {...props}
     />
   )
-})
-SidebarInset.displayName = "SidebarInset"
+});
+SidebarInset.displayName = "SidebarInset";
 
 interface SearchResult {
   id: string;
@@ -103,10 +156,22 @@ interface SearchResult {
 
 const STUDY_GRADES_SEARCH_CACHE_KEY = 'studyGradesSearchCache';
 
+/**
+ * The AppShell component provides the main layout for the application,
+ * including sidebar navigation, header with search and user controls,
+ * and the main content area.
+ * It handles:
+ * - User session management (displaying login/logout, user info, role-based views).
+ * - A global search functionality.
+ * - Theme toggling.
+ * - Debug mode for switching user roles during development.
+ * - Online/offline status indication.
+ */
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  // User session management from context
+  const searchParams = useSearchParams(); // For preserving scroll on simulations page
+
   const {
     currentUser,
     isLoggedIn,
@@ -117,15 +182,16 @@ export function AppShell({ children }: AppShellProps) {
     signOutFirebase,
     isLoading: isSessionLoading,
     isFirebaseConfigured,
-    debugSwitchRole
+    debugSwitchRole,
+    toggleViewAsStudent,
   } = useUserSession();
 
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(true);
 
-  // State for login flow
+  // State for login flow (when user clicks initial Login button)
   const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
-  // State for debug login form
+  // State for debug login form (offline teacher login)
   const [debugUsername, setDebugUsername] = useState("");
   const [debugPassword, setDebugPassword] = useState("");
 
@@ -152,17 +218,20 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, []);
 
-  // Fetch study grades for search functionality, with caching
-  const fetchStudyGradesForSearch = useCallback(async (forceFetch = false) => {
-    if (!forceFetch && studyGradesData.length > 0 && !isLoadingSearchData) {
-      console.log("AppShell Search: Using already loaded study grades data.");
-      return;
+  /**
+   * Fetches study grades data for the global search.
+   * Tries to load from localStorage first, then falls back to API if online.
+   * @param {boolean} forceApiFetch - If true, bypasses cache and fetches from API.
+   */
+  const fetchStudyGradesForSearch = useCallback(async (forceApiFetch = false) => {
+    if (!forceApiFetch && studyGradesData.length > 0) {
+      return; // Already have data
     }
 
     setIsLoadingSearchData(true);
     let loadedFromCache = false;
 
-    if (!forceFetch && typeof window !== 'undefined') {
+    if (!forceApiFetch && typeof window !== 'undefined') {
         try {
             const cachedDataString = localStorage.getItem(STUDY_GRADES_SEARCH_CACHE_KEY);
             if (cachedDataString) {
@@ -170,61 +239,60 @@ export function AppShell({ children }: AppShellProps) {
                 if (cachedData && cachedData.length > 0) {
                     setStudyGradesData(cachedData);
                     loadedFromCache = true;
-                    console.log("AppShell Search: Loaded study grades from localStorage.");
-                    if (!isOnline) { // If offline and cache loaded, no need to fetch from API
+                    console.log("AppShell Search: Loaded study grades for search from localStorage.");
+                    if (!isOnline) {
                         setIsLoadingSearchData(false);
                         return;
                     }
                 }
             }
         } catch (e) {
-            console.warn("AppShell Search: Failed to parse study grades from localStorage:", e);
+            console.warn("AppShell Search: Failed to parse study grades from localStorage for search:", e);
             if (typeof window !== 'undefined') localStorage.removeItem(STUDY_GRADES_SEARCH_CACHE_KEY);
         }
     }
 
-    if (!isOnline && !loadedFromCache) {
-        console.log("AppShell Search: Offline and no cached study grades for search.");
-        setIsLoadingSearchData(false);
-        return;
-    }
-
     if (isOnline) {
-        console.log("AppShell Search: Fetching study grades for search from API...");
-        try {
-            const res = await fetch('/api/study-materials');
-            if (res.ok) {
-                const data = await res.json();
-                setStudyGradesData(data);
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
-                    console.log("AppShell Search: Updated study grades from API and cached to localStorage.");
-                }
-            } else {
-                console.warn("AppShell Search: API fetch failed for study materials. Status:", res.status);
-                if (!loadedFromCache) { // Only toast if no cache was available initially
-                    toast({ title: "Search Data Limited", description: "Could not load full study material index for search.", variant: "default" });
-                }
-            }
-        } catch (e) {
-            console.error("AppShell Search: Error fetching study materials:", e);
-            if (!loadedFromCache) { // Only toast if no cache was available initially
-                 toast({ title: "Search Data Error", description: "Error loading study material index for search.", variant: "destructive" });
-            }
+      try {
+        const res = await fetch('/api/study-materials');
+        if (res.ok) {
+          const data = await res.json();
+          setStudyGradesData(data);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
+            console.log("AppShell Search: Updated study grades from API and cached to localStorage.");
+          }
+        } else {
+          console.warn("AppShell Search: API fetch failed for study materials. Status:", res.status);
+          if (!loadedFromCache) {
+            // toast({ title: "Search Data Limited", description: "Could not load full study material index for search.", variant: "default" });
+          }
         }
+      } catch (e) {
+        console.error("AppShell Search: Error fetching study materials for search:", e);
+        if (!loadedFromCache) {
+          // toast({ title: "Search Data Error", description: "Error loading study material index for search.", variant: "destructive" });
+        }
+      }
+    } else if (!loadedFromCache) {
+        console.log("AppShell Search: Offline and no cached study grades for search.");
     }
     setIsLoadingSearchData(false);
-  }, [isOnline, studyGradesData.length, isLoadingSearchData, toast]);
+  }, [isOnline, studyGradesData.length]);
 
+  // Fetch initial study grades for search on mount
   useEffect(() => {
-    // Fetch initial study grades for search on mount if not already populated
     if (studyGradesData.length === 0 && !isLoadingSearchData) {
       fetchStudyGradesForSearch();
     }
   }, [fetchStudyGradesForSearch, studyGradesData.length, isLoadingSearchData]);
 
 
-  // Function to perform search across various parts of the app
+  /**
+   * Performs a client-side search across various application content.
+   * Includes navigation items, simulations, quiz topics, study materials (grades, chapters, basic content), and settings keywords.
+   * @param {string} query - The search query string.
+   */
   const performSearch = useCallback((query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -235,11 +303,9 @@ export function AppShell({ children }: AppShellProps) {
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
 
-    // Developer comment: Current search is substring matching.
-    // Advanced fuzzy/semantic search ("Did you mean?") would require dedicated libraries (e.g., Fuse.js)
-    // or backend search services (e.g., Algolia, Elasticsearch).
+    // Note: This is client-side substring matching.
+    // Advanced fuzzy/semantic search would require dedicated libraries (e.g., Fuse.js) or backend search services.
 
-    // Search Navigation Items
     NAV_ITEMS.forEach(item => {
       if (item.label.toLowerCase().includes(lowerQuery)) {
         results.push({ id: `nav-${item.href}`, label: item.label, href: item.href, category: 'Navigation', icon: item.icon });
@@ -251,7 +317,6 @@ export function AppShell({ children }: AppShellProps) {
       });
     });
 
-    // Search Simulations
     SIMULATION_TOPICS.forEach(sim => {
       let match = false;
       if (sim.name.toLowerCase().includes(lowerQuery)) match = true;
@@ -263,14 +328,12 @@ export function AppShell({ children }: AppShellProps) {
       }
     });
 
-    // Search Quiz Topics
     QUIZ_TOPICS.forEach(quiz => {
       if (quiz.name.toLowerCase().includes(lowerQuery) || (quiz.description && quiz.description.toLowerCase().includes(lowerQuery))) {
         results.push({ id: `quiz-${quiz.id}`, label: quiz.name, href: `/quizzes/topic/${quiz.id}`, category: 'Quiz Topic', icon: ListChecks, description: quiz.description });
       }
     });
 
-    // Search Study Materials (Grades, Chapters, Basic Content)
     if (studyGradesData && studyGradesData.length > 0) {
       studyGradesData.forEach(grade => {
         if (grade.name.toLowerCase().includes(lowerQuery)) {
@@ -278,12 +341,12 @@ export function AppShell({ children }: AppShellProps) {
         }
         (grade.chapters || []).forEach(chapter => {
           if (chapter.name.toLowerCase().includes(lowerQuery)) {
-            results.push({ id: `chapter-${chapter.id}`, label: `${grade.name} > ${chapter.name}`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Chapter', icon: FileText });
+            results.push({ id: `chapter-${chapter.id}`, label: `${grade.name} > ${chapter.name}`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Chapter', icon: FileTextIcon });
           }
           const content = chapter.content;
           if (content) {
             if (content.keyPoints && content.keyPoints.toLowerCase().includes(lowerQuery)) {
-              results.push({ id: `chapter-kp-${chapter.id}`, label: `${chapter.name} (Key Points)`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Material - Key Point', icon: FileText });
+              results.push({ id: `chapter-kp-${chapter.id}`, label: `${chapter.name} (Key Points)`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Material - Key Point', icon: FileTextIcon });
             }
             content.mcqs?.forEach(mcq => {
               if (mcq.question.toLowerCase().includes(lowerQuery)) {
@@ -303,19 +366,14 @@ export function AppShell({ children }: AppShellProps) {
           }
         });
       });
-    } else if (isLoadingSearchData) {
-        // Optionally add a placeholder or loading indicator if search happens while studyGradesData is still loading
     }
 
-
-    // Search Settings Keywords
     SETTINGS_SEARCHABLE_KEYWORDS.forEach(setting => {
       if (setting.term.toLowerCase().includes(lowerQuery) || setting.label.toLowerCase().includes(lowerQuery)) {
         results.push({ id: `setting-${setting.term}`, label: setting.label, href: setting.href, category: 'Settings', icon: SettingsIcon });
       }
     });
 
-    // Deduplicate results based on href and label to avoid visually identical entries
     const uniqueResults = results.reduce((acc, current) => {
       const x = acc.find(item => item.href === current.href && item.label === current.label);
       if (!x) {
@@ -325,9 +383,8 @@ export function AppShell({ children }: AppShellProps) {
       }
     }, [] as SearchResult[]);
 
-
     setSearchResults(uniqueResults.slice(0, 10));
-  }, [studyGradesData, isLoadingSearchData]);
+  }, [studyGradesData]);
 
   // Debounced search effect
   useEffect(() => {
@@ -345,7 +402,9 @@ export function AppShell({ children }: AppShellProps) {
     };
   }, [searchTerm, performSearch]);
 
-  // Simulated Debug Login Handler
+  /**
+   * Handles debug login attempt when offline and Firebase is not configured.
+   */
   const handleDebugLogin = useCallback(async () => {
     if (!debugUsername || !debugPassword) {
       toast({ title: "Debug Login", description: "Please enter debug username and password.", variant: "destructive" });
@@ -354,7 +413,7 @@ export function AppShell({ children }: AppShellProps) {
     if (magicLogin) {
       const success = await magicLogin(debugUsername, debugPassword);
       if (success) {
-        setIsLoginFlowActive(false); // Close the main login flow if debug succeeds
+        setIsLoginFlowActive(false);
         setDebugUsername("");
         setDebugPassword("");
       }
@@ -362,17 +421,20 @@ export function AppShell({ children }: AppShellProps) {
   }, [debugUsername, debugPassword, magicLogin, toast, setIsLoginFlowActive]);
 
 
-  // Function to render navigation items, conditionally showing teacher panel
+  /**
+   * Renders navigation items for the sidebar, conditionally including teacher panel.
+   * Handles nested sub-items using Accordion components.
+   * @param {NavItem[]} items - The array of navigation items to render.
+   * @returns {React.ReactNode[]} An array of React nodes representing the sidebar menu items.
+   */
   const renderNavItems = useCallback((items: NavItem[]) => {
     return items.map((item) => {
-      // Conditional rendering for teacher panel based on login state and role
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || (userRole === 'teacher' && viewAsStudent))) {
-        return null; // Don't render teacher panel if not logged in as teacher or if teacher is viewing as student
+        return null;
       }
 
       const isActive = item.matchExact ? pathname === item.href : pathname.startsWith(item.href);
 
-      // Handle items with sub-items (accordion style)
       if (item.subItems && item.subItems.length > 0) {
         const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
         return (
@@ -382,10 +444,9 @@ export function AppShell({ children }: AppShellProps) {
                 className={cn(
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180",
                 )}
-                // Ensure asChild is NOT true here for the custom AccordionTrigger wrapper
               >
                 <SidebarMenuButton
-                  asChild={true} // SidebarMenuButton's Slot will receive the span as a single child.
+                  asChild={true}
                   className="w-full"
                   tooltip={item.label}
                 >
@@ -395,7 +456,7 @@ export function AppShell({ children }: AppShellProps) {
                       <item.icon />
                       <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </span>
-                    {/* The AccordionTrigger component (from ui/accordion) adds its own ChevronDown icon */}
+                    {/* AccordionTrigger itself adds the chevron */}
                   </span>
                 </SidebarMenuButton>
               </AccordionTrigger>
@@ -405,7 +466,7 @@ export function AppShell({ children }: AppShellProps) {
                     <SidebarMenuItem key={subItem.href}>
                       <Link href={subItem.href} passHref legacyBehavior>
                         <SidebarMenuButton
-                          asChild={false} // Render as a button
+                          asChild={false}
                           isActive={pathname.startsWith(subItem.href)}
                           className="pl-6"
                         >
@@ -422,12 +483,11 @@ export function AppShell({ children }: AppShellProps) {
         );
       }
 
-      // Handle regular navigation items
       return (
         <SidebarMenuItem key={item.href}>
           <Link href={item.href} passHref legacyBehavior>
             <SidebarMenuButton
-              asChild={false} // Render as a button
+              asChild={false}
               isActive={isActive}
               tooltip={item.label}
             >
@@ -438,11 +498,12 @@ export function AppShell({ children }: AppShellProps) {
         </SidebarMenuItem>
       )
     });
-  }, [pathname, isLoggedIn, userRole, viewAsStudent]); // Added dependencies for useCallback
+  }, [pathname, isLoggedIn, userRole, viewAsStudent]);
 
   // Main return for AppShell component
   if (isSessionLoading && !currentUser) { // Initial load before Firebase auth state is resolved
-    return <div className="flex items-center justify-center h-screen text-lg"><Loader2 className="mr-2 h-6 w-6 animate-spin"/>Loading PhysicsLab...</div>;
+    // Simplified initial loading state to prevent hydration mismatch
+    return <div className="flex items-center justify-center h-screen text-lg">Loading PhysicsLab...</div>;
   }
 
 
@@ -473,7 +534,9 @@ export function AppShell({ children }: AppShellProps) {
             </Avatar>
             <div>
               <p className="text-sm font-medium">{currentUser?.displayName || (isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR : 'Student User') : 'Guest')}</p>
-              <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}</p>
+              <p className="text-xs text-muted-foreground">
+                {isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}
+              </p>
             </div>
           </div>
           <div className="group-data-[collapsible=icon]:hidden text-center text-xs text-muted-foreground mt-2">
@@ -487,7 +550,7 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Global Search Bar */}
           <div className="relative flex-grow max-w-md">
-             <Popover open={isSearchOpen} onOpenChange={(open) => { if(!open) { setSearchTerm(''); setSearchResults([]);} setIsSearchOpen(open);}}>
+             <Popover open={isSearchOpen} onOpenChange={(open) => { if(!open && !searchTerm) { setIsSearchOpen(false); } else if (open && searchTerm) { setIsSearchOpen(true); } else if (!open && searchTerm) { /* remain open if there is a search term */ } else {setIsSearchOpen(open); setSearchTerm(''); setSearchResults([]); } }}>
               <PopoverAnchor asChild>
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -496,11 +559,8 @@ export function AppShell({ children }: AppShellProps) {
                     placeholder="Search app..."
                     className="pl-10 w-full"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => {
-                        if (!isSearchOpen && searchTerm) setIsSearchOpen(true);
-                        if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) fetchStudyGradesForSearch(false);
-                    }}
+                    onChange={(e) => { setSearchTerm(e.target.value); if(e.target.value.trim()) setIsSearchOpen(true); else setIsSearchOpen(false);}}
+                    onFocus={() => { if (searchTerm.trim()) setIsSearchOpen(true); if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) fetchStudyGradesForSearch(false);}}
                      onKeyDown={(e) => {
                       if (e.key === 'Enter' && searchResults.length > 0 && searchResults[0].href) {
                         e.preventDefault();
@@ -529,7 +589,7 @@ export function AppShell({ children }: AppShellProps) {
                   <ScrollArea className="h-full">
                     <div className="flex flex-col gap-0.5">
                         {searchResults.map(result => {
-                        const Icon = result.icon || FileText;
+                        const Icon = result.icon || FileTextIcon;
                         return (
                             <Button
                             key={result.id}
@@ -559,21 +619,26 @@ export function AppShell({ children }: AppShellProps) {
                   <p className="text-sm text-muted-foreground">No results found for "{searchTerm}".</p>
                 </PopoverContent>
               )}
+               {isSearchOpen && isLoadingSearchData && (
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-4 text-center" align="start" onOpenAutoFocus={(e) => e.preventDefault()} forceMount>
+                  <div className="flex items-center justify-center">
+                     <Loader2 className="h-4 w-4 animate-spin mr-2"/> Searching...
+                  </div>
+                </PopoverContent>
+              )}
             </Popover>
           </div>
 
 
           {/* Right side of header: Network Status, Login/User Info, Theme Toggle, Dev View Switcher */}
-          <div className="flex items-center gap-2 ml-auto">
-            {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center text-xs"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
+          <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+            {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center text-xs h-7"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
 
             {isSessionLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : !isLoggedIn ? (
-              // Not Logged In: Show Login / Create Account button or Debug Login if offline & flow active
               isLoginFlowActive ? (
                 <>
-                  {/* Debug Login for Offline (only if Firebase not configured and offline) */}
                   {(!isOnline && !isFirebaseConfigured) && (
                      <Card className="p-3 w-full md:w-auto shadow-md absolute top-16 right-4 sm:right-6 z-50 bg-card border">
                       <CardHeader className="p-0 mb-2">
@@ -593,18 +658,18 @@ export function AppShell({ children }: AppShellProps) {
                     </Card>
                   )}
 
-                  {/* Main Login Options (Firebase or generic prompt) */}
                   {(isOnline && isFirebaseConfigured) && (
-                      <Button variant="default" size="sm" onClick={async () => { if (signInWithGoogle) { await signInWithGoogle(); setIsLoginFlowActive(false); } }}>
-                      <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
+                      <Button variant="outline" size="sm" onClick={() => { login('student'); setIsLoginFlowActive(false); toast({ title: "Logged In as Student.", description: "New student accounts require teacher approval for full features." });}}>
+                         <UserCircle className="mr-1 h-4 w-4" />Proceed as Student
                       </Button>
                   )}
-                  {(!isOnline && isFirebaseConfigured) && (
-                      <Button variant="default" size="sm" disabled>
-                          <LogIn className="mr-2 h-4 w-4" /> Google Login Offline
+                   {(isOnline && isFirebaseConfigured) && (
+                      <Button variant="outline" size="sm" onClick={() => { login('teacher'); setIsLoginFlowActive(false); }}>
+                        <UserCog className="mr-1 h-4 w-4" />Proceed as Teacher
                       </Button>
                   )}
-                  {(!isFirebaseConfigured && isOnline && !magicLogin) && ( // If no Firebase and no magic login
+
+                  {(!isFirebaseConfigured && !isOnline && !magicLogin) && (
                      <p className="text-xs text-muted-foreground">Login not available.</p>
                   )}
                   <Button variant="ghost" size="sm" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }}>Cancel</Button>
@@ -615,13 +680,7 @@ export function AppShell({ children }: AppShellProps) {
                 </Button>
               )
             ) : (
-              // Logged In: Show User Info and Logout
               <>
-                <span className="text-sm text-muted-foreground hidden md:inline">
-                  {currentUser?.displayName || currentUser?.email || "User"} (<span className="font-semibold capitalize">{userRole}</span>
-                  {userRole === 'teacher' && viewAsStudent && " (Student View)"})
-                </span>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
@@ -634,10 +693,14 @@ export function AppShell({ children }: AppShellProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuLabel className="text-xs">
+                      Signed in as: <span className="font-semibold">{currentUser?.displayName || currentUser?.email || "User"}</span> (<span className="capitalize">{userRole}</span>)
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     {userRole === 'teacher' && (
-                      <DropdownMenuItem onClick={() => { if (debugSwitchRole) debugSwitchRole(viewAsStudent ? 'teacher' : 'student'); else if (toggleViewAsStudent) toggleViewAsStudent(); }}>
-                        {viewAsStudent ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                        {viewAsStudent ? "Teacher View" : "Student View"}
+                      <DropdownMenuItem onClick={() => { if (toggleViewAsStudent) toggleViewAsStudent(); }}>
+                        {viewAsStudent ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}
+                        {viewAsStudent ? "Switch to Teacher View" : "Switch to Student View"}
                       </DropdownMenuItem>
                     )}
                     {signOutFirebase && (
@@ -651,24 +714,23 @@ export function AppShell({ children }: AppShellProps) {
             )}
             <ThemeToggle />
 
-            {/* Development Debug View Switcher (Only in Development Mode) */}
-            {process.env.NODE_ENV === 'development' && (
+            {process.env.NODE_ENV === 'development' && debugSwitchRole && (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-8 w-8">
                         <Bug className="h-4 w-4" />
-                        <span className="sr-only">Developer Debug View</span>
+                        <span className="sr-only">Developer Debug View Switcher</span>
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole(null)}>
-                        <UserCircle className="mr-2 h-4 w-4" /> Guest
+                    <DropdownMenuItem onClick={() => debugSwitchRole(null)}>
+                        <UserCircle className="mr-2 h-4 w-4" /> View as Guest
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('student')}>
-                        <UserCircle className="mr-2 h-4 w-4" /> Student
+                    <DropdownMenuItem onClick={() => debugSwitchRole('student')}>
+                        <UserCircle className="mr-2 h-4 w-4" /> View as Student
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('teacher')}>
-                        <UserCog className="mr-2 h-4 w-4" /> Teacher
+                    <DropdownMenuItem onClick={() => debugSwitchRole('teacher')}>
+                        <UserCog className="mr-2 h-4 w-4" /> View as Teacher
                     </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -685,5 +747,3 @@ export function AppShell({ children }: AppShellProps) {
     </SidebarProvider>
   );
 }
-
-    

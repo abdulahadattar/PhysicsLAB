@@ -16,6 +16,16 @@ body {
 
 @layer base {
   :root {
+    --color-primary: hsl(var(--primary));
+    --color-destructive: hsl(var(--destructive));
+    --color-success: hsl(142.1 76.2% 36.3%);
+    --color-info: hsl(204 100% 40%);
+    --color-chart-1: hsl(var(--chart-1));
+    --color-chart-2: hsl(var(--chart-2));
+    --color-chart-3: hsl(var(--chart-3));
+    --color-chart-4: hsl(var(--chart-4));
+    --color-chart-5: hsl(var(--chart-5));
+
     --background: 190 67% 93%; /* Light Blue #E0F7FA */
     --foreground: 224 71.4% 4.1%; /* Darker for better contrast on light blue */
 
