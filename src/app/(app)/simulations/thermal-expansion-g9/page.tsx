@@ -1,17 +1,18 @@
 
+// src/app/(app)/simulations/thermal-expansion-g9/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, HelpCircle, Thermometer } from "lucide-react";
-import Link from "next/link";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
+import { ArrowLeft, HelpCircle, Thermometer } from "lucide-react";
+import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"; // Added missing import
 
 interface MaterialExpansion {
   name: string;
@@ -27,8 +28,8 @@ const MATERIALS_EXPANSION: MaterialExpansion[] = [
   { name: "Brass", alpha: 19e-6, color: "hsl(45, 60%, 55%)" },
 ];
 
-const VISUAL_BASE_LENGTH_PX = 300; // Base width for 1 meter representation
-const VISUAL_EXPANSION_SCALE_FACTOR = 5000; // Exaggerates visual change
+const VISUAL_BASE_LENGTH_PX = 200; // Base width for 1 meter representation on smaller screens
+const VISUAL_EXPANSION_SCALE_FACTOR = 50000; // Increased for more noticeable visual change
 
 export default function ThermalExpansionG9Page() {
   const [selectedMaterialName, setSelectedMaterialName] = useState<string>(MATERIALS_EXPANSION[0].name);
@@ -52,9 +53,9 @@ export default function ThermalExpansionG9Page() {
     return initialLengthMeters + changeInLengthMeters;
   }, [initialLengthMeters, changeInLengthMeters]);
 
-  const visualInitialLengthPx = VISUAL_BASE_LENGTH_PX * initialLengthMeters;
-  const visualChangePx = changeInLengthMeters * VISUAL_EXPANSION_SCALE_FACTOR * initialLengthMeters; // Scale factor applied to change
-  const visualFinalLengthPx = visualInitialLengthPx + visualChangePx;
+  const visualInitialLengthPx = Math.max(20, VISUAL_BASE_LENGTH_PX * initialLengthMeters);
+  const visualChangeInLengthPx = changeInLengthMeters * VISUAL_EXPANSION_SCALE_FACTOR; // Corrected scaling
+  const visualFinalLengthPx = visualInitialLengthPx + visualChangeInLengthPx;
 
 
   return (
@@ -138,7 +139,7 @@ export default function ThermalExpansionG9Page() {
                 <CardHeader><CardTitle className="text-lg">Calculated Results</CardTitle></CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   <p>Temperature Change (ΔT): <span className="font-semibold">{temperatureChange.toFixed(1)} °C</span></p>
-                  <p>Change in Length (ΔL): <span className={cn("font-semibold", changeInLengthMeters > 0 ? "text-green-600" : changeInLengthMeters < 0 ? "text-red-600" : "")}>
+                  <p>Change in Length (ΔL): <span className={cn("font-semibold", changeInLengthMeters > 0 ? "text-green-600 dark:text-green-400" : changeInLengthMeters < 0 ? "text-red-600 dark:text-red-400" : "")}>
                     {(changeInLengthMeters * 100).toFixed(4)} cm 
                     </span> 
                     ({(changeInLengthMeters).toExponential(2)} m)
@@ -153,39 +154,53 @@ export default function ThermalExpansionG9Page() {
               <Card className="h-full">
                 <CardHeader><CardTitle className="text-lg">Visual Representation</CardTitle></CardHeader>
                 <CardContent className="flex flex-col items-center justify-center p-4 min-h-[250px] bg-muted/30 rounded-md border relative overflow-hidden">
-                  <div className="w-full max-w-md space-y-2">
+                  <div className="w-full max-w-md space-y-3 my-auto"> {/* Centering content vertically */}
                     {/* Initial Length Reference Bar */}
-                    <div className="relative h-8 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center text-xs text-gray-700 dark:text-gray-300" style={{ width: `${visualInitialLengthPx}px` }}>
-                       L₀ = {initialLengthMeters.toFixed(2)} m @ {initialTemperatureCelsius.toFixed(1)}°C
-                       <div className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-px bg-gray-500"></div>
-                       <div className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-px bg-gray-500"></div>
+                    <div className="text-center text-xs text-muted-foreground mb-1">
+                      Initial State (L₀ @ T₀)
+                    </div>
+                    <div 
+                        className="relative h-8 bg-gray-400 dark:bg-gray-600 rounded flex items-center justify-center text-xs text-white transition-all duration-200 ease-out" 
+                        style={{ 
+                          width: `${Math.max(20, visualInitialLengthPx)}px`,
+                          minWidth: '80px' // Ensure a minimum visible size for the reference bar
+                        }}
+                    >
+                       L₀ = {initialLengthMeters.toFixed(2)}m @ {initialTemperatureCelsius.toFixed(1)}°C
+                       <div className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-px bg-gray-500 dark:bg-gray-400"></div>
+                       <div className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-px bg-gray-500 dark:bg-gray-400"></div>
                     </div>
                     
                     {/* Expanding/Contracting Bar */}
+                     <div className="text-center text-xs text-muted-foreground mt-4 mb-1">
+                      Final State (L @ T)
+                    </div>
                     <div 
                       className="relative h-10 rounded transition-all duration-200 ease-out flex items-center justify-center text-white text-sm font-medium shadow-md"
                       style={{ 
-                        width: `${Math.max(10, visualFinalLengthPx)}px`, // Ensure min width for visibility
+                        width: `${Math.max(20, visualFinalLengthPx)}px`, 
+                        minWidth: '80px', // Ensure a minimum visible size
                         backgroundColor: selectedMaterial.color,
-                        marginLeft: visualChangePx < 0 ? `${Math.abs(visualChangePx)}px` : '0px', // Shift left if contracting for alignment effect
                       }}
                     >
-                      L = {finalLengthMeters.toFixed(4)} m @ {finalTemperatureCelsius.toFixed(1)}°C
+                      L = {finalLengthMeters.toFixed(4)}m @ {finalTemperatureCelsius.toFixed(1)}°C
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-px bg-current opacity-70"></div>
                        <div className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-px bg-current opacity-70"></div>
                     </div>
                     
                     {/* Change Indicator */}
-                    {Math.abs(changeInLengthMeters) > 1e-7 && (
+                    {Math.abs(changeInLengthMeters) > 1e-9 && ( // Adjusted threshold for visibility
                       <div className={cn(
-                        "text-xs font-medium",
-                        changeInLengthMeters > 0 ? "text-green-600" : "text-red-600"
+                        "text-sm font-semibold text-center mt-2",
+                        changeInLengthMeters > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                       )}>
                         ΔL: {(changeInLengthMeters * 100).toFixed(4)} cm {changeInLengthMeters > 0 ? "(Expansion)" : "(Contraction)"}
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-4 absolute bottom-2 left-1/2 -translate-x-1/2">Note: Visual change is exaggerated for effect.</p>
+                  <p className="text-xs text-muted-foreground mt-4 absolute bottom-2 left-1/2 -translate-x-1/2 w-full text-center">
+                    Note: Visual change is exaggerated ({VISUAL_EXPANSION_SCALE_FACTOR}x) for clarity.
+                  </p>
                 </CardContent>
                  <CardFooter className="pt-4">
                     <p className="text-xs text-muted-foreground">
