@@ -5,7 +5,7 @@ import type { NavItem } from '@/lib/types';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   SidebarProvider,
@@ -107,23 +107,23 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   // User session management from context
-  const { 
-    currentUser, 
-    isLoggedIn, 
-    userRole, 
-    viewAsStudent, 
-    signInWithGoogle, 
-    magicLogin, 
-    signOutFirebase, 
-    isLoading: isSessionLoading, 
-    isFirebaseConfigured, 
-    debugSwitchRole 
+  const {
+    currentUser,
+    isLoggedIn,
+    userRole,
+    viewAsStudent,
+    signInWithGoogle,
+    magicLogin,
+    signOutFirebase,
+    isLoading: isSessionLoading,
+    isFirebaseConfigured,
+    debugSwitchRole
   } = useUserSession();
-  
+
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(true);
 
-  // State for simulated login flow
+  // State for login flow
   const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
   // State for debug login form
   const [debugUsername, setDebugUsername] = useState("");
@@ -154,7 +154,10 @@ export function AppShell({ children }: AppShellProps) {
 
   // Fetch study grades for search functionality, with caching
   const fetchStudyGradesForSearch = useCallback(async (forceFetch = false) => {
-    if (!forceFetch && studyGradesData.length > 0 && !isLoadingSearchData) return;
+    if (!forceFetch && studyGradesData.length > 0 && !isLoadingSearchData) {
+      console.log("AppShell Search: Using already loaded study grades data.");
+      return;
+    }
 
     setIsLoadingSearchData(true);
     let loadedFromCache = false;
@@ -167,24 +170,25 @@ export function AppShell({ children }: AppShellProps) {
                 if (cachedData && cachedData.length > 0) {
                     setStudyGradesData(cachedData);
                     loadedFromCache = true;
-                    if (!isOnline) {
+                    console.log("AppShell Search: Loaded study grades from localStorage.");
+                    if (!isOnline) { // If offline and cache loaded, no need to fetch from API
                         setIsLoadingSearchData(false);
                         return;
                     }
                 }
             }
         } catch (e) {
-            console.warn("AppShell Search: Failed to parse study grades from localStorage for search:", e);
+            console.warn("AppShell Search: Failed to parse study grades from localStorage:", e);
             if (typeof window !== 'undefined') localStorage.removeItem(STUDY_GRADES_SEARCH_CACHE_KEY);
         }
     }
 
     if (!isOnline && !loadedFromCache) {
-        console.log("AppShell Search: Offline and no cached study grades.");
+        console.log("AppShell Search: Offline and no cached study grades for search.");
         setIsLoadingSearchData(false);
         return;
     }
-    
+
     if (isOnline) {
         console.log("AppShell Search: Fetching study grades for search from API...");
         try {
@@ -192,14 +196,21 @@ export function AppShell({ children }: AppShellProps) {
             if (res.ok) {
                 const data = await res.json();
                 setStudyGradesData(data);
-                if (typeof window !== 'undefined') localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
+                    console.log("AppShell Search: Updated study grades from API and cached to localStorage.");
+                }
             } else {
                 console.warn("AppShell Search: API fetch failed for study materials. Status:", res.status);
-                if (!loadedFromCache) toast({ title: "Search Data Limited", description: "Could not load full study material index for search.", variant: "default" });
+                if (!loadedFromCache) { // Only toast if no cache was available initially
+                    toast({ title: "Search Data Limited", description: "Could not load full study material index for search.", variant: "default" });
+                }
             }
         } catch (e) {
-            console.warn("AppShell Search: Error fetching study materials:", e);
-            if (!loadedFromCache) toast({ title: "Search Data Error", description: "Error loading study material index for search.", variant: "destructive" });
+            console.error("AppShell Search: Error fetching study materials:", e);
+            if (!loadedFromCache) { // Only toast if no cache was available initially
+                 toast({ title: "Search Data Error", description: "Error loading study material index for search.", variant: "destructive" });
+            }
         }
     }
     setIsLoadingSearchData(false);
@@ -223,8 +234,10 @@ export function AppShell({ children }: AppShellProps) {
     setIsSearchOpen(true);
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
-    // This comment clarifies that current search is substring matching.
-    // Advanced fuzzy/semantic search would require dedicated libraries or backend services.
+
+    // Developer comment: Current search is substring matching.
+    // Advanced fuzzy/semantic search ("Did you mean?") would require dedicated libraries (e.g., Fuse.js)
+    // or backend search services (e.g., Algolia, Elasticsearch).
 
     // Search Navigation Items
     NAV_ITEMS.forEach(item => {
@@ -244,7 +257,7 @@ export function AppShell({ children }: AppShellProps) {
       if (sim.name.toLowerCase().includes(lowerQuery)) match = true;
       if (sim.description && sim.description.toLowerCase().includes(lowerQuery)) match = true;
       if (sim.categories && sim.categories.some(cat => cat.toLowerCase().includes(lowerQuery))) match = true;
-      
+
       if (match) {
         results.push({ id: `sim-${sim.id}`, label: sim.name, href: `/simulations/${sim.id}`, category: 'Simulation', icon: sim.icon, description: sim.description });
       }
@@ -290,7 +303,10 @@ export function AppShell({ children }: AppShellProps) {
           }
         });
       });
+    } else if (isLoadingSearchData) {
+        // Optionally add a placeholder or loading indicator if search happens while studyGradesData is still loading
     }
+
 
     // Search Settings Keywords
     SETTINGS_SEARCHABLE_KEYWORDS.forEach(setting => {
@@ -299,6 +315,7 @@ export function AppShell({ children }: AppShellProps) {
       }
     });
 
+    // Deduplicate results based on href and label to avoid visually identical entries
     const uniqueResults = results.reduce((acc, current) => {
       const x = acc.find(item => item.href === current.href && item.label === current.label);
       if (!x) {
@@ -308,8 +325,9 @@ export function AppShell({ children }: AppShellProps) {
       }
     }, [] as SearchResult[]);
 
+
     setSearchResults(uniqueResults.slice(0, 10));
-  }, [studyGradesData]); // Depends on studyGradesData for comprehensive search
+  }, [studyGradesData, isLoadingSearchData]);
 
   // Debounced search effect
   useEffect(() => {
@@ -320,7 +338,7 @@ export function AppShell({ children }: AppShellProps) {
         setSearchResults([]);
         setIsSearchOpen(false);
       }
-    }, 300); 
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -333,25 +351,28 @@ export function AppShell({ children }: AppShellProps) {
       toast({ title: "Debug Login", description: "Please enter debug username and password.", variant: "destructive" });
       return;
     }
-    if (magicLogin) { 
+    if (magicLogin) {
       const success = await magicLogin(debugUsername, debugPassword);
       if (success) {
-        setIsLoginFlowActive(false);
+        setIsLoginFlowActive(false); // Close the main login flow if debug succeeds
         setDebugUsername("");
         setDebugPassword("");
       }
     }
-  }, [debugUsername, debugPassword, magicLogin, toast]);
+  }, [debugUsername, debugPassword, magicLogin, toast, setIsLoginFlowActive]);
+
 
   // Function to render navigation items, conditionally showing teacher panel
   const renderNavItems = useCallback((items: NavItem[]) => {
     return items.map((item) => {
+      // Conditional rendering for teacher panel based on login state and role
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || (userRole === 'teacher' && viewAsStudent))) {
-        return null;
+        return null; // Don't render teacher panel if not logged in as teacher or if teacher is viewing as student
       }
 
       const isActive = item.matchExact ? pathname === item.href : pathname.startsWith(item.href);
 
+      // Handle items with sub-items (accordion style)
       if (item.subItems && item.subItems.length > 0) {
         const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
         return (
@@ -360,23 +381,21 @@ export function AppShell({ children }: AppShellProps) {
               <AccordionTrigger
                 className={cn(
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180",
-                  isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
                 )}
-                asChild={true}
+                // Ensure asChild is NOT true here for the custom AccordionTrigger wrapper
               >
                 <SidebarMenuButton
-                  asChild={true} 
+                  asChild={true} // SidebarMenuButton's Slot will receive the span as a single child.
                   className="w-full"
-                  isActive={isActive && !isParentActive} 
                   tooltip={item.label}
                 >
-                  {/* Single child for AccordionTrigger */}
+                  {/* This span becomes the single child for SidebarMenuButton's Slot */}
                   <span className="flex w-full items-center justify-between">
-                     <span className="flex items-center gap-2">
-                        <item.icon />
-                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                     </span>
-                     {/* AccordionTrigger itself will render its own ChevronDown */}
+                    <span className="flex items-center gap-2">
+                      <item.icon />
+                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    </span>
+                    {/* The AccordionTrigger component (from ui/accordion) adds its own ChevronDown icon */}
                   </span>
                 </SidebarMenuButton>
               </AccordionTrigger>
@@ -386,7 +405,7 @@ export function AppShell({ children }: AppShellProps) {
                     <SidebarMenuItem key={subItem.href}>
                       <Link href={subItem.href} passHref legacyBehavior>
                         <SidebarMenuButton
-                          asChild={false}
+                          asChild={false} // Render as a button
                           isActive={pathname.startsWith(subItem.href)}
                           className="pl-6"
                         >
@@ -403,11 +422,12 @@ export function AppShell({ children }: AppShellProps) {
         );
       }
 
+      // Handle regular navigation items
       return (
         <SidebarMenuItem key={item.href}>
           <Link href={item.href} passHref legacyBehavior>
             <SidebarMenuButton
-              asChild={false}
+              asChild={false} // Render as a button
               isActive={isActive}
               tooltip={item.label}
             >
@@ -418,10 +438,11 @@ export function AppShell({ children }: AppShellProps) {
         </SidebarMenuItem>
       )
     });
-  }, [pathname, isLoggedIn, userRole, viewAsStudent]);
+  }, [pathname, isLoggedIn, userRole, viewAsStudent]); // Added dependencies for useCallback
 
-  if (isSessionLoading && !currentUser) {
-    return <div className="flex items-center justify-center h-screen text-lg">Loading Application...</div>;
+  // Main return for AppShell component
+  if (isSessionLoading && !currentUser) { // Initial load before Firebase auth state is resolved
+    return <div className="flex items-center justify-center h-screen text-lg"><Loader2 className="mr-2 h-6 w-6 animate-spin"/>Loading PhysicsLab...</div>;
   }
 
 
@@ -442,6 +463,7 @@ export function AppShell({ children }: AppShellProps) {
           </SidebarContent>
         </ScrollArea>
         <SidebarFooter className="p-4 mt-auto space-y-2">
+          {/* User Avatar and Info */}
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
             <Avatar>
               <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? (userRole || "User") : "Guest")} data-ai-hint="user avatar"/>
@@ -454,30 +476,6 @@ export function AppShell({ children }: AppShellProps) {
               <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}</p>
             </div>
           </div>
-          
-          {/* Debug View Switcher - Only in Development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="group-data-[collapsible=icon]:hidden pt-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-start text-xs">
-                    <Bug className="mr-2 h-3.5 w-3.5" /> Dev View As...
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" side="top">
-                  <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole(null)}>
-                    <UserCircle className="mr-2 h-4 w-4" /> Guest
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('student')}>
-                    <UserCircle className="mr-2 h-4 w-4" /> Student
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('teacher')}>
-                    <UserCog className="mr-2 h-4 w-4" /> Teacher
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
           <div className="group-data-[collapsible=icon]:hidden text-center text-xs text-muted-foreground mt-2">
             &copy; {new Date().getFullYear()} {APP_NAME}
           </div>
@@ -565,17 +563,19 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
 
+          {/* Right side of header: Network Status, Login/User Info, Theme Toggle, Dev View Switcher */}
           <div className="flex items-center gap-2 ml-auto">
             {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center text-xs"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
-            
+
             {isSessionLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : !isLoggedIn ? (
+              // Not Logged In: Show Login / Create Account button or Debug Login if offline & flow active
               isLoginFlowActive ? (
                 <>
-                  {/* Offline Debug Login UI - Shows only if offline AND Firebase not configured */}
+                  {/* Debug Login for Offline (only if Firebase not configured and offline) */}
                   {(!isOnline && !isFirebaseConfigured) && (
-                    <Card className="p-3 w-full md:w-auto shadow-md absolute top-16 right-4 sm:right-6 z-50 bg-card border">
+                     <Card className="p-3 w-full md:w-auto shadow-md absolute top-16 right-4 sm:right-6 z-50 bg-card border">
                       <CardHeader className="p-0 mb-2">
                         <CardTitle className="text-sm flex items-center"><KeyRound className="mr-1 h-4 w-4" /> Offline Debug Login</CardTitle>
                       </CardHeader>
@@ -592,36 +592,36 @@ export function AppShell({ children }: AppShellProps) {
                       </CardContent>
                     </Card>
                   )}
-                  {/* Main Login Options - Shown if login flow is active */}
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
-                    {(isOnline && isFirebaseConfigured) && (
-                        <Button variant="default" size="sm" onClick={async () => { if (signInWithGoogle) { await signInWithGoogle(); setIsLoginFlowActive(false); } }}>
-                        <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
-                        </Button>
-                    )}
-                     {(!isOnline && isFirebaseConfigured) && ( // Google login button disabled if offline but firebase is configured
-                        <Button variant="default" size="sm" disabled>
-                            <LogIn className="mr-2 h-4 w-4" /> Google Login Offline
-                        </Button>
-                    )}
-                    {(!isFirebaseConfigured && isOnline) && ( // Google login button disabled if firebase not configured but online
-                        <Button variant="outline" size="sm" disabled>Google Login N/A</Button>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }}>Cancel</Button>
-                  </div>
+
+                  {/* Main Login Options (Firebase or generic prompt) */}
+                  {(isOnline && isFirebaseConfigured) && (
+                      <Button variant="default" size="sm" onClick={async () => { if (signInWithGoogle) { await signInWithGoogle(); setIsLoginFlowActive(false); } }}>
+                      <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
+                      </Button>
+                  )}
+                  {(!isOnline && isFirebaseConfigured) && (
+                      <Button variant="default" size="sm" disabled>
+                          <LogIn className="mr-2 h-4 w-4" /> Google Login Offline
+                      </Button>
+                  )}
+                  {(!isFirebaseConfigured && isOnline && !magicLogin) && ( // If no Firebase and no magic login
+                     <p className="text-xs text-muted-foreground">Login not available.</p>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }}>Cancel</Button>
                 </>
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setIsLoginFlowActive(true)}>
                   <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
                 </Button>
               )
-            ) : ( 
+            ) : (
+              // Logged In: Show User Info and Logout
               <>
                 <span className="text-sm text-muted-foreground hidden md:inline">
                   {currentUser?.displayName || currentUser?.email || "User"} (<span className="font-semibold capitalize">{userRole}</span>
                   {userRole === 'teacher' && viewAsStudent && " (Student View)"})
                 </span>
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
@@ -635,24 +635,23 @@ export function AppShell({ children }: AppShellProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {userRole === 'teacher' && (
-                      <DropdownMenuItem onClick={() => { if (debugSwitchRole) debugSwitchRole(viewAsStudent ? 'teacher' : 'student'); }}>
+                      <DropdownMenuItem onClick={() => { if (debugSwitchRole) debugSwitchRole(viewAsStudent ? 'teacher' : 'student'); else if (toggleViewAsStudent) toggleViewAsStudent(); }}>
                         {viewAsStudent ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
                         {viewAsStudent ? "Teacher View" : "Student View"}
                       </DropdownMenuItem>
                     )}
-                    {signOutFirebase && ( 
+                    {signOutFirebase && (
                         <DropdownMenuItem onClick={async () => { await signOutFirebase(); setIsLoginFlowActive(false); }}>
                             <LogOut className="mr-2 h-4 w-4" /> Logout
                         </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-
               </>
             )}
             <ThemeToggle />
-            
-            {/* Development Debug View Switcher */}
+
+            {/* Development Debug View Switcher (Only in Development Mode) */}
             {process.env.NODE_ENV === 'development' && (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -686,3 +685,5 @@ export function AppShell({ children }: AppShellProps) {
     </SidebarProvider>
   );
 }
+
+    
