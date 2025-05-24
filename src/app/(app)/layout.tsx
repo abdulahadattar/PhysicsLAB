@@ -1,32 +1,21 @@
+
 'use client';
 import { AppShell } from '@/components/layout/app-shell';
 import { FunFactPanel } from '@/components/fun-fact-panel';
-import { Button } from '@/components/ui/button';
-import { useUserSession } from '@/contexts/user-session-context';
+// Removed Button and useUserSession import as they are no longer needed here
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userRole, viewAsStudent, updateSession } = useUserSession();
+  // const { userRole, viewAsStudent, updateSession } = useUserSession(); // REMOVED - This logic is now in AppShell
 
   return (
     <AppShell>
       {children}
       <FunFactPanel />
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 z-50">
-          {userRole === 'teacher' && updateSession && (
-            <Button onClick={() => updateSession({ viewAsStudent: !viewAsStudent })}>
-              Switch to {viewAsStudent ? 'Teacher' : 'Student'} View
-            </Button>
-          )}
-          {userRole !== 'teacher' && (
-             <Button disabled>Student Mode</Button>
-          )}
-        </div>
-      )}
+      {/* The development mode view switcher is now handled entirely within AppShell's header DropdownMenu */}
     </AppShell>
   );
 }
