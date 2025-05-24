@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save, BookCopy, Landmark, Globe, Notebook, NotebookText } from "lucide-react"; // Added NotebookText
+import { Loader2, AlertTriangle, FileEdit, Link2, Trash2, Bot, PlusCircle, Save, BookCopy, Landmark, Globe, Notebook, NotebookText, BookOpen } from "lucide-react"; // Added BookOpen
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { StudyGrade, Chapter, TeacherChapterOverrides, ChapterContent, MCQ, QuestionAnswer, TeacherGradeOverrides, TeacherGradeOverride } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ const TEACHER_CHAPTER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides
 const TEACHER_GRADE_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherGradeOverrides';
 
 
-type ChapterPdfTypeKey = keyof Pick<ChapterContent, 'stbbChapterPdfLink' | 'teacherNotesPdfName' | 'alternativeChapterPdfLink'>;
+type ChapterPdfTypeKey = keyof Pick<ChapterContent, 'stbbChapterPdfLink' | 'teacherNotesPdfName' | 'alternativeChapterPdfLink' | 'punjabBoardPdfName' | 'nationalSyllabusPdfName' | 'ziauddinBoardPdfName'>;
 interface ChapterPdfConfigItem {
   key: ChapterPdfTypeKey;
   label: string;
@@ -51,6 +51,9 @@ export default function TeacherContentManagementPage() {
 
   const chapterPdfConfig: ChapterPdfConfigItem[] = [
     { key: 'stbbChapterPdfLink', label: 'STBB Chapter PDF Link', placeholder: 'Sindh Board Chapter Google Drive PDF link', icon: BookCopy },
+    { key: 'ziauddinBoardPdfName', label: 'Ziauddin Board Chapter PDF Link', placeholder: 'Ziauddin Board Chapter Google Drive PDF link', icon: Landmark },
+    { key: 'punjabBoardPdfName', label: 'Punjab Board Chapter PDF Link', placeholder: 'Punjab Board Chapter Google Drive PDF link', icon: BookCopy },
+    { key: 'nationalSyllabusPdfName', label: 'National Syllabus Chapter PDF Link', placeholder: 'National Syllabus Chapter Google Drive PDF link', icon: Globe },
     { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link", placeholder: "Teacher's Notes Google Drive PDF link", icon: NotebookText },
     { key: 'alternativeChapterPdfLink', label: 'Other Alternative Chapter PDF Link', placeholder: 'Alternative Chapter Google Drive PDF link', icon: BookOpen },
   ];
@@ -71,6 +74,7 @@ export default function TeacherContentManagementPage() {
       if (!res.ok) throw new Error(`Failed to fetch grades: ${res.statusText}`);
       let data: StudyGrade[] = await res.json();
       
+      // Apply teacher overrides for full textbook links at the grade level
       const gradeOverridesRaw = localStorage.getItem(TEACHER_GRADE_OVERRIDES_STORAGE_KEY);
       if (gradeOverridesRaw) {
         const allGradeOverrides: TeacherGradeOverrides = JSON.parse(gradeOverridesRaw);
@@ -84,10 +88,11 @@ export default function TeacherContentManagementPage() {
       console.error("Error fetching study grades:", error);
       const errorMsg = error instanceof Error ? error.message : "Could not load grade information.";
       setGradesError(errorMsg);
+      toast({title: "Error", description: errorMsg, variant: "destructive"});
     } finally {
       setIsLoadingGrades(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchGrades();
@@ -191,11 +196,11 @@ export default function TeacherContentManagementPage() {
 
   const handleAiGenerate = async () => {
     let primaryPdfForAi: string | undefined;
-    const potentialPdfKeys: ChapterPdfTypeKey[] = ['teacherNotesPdfName', 'stbbChapterPdfLink', 'alternativeChapterPdfLink'];
+    const potentialPdfKeys: ChapterPdfTypeKey[] = ['teacherNotesPdfName', 'stbbChapterPdfLink', 'alternativeChapterPdfLink', 'punjabBoardPdfName', 'nationalSyllabusPdfName', 'ziauddinBoardPdfName'];
     
     for (const key of potentialPdfKeys) {
-        if (editableChapterContent[key]?.trim()) {
-            primaryPdfForAi = editableChapterContent[key];
+        if ((editableChapterContent as any)[key]?.trim()) {
+            primaryPdfForAi = (editableChapterContent as any)[key];
             break;
         }
     }
@@ -207,7 +212,7 @@ export default function TeacherContentManagementPage() {
     setIsGeneratingAiContent(true);
     try {
       const result: ExtractedChapterContentOutput = await extractChapterContent({ 
-        pdfTextContent: `Content from PDF link: ${primaryPdfForAi}`, 
+        pdfTextContent: `Simulated content from PDF link: ${primaryPdfForAi}`, 
         chapterName: studyGrades.find(g=>g.id === selectedGradeId)?.chapters.find(c=>c.id === selectedChapterId)?.name || "Selected Chapter"
       });
       
@@ -221,7 +226,8 @@ export default function TeacherContentManagementPage() {
       toast({ title: "AI Content Generated (Simulated)", description: "Review and save the generated content." });
     } catch (error) {
       console.error("AI generation error:", error);
-      toast({ title: "AI Generation Failed", description: error instanceof Error ? error.message : "Could not generate content.", variant: "destructive" });
+      const errorMsg = error instanceof Error ? error.message : "Could not generate content.";
+      toast({ title: "AI Generation Failed", description: errorMsg, variant: "destructive" });
     } finally {
       setIsGeneratingAiContent(false);
     }
@@ -287,7 +293,7 @@ export default function TeacherContentManagementPage() {
       
       const contentToSave: Partial<ChapterContent> = { ...editableChapterContent };
       chapterPdfConfig.forEach(pdf => {
-        if (!contentToSave[pdf.key]?.trim()) delete contentToSave[pdf.key];
+        if (!(contentToSave as any)[pdf.key]?.trim()) delete (contentToSave as any)[pdf.key];
       });
 
       allOverrides[selectedChapterId] = {
@@ -298,7 +304,7 @@ export default function TeacherContentManagementPage() {
       };
       
       localStorage.setItem(TEACHER_CHAPTER_OVERRIDES_STORAGE_KEY, JSON.stringify(allOverrides));
-      toast({ title: "Chapter Content Saved!", description: `Changes for chapter ${selectedChapterId} saved locally.` });
+      toast({ title: "Chapter Content Saved Locally!", description: `Changes for chapter ${selectedChapterId} saved to your browser.` });
 
        setStudyGrades(prevGrades => prevGrades.map(g => {
         if (g.id === selectedGradeId) {
@@ -334,13 +340,13 @@ export default function TeacherContentManagementPage() {
 
         const gradeContentToSave: Partial<TeacherGradeOverride> = { ...editableGradeOverrides, gradeId: selectedGradeId };
         gradePdfConfig.forEach(pdf => {
-            if (!gradeContentToSave[pdf.key]?.trim()) delete gradeContentToSave[pdf.key];
+            if (!(gradeContentToSave as any)[pdf.key]?.trim()) delete (gradeContentToSave as any)[pdf.key];
         });
         gradeContentToSave.lastUpdated = new Date().toISOString();
         
         allGradeOverrides[selectedGradeId] = gradeContentToSave as TeacherGradeOverride;
         localStorage.setItem(TEACHER_GRADE_OVERRIDES_STORAGE_KEY, JSON.stringify(allGradeOverrides));
-        toast({ title: "Grade PDF Links Saved!", description: `Full textbook links for ${studyGrades.find(g => g.id === selectedGradeId)?.name} saved locally.` });
+        toast({ title: "Grade PDF Links Saved Locally!", description: `Full textbook links for ${studyGrades.find(g => g.id === selectedGradeId)?.name} saved to your browser.` });
         
         setStudyGrades(prevGrades => prevGrades.map(g => {
             if (g.id === selectedGradeId) {
@@ -360,29 +366,38 @@ export default function TeacherContentManagementPage() {
   const selectedChapterName = selectedGradeObject?.chapters.find(c => c.id === selectedChapterId)?.name;
 
 
-  if (isLoadingGrades) return <div className="flex justify-center items-center p-10"><Loader2 className="h-10 w-10 animate-spin"/></div>;
-  if (gradesError) return <Alert variant="destructive"><AlertTriangle className="h-4 w-4"/><AlertDescription>{gradesError}</AlertDescription></Alert>;
+  if (isLoadingGrades && studyGrades.length === 0) return <div className="flex justify-center items-center p-10"><Loader2 className="h-10 w-10 animate-spin text-primary"/> <span className="ml-2">Loading grades...</span></div>;
+  
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileEdit className="h-6 w-6 text-primary"/>Content Management</CardTitle>
-          <CardDescription>Manage study material structure, PDF links, key points, and exercises. Changes are saved locally to your browser.</CardDescription>
+          <CardDescription>Manage study material structure, PDF links, key points, and exercises. 
+            <span className="font-semibold text-destructive block mt-1">Note: Your changes here are saved to your browser's local storage. To make these changes permanent for all users, you'll need to manually copy this data from local storage and update the <code>src/data/study-materials.json</code> file in the project code.</span>
+          </CardDescription>
         </CardHeader>
       </Card>
+       {gradesError && (
+            <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{gradesError}</AlertDescription>
+            </Alert>
+        )}
 
       <div className="grid md:grid-cols-3 gap-6 items-start">
         <div className="md:col-span-1 space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-lg">Select Grade</CardTitle></CardHeader>
             <CardContent>
-              <Select onValueChange={(value) => {setSelectedGradeId(value);}} value={selectedGradeId || undefined}>
+              <Select onValueChange={(value) => {setSelectedGradeId(value);}} value={selectedGradeId || undefined} disabled={isLoadingGrades || studyGrades.length === 0}>
                 <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
                 <SelectContent>
                   {studyGrades.map(grade => <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+               {studyGrades.length === 0 && !isLoadingGrades && <p className="text-xs text-muted-foreground mt-1">No grades found. Check API or data source.</p>}
             </CardContent>
           </Card>
 
@@ -422,25 +437,25 @@ export default function TeacherContentManagementPage() {
                     <CardTitle className="text-xl">Chapters for {selectedGradeName}</CardTitle>
                     <CardDescription>Select a chapter below to edit its specific content (PDF links, key points, exercises).</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Accordion type="single" collapsible onValueChange={setSelectedChapterId} value={selectedChapterId || undefined}>
+                <CardContent className="max-h-[calc(100vh-250px)] overflow-y-auto pr-2"> {/* Added scroll for long chapter lists */}
+                    <Accordion type="single" collapsible onValueChange={setSelectedChapterId} value={selectedChapterId || undefined} className="w-full">
                         {(selectedGradeObject?.chapters || []).map(chapter => (
-                            <AccordionItem value={chapter.id} key={chapter.id}>
-                                <AccordionTrigger className="text-base">{chapter.name}</AccordionTrigger>
-                                <AccordionContent className="pt-4 space-y-6 bg-muted/30 p-4 rounded-md">
-                                  <div className="space-y-4 p-4 border rounded-md bg-background">
-                                    <h3 className="font-semibold text-lg">Chapter-Specific PDF Links for "{chapter.name}"</h3>
+                            <AccordionItem value={chapter.id} key={chapter.id} className="border-b last:border-b-0">
+                                <AccordionTrigger className="text-base py-3 hover:bg-muted/50 px-2 rounded-md">{chapter.name}</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6 bg-muted/10 p-4 rounded-b-md mt-[-1px] border-t">
+                                  <div className="space-y-4 p-4 border rounded-md bg-background shadow-sm">
+                                    <h3 className="font-semibold text-lg border-b pb-2 mb-3">Chapter-Specific PDF Links for "{chapter.name}"</h3>
                                     {chapterPdfConfig.map(pdf => (
                                       <div key={pdf.key} className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
-                                        <Label htmlFor={`${pdf.key}-chapterinput`} className="font-medium flex items-center gap-1"><pdf.icon className="h-4 w-4"/>{pdf.label}</Label>
+                                        <Label htmlFor={`${pdf.key}-chapterinput-${chapter.id}`} className="font-medium flex items-center gap-1 text-sm"><pdf.icon className="h-4 w-4"/>{pdf.label}</Label>
                                         <div className="flex gap-2 items-center">
                                           <Input 
-                                            id={`${pdf.key}-chapterinput`} 
+                                            id={`${pdf.key}-chapterinput-${chapter.id}`} 
                                             type="url" 
                                             placeholder={pdf.placeholder} 
                                             value={(editableChapterContent as any)[pdf.key] || ""}
                                             onChange={(e) => handleChapterPdfLinkChange(pdf.key, e.target.value)}
-                                            className="flex-grow"
+                                            className="flex-grow h-9"
                                           />
                                           {(editableChapterContent as any)[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveChapterPdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
                                         </div>
@@ -458,13 +473,13 @@ export default function TeacherContentManagementPage() {
                                     Generate Key Points &amp; Exercises from PDF (AI - Simulated)
                                   </Button>
                                   
-                                  <div className="space-y-2 p-4 border rounded-md bg-background">
-                                    <h3 className="font-semibold">Key Points &amp; Summary</h3>
+                                  <div className="space-y-2 p-4 border rounded-md bg-background shadow-sm">
+                                    <h3 className="font-semibold text-lg border-b pb-2 mb-3">Key Points &amp; Summary</h3>
                                     <Textarea 
                                       value={editableChapterContent.keyPoints || ""}
                                       onChange={(e) => handleContentChange('keyPoints', e.target.value)}
                                       placeholder="Enter key points and summary... (AI can help generate this)"
-                                      rows={6}
+                                      rows={8}
                                     />
                                   </div>
 
@@ -472,23 +487,23 @@ export default function TeacherContentManagementPage() {
                                     <CardHeader><CardTitle className="text-md">Multiple Choice Questions (MCQs)</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
                                       {(editableChapterContent.mcqs || []).map((mcq, index) => (
-                                        <Card key={mcq.id || index} className="p-3 bg-secondary/50">
-                                          <Label>MCQ {index + 1}:</Label>
-                                          <Textarea placeholder="Question" value={mcq.question} onChange={e => handleContentChange('mcqs', e.target.value, index, 'question')} className="mb-1" rows={2}/>
+                                        <Card key={mcq.id || index} className="p-3 bg-secondary/30 shadow-inner">
+                                          <Label className="font-semibold">MCQ {index + 1}:</Label>
+                                          <Textarea placeholder="Question" value={mcq.question} onChange={e => handleContentChange('mcqs', e.target.value, index, 'question')} className="mb-1 bg-white" rows={2}/>
                                           {mcq.options.map((opt, optIndex) => (
-                                            <Input key={optIndex} placeholder={`Option ${optIndex + 1}`} value={opt} onChange={e => handleContentChange('mcqs', {optionIndex: optIndex, optionValue: e.target.value}, index, 'options')} className="mb-1 text-sm"/>
+                                            <Input key={optIndex} placeholder={`Option ${optIndex + 1}`} value={opt} onChange={e => handleContentChange('mcqs', {optionIndex: optIndex, optionValue: e.target.value}, index, 'options')} className="mb-1 text-sm bg-white h-9"/>
                                           ))}
-                                          <Select value={mcq.correctAnswerIndex?.toString()} onValueChange={val => handleContentChange('mcqs', val, index, 'correctAnswerIndex')}>
-                                            <SelectTrigger className="text-sm"><SelectValue placeholder="Correct Answer" /></SelectTrigger>
+                                          <Select value={mcq.correctAnswerIndex?.toString() || "0"} onValueChange={val => handleContentChange('mcqs', val, index, 'correctAnswerIndex')}>
+                                            <SelectTrigger className="text-sm h-9 bg-white"><SelectValue placeholder="Correct Answer" /></SelectTrigger>
                                             <SelectContent>
                                               {mcq.options.map((_, optIdx) => <SelectItem key={optIdx} value={optIdx.toString()}>Option {optIdx + 1}</SelectItem>)}
                                             </SelectContent>
                                           </Select>
-                                          <Textarea placeholder="Explanation" value={mcq.explanation} onChange={e => handleContentChange('mcqs', e.target.value, index, 'explanation')} className="mt-1 text-sm" rows={2}/>
-                                          <Button variant="ghost" size="sm" onClick={() => removeMcq(index)} className="mt-1 text-destructive hover:bg-destructive/10"><Trash2 className="mr-1 h-3 w-3"/>Remove MCQ</Button>
+                                          <Textarea placeholder="Explanation" value={mcq.explanation} onChange={e => handleContentChange('mcqs', e.target.value, index, 'explanation')} className="mt-1 text-sm bg-white" rows={2}/>
+                                          <Button variant="ghost" size="sm" onClick={() => removeMcq(index)} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove MCQ</Button>
                                         </Card>
                                       ))}
-                                      <Button variant="outline" size="sm" onClick={addMcq}><PlusCircle className="mr-2 h-4 w-4"/>Add MCQ</Button>
+                                      <Button variant="outline" size="sm" onClick={addMcq} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add MCQ</Button>
                                     </CardContent>
                                   </Card>
 
@@ -496,14 +511,14 @@ export default function TeacherContentManagementPage() {
                                     <CardHeader><CardTitle className="text-md">Short Answer Questions (CRQs)</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
                                       {(editableChapterContent.shortAnswers || []).map((qa, index) => (
-                                        <Card key={qa.id || index} className="p-3 bg-secondary/50">
-                                          <Label>Short Question {index + 1}:</Label>
-                                          <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'question')} className="mb-1" rows={2}/>
-                                          <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'answer')} className="text-sm" rows={3}/>
-                                          <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('shortAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10"><Trash2 className="mr-1 h-3 w-3"/>Remove Short Q</Button>
+                                        <Card key={qa.id || index} className="p-3 bg-secondary/30 shadow-inner">
+                                          <Label className="font-semibold">Short Question {index + 1}:</Label>
+                                          <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'question')} className="mb-1 bg-white" rows={2}/>
+                                          <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'answer')} className="text-sm bg-white" rows={3}/>
+                                          <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('shortAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove Short Q</Button>
                                         </Card>
                                       ))}
-                                      <Button variant="outline" size="sm" onClick={() => addQuestionAnswer('shortAnswers')}><PlusCircle className="mr-2 h-4 w-4"/>Add Short Question</Button>
+                                      <Button variant="outline" size="sm" onClick={() => addQuestionAnswer('shortAnswers')} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Short Question</Button>
                                     </CardContent>
                                   </Card>
 
@@ -511,14 +526,14 @@ export default function TeacherContentManagementPage() {
                                     <CardHeader><CardTitle className="text-md">Long Answer Questions (ERQs)</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
                                       {(editableChapterContent.longAnswers || []).map((qa, index) => (
-                                        <Card key={qa.id || index} className="p-3 bg-secondary/50">
-                                          <Label>Long Question {index + 1}:</Label>
-                                          <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'question')} className="mb-1" rows={3}/>
-                                          <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'answer')} className="text-sm" rows={5}/>
-                                          <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('longAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10"><Trash2 className="mr-1 h-3 w-3"/>Remove Long Q</Button>
+                                        <Card key={qa.id || index} className="p-3 bg-secondary/30 shadow-inner">
+                                          <Label className="font-semibold">Long Question {index + 1}:</Label>
+                                          <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'question')} className="mb-1 bg-white" rows={3}/>
+                                          <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'answer')} className="text-sm bg-white" rows={5}/>
+                                          <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('longAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove Long Q</Button>
                                         </Card>
                                       ))}
-                                      <Button variant="outline" size="sm" onClick={() => addQuestionAnswer('longAnswers')}><PlusCircle className="mr-2 h-4 w-4"/>Add Long Question</Button>
+                                      <Button variant="outline" size="sm" onClick={() => addQuestionAnswer('longAnswers')} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Long Question</Button>
                                     </CardContent>
                                   </Card>
 
@@ -541,3 +556,4 @@ export default function TeacherContentManagementPage() {
     </div>
   );
 }
+
