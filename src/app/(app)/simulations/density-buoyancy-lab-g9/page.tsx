@@ -1,3 +1,4 @@
+
 // src/app/(app)/simulations/density-buoyancy-lab-g9/page.tsx
 "use client";
 
@@ -9,9 +10,10 @@ import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const G_ACCELERATION = 9.81; // m/s^2
 const G_SCALED_FOR_GRAMS = 0.00981; // N/g (to work with grams for mass and cm³ for volume directly)
@@ -19,33 +21,36 @@ const G_SCALED_FOR_GRAMS = 0.00981; // N/g (to work with grams for mass and cm³
 interface Material {
   name: string;
   density: number; // g/cm³
+  color: string; // hsla format for easy alpha adjustments
 }
 const MATERIALS: Material[] = [
-  { name: "Wood (Pine)", density: 0.5 },
-  { name: "Water (Ice)", density: 0.92 },
-  { name: "Aluminium", density: 2.7 },
-  { name: "Iron", density: 7.87 },
-  { name: "Lead", density: 11.34 },
-  { name: "Gold", density: 19.32 },
-  { name: "Custom", density: 1.0 }, // Placeholder for custom input
+  { name: "Wood (Pine)", density: 0.5, color: "hsla(30, 50%, 60%, 1)" }, // Light brown
+  { name: "Water (Ice)", density: 0.92, color: "hsla(190, 60%, 85%, 1)" }, // Light icy blue
+  { name: "Aluminium", density: 2.7, color: "hsla(210, 15%, 75%, 1)" }, // Silvery gray
+  { name: "Iron", density: 7.87, color: "hsla(210, 10%, 50%, 1)" },    // Darker gray
+  { name: "Lead", density: 11.34, color: "hsla(220, 10%, 35%, 1)" },   // Very dark blue-gray
+  { name: "Gold", density: 19.32, color: "hsla(50, 80%, 60%, 1)" },    // Gold
+  { name: "Custom", density: 1.0, color: "hsla(0, 0%, 50%, 1)" },      // Neutral gray for custom
 ];
 
 interface Fluid {
   name: string;
   density: number; // g/cm³
+  color: string; // hsla format for semi-transparency
 }
 const FLUIDS: Fluid[] = [
-  { name: "Water", density: 1.0 },
-  { name: "Olive Oil", density: 0.92 },
-  { name: "Glycerine", density: 1.26 },
-  { name: "Mercury", density: 13.56 },
+  { name: "Water", density: 1.0, color: "hsla(200, 70%, 60%, 0.5)" },  // Blue
+  { name: "Olive Oil", density: 0.92, color: "hsla(60, 50%, 60%, 0.5)" },// Yellowish
+  { name: "Glycerine", density: 1.26, color: "hsla(270, 40%, 70%, 0.5)" },// Light purple
+  { name: "Mercury", density: 13.56, color: "hsla(0, 0%, 65%, 0.6)" },  // Silvery, slightly opaque
 ];
 
-const CANVAS_WIDTH = 300;
-const CANVAS_HEIGHT = 350;
+const CANVAS_WIDTH = 350; // Slightly increased width
+const CANVAS_HEIGHT = 400; // Increased height for better vertical scale
 const BEAKER_WIDTH_RATIO = 0.7;
-const FLUID_LEVEL_RATIO = 0.75;
-const OBJECT_BASE_SIZE = 50; // Base visual size for volume of 100 cm³
+const FLUID_LEVEL_RATIO = 0.7; // Percentage of beaker height filled with fluid
+const OBJECT_BASE_WIDTH_CM = 5; // Conceptual width of object at 100cm3 volume
+const OBJECT_BASE_HEIGHT_CM = 5; // Conceptual height
 
 export default function DensityBuoyancyLabG9Page() {
   const { toast } = useToast();
@@ -70,12 +75,12 @@ export default function DensityBuoyancyLabG9Page() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const objectProperties = useCallback(() => {
-    let density = customObjectDensity;
-    if (selectedMaterialName !== "Custom") {
-      density = MATERIALS.find(m => m.name === selectedMaterialName)?.density || 1.0;
-    }
-    const mass = density * objectVolumeCm3;
-    return { density, mass, volume: objectVolumeCm3 };
+    const material = MATERIALS.find(m => m.name === selectedMaterialName) || MATERIALS.find(m=>m.name==="Custom")!;
+    let density = material.name === "Custom" ? customObjectDensity : material.density;
+    density = Math.max(0.01, density); // Prevent zero or negative density
+    const volume = Math.max(1, objectVolumeCm3); // Prevent zero or negative volume
+    const mass = density * volume;
+    return { density, mass, volume, color: material.color };
   }, [selectedMaterialName, objectVolumeCm3, customObjectDensity]);
 
   const fluidProperties = useCallback(() => {
@@ -94,13 +99,13 @@ export default function DensityBuoyancyLabG9Page() {
 
     if (isObjectInFluid) {
       if (objProps.density <= fluidProps.density) { // Floats or neutrally buoyant
-        buoyantForce = weightInAir; // Buoyant force equals weight
+        buoyantForce = weightInAir;
         const submergedVolume = objProps.mass / fluidProps.density;
         percentageSubmerged = Math.min(1, submergedVolume / objProps.volume) * 100;
-        apparentWeightInFluid = 0; // Effectively
+        apparentWeightInFluid = Math.max(0, weightInAir - buoyantForce); // Should be close to 0
         statusMessage = objProps.density === fluidProps.density ? "Neutrally Buoyant" : "Floats";
       } else { // Sinks
-        const submergedVolume = objProps.volume; // Fully submerged
+        const submergedVolume = objProps.volume;
         buoyantForce = fluidProps.density * submergedVolume * G_SCALED_FOR_GRAMS;
         percentageSubmerged = 100;
         apparentWeightInFluid = weightInAir - buoyantForce;
@@ -134,81 +139,131 @@ export default function DensityBuoyancyLabG9Page() {
 
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Beaker
-    const beakerWidth = CANVAS_WIDTH * BEAKER_WIDTH_RATIO;
-    const beakerX = (CANVAS_WIDTH - beakerWidth) / 2;
-    const beakerBottomY = CANVAS_HEIGHT - 20;
+    // Beaker styling
+    const beakerColor = "hsl(var(--border))"; // Using border color for beaker lines
+    const beakerLineWidth = 2;
+    const beakerWallPadding = 20; // Padding from canvas edge
+    const beakerWidth = CANVAS_WIDTH - 2 * beakerWallPadding;
+    const beakerBottomY = CANVAS_HEIGHT - 30;
     const beakerTopY = 50;
-    ctx.strokeStyle = "hsl(var(--muted-foreground))";
-    ctx.lineWidth = 2;
+    const beakerActualHeight = beakerBottomY - beakerTopY;
+
+    ctx.strokeStyle = beakerColor;
+    ctx.lineWidth = beakerLineWidth;
+
+    // Draw beaker walls and base
     ctx.beginPath();
-    ctx.moveTo(beakerX, beakerTopY);
-    ctx.lineTo(beakerX, beakerBottomY);
-    ctx.lineTo(beakerX + beakerWidth, beakerBottomY);
-    ctx.lineTo(beakerX + beakerWidth, beakerTopY);
+    ctx.moveTo(beakerWallPadding, beakerTopY);
+    ctx.lineTo(beakerWallPadding, beakerBottomY);
+    ctx.lineTo(beakerWallPadding + beakerWidth, beakerBottomY);
+    ctx.lineTo(beakerWallPadding + beakerWidth, beakerTopY);
+    // ctx.closePath(); // Don't close path if you want an open top
+    ctx.stroke();
+    
+    // Fluid
+    const fluidProps = fluidProperties();
+    const fluidHeightPixels = beakerActualHeight * FLUID_LEVEL_RATIO;
+    const fluidTopSurfaceY = beakerBottomY - fluidHeightPixels;
+    ctx.fillStyle = fluidProps.color;
+    ctx.fillRect(beakerWallPadding + beakerLineWidth / 2, fluidTopSurfaceY, beakerWidth - beakerLineWidth, fluidHeightPixels);
+    
+    // Fluid surface line
+    ctx.beginPath();
+    ctx.moveTo(beakerWallPadding, fluidTopSurfaceY);
+    ctx.lineTo(beakerWallPadding + beakerWidth, fluidTopSurfaceY);
+    ctx.strokeStyle = "hsla(var(--foreground), 0.5)"; // Darker line for surface
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Fluid
-    const fluidHeightPixels = (beakerBottomY - beakerTopY) * FLUID_LEVEL_RATIO;
-    const fluidTopSurfaceY = beakerBottomY - fluidHeightPixels;
-    ctx.fillStyle = "hsla(var(--primary) / 0.3)";
-    ctx.fillRect(beakerX + ctx.lineWidth/2, fluidTopSurfaceY, beakerWidth - ctx.lineWidth, fluidHeightPixels);
-
     // Object
+    const objProps = objectProperties();
+    // Visual size scaling: cube root of volume ratio, then apply to base dimensions
+    const volumeRatio = objProps.volume / 100; // Assuming 100cm³ is a "standard" size
+    const scaleFactor = Math.pow(volumeRatio, 1/3);
+    const objectDisplayWidth = Math.min(beakerWidth * 0.6, OBJECT_BASE_WIDTH_CM * scaleFactor * 10); // Scale by 10 for pixels, cap at 60% beaker width
+    const objectDisplayHeight = Math.min(beakerActualHeight * 0.8, OBJECT_BASE_HEIGHT_CM * scaleFactor * 10); // Cap at 80% beaker height
+
     if (isObjectInFluid) {
-      const objProps = objectProperties();
-      // Scale object visual size roughly with cube root of volume
-      const visualSizeFactor = Math.pow(objProps.volume / 100, 1/3);
-      const objectDisplayWidth = OBJECT_BASE_SIZE * visualSizeFactor * 0.8; // make it a bit cuboid
-      const objectDisplayHeight = OBJECT_BASE_SIZE * visualSizeFactor * 1.2;
+      let objectTopY; // Top edge of the object
 
-      let objectY; // Top of the object
       if (simulationData.statusMessage === "Sinks") {
-        objectY = beakerBottomY - objectDisplayHeight - 2; // Sits at bottom
+        objectTopY = beakerBottomY - objectDisplayHeight - beakerLineWidth; // Sits at bottom
       } else { // Floats or neutrally buoyant
-        const submergedDepth = objectDisplayHeight * (simulationData.percentageSubmerged / 100);
-        objectY = fluidTopSurfaceY + (fluidHeightPixels * 0.1) - (objectDisplayHeight - submergedDepth); // Position based on submersion
+        const submergedDepthPixels = objectDisplayHeight * (simulationData.percentageSubmerged / 100);
+        objectTopY = fluidTopSurfaceY - (objectDisplayHeight - submergedDepthPixels);
       }
-      objectY = Math.max(beakerTopY + 2, Math.min(objectY, beakerBottomY - objectDisplayHeight -2))
-
-
+      // Ensure object is within beaker vertical bounds
+      objectTopY = Math.max(beakerTopY, Math.min(objectTopY, beakerBottomY - objectDisplayHeight));
+      
       const objectX = CANVAS_WIDTH / 2 - objectDisplayWidth / 2;
       
-      ctx.fillStyle = "hsl(var(--accent))";
-      ctx.fillRect(objectX, objectY, objectDisplayWidth, objectDisplayHeight);
-      ctx.strokeStyle = "hsl(var(--accent-foreground))";
-      ctx.strokeRect(objectX, objectY, objectDisplayWidth, objectDisplayHeight);
+      ctx.fillStyle = objProps.color;
+      ctx.fillRect(objectX, objectTopY, objectDisplayWidth, objectDisplayHeight);
+      ctx.strokeStyle = "hsl(var(--foreground))"; // Black outline for object
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(objectX, objectTopY, objectDisplayWidth, objectDisplayHeight);
 
-      // Force Arrows (Simplified)
-      if (simulationData.weightInAirN > 0) {
-        // Weight
+      // Force Arrows (Simplified with labels)
+      const arrowStartX = objectX + objectDisplayWidth / 2;
+      const arrowStartY = objectTopY + objectDisplayHeight / 2;
+      const arrowLength = 30; // Max arrow length
+      
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "left";
+
+      // Weight Arrow (W) - always present if mass > 0
+      if (simulationData.weightInAirN > 0.001) {
         ctx.beginPath();
-        ctx.moveTo(objectX + objectDisplayWidth / 2, objectY + objectDisplayHeight / 2);
-        ctx.lineTo(objectX + objectDisplayWidth / 2, objectY + objectDisplayHeight / 2 + 30);
-        ctx.strokeStyle = "hsl(var(--destructive))";
+        ctx.moveTo(arrowStartX, arrowStartY);
+        ctx.lineTo(arrowStartX, arrowStartY + arrowLength);
+        ctx.strokeStyle = "hsl(var(--destructive))"; // Red
         ctx.lineWidth = 2;
         ctx.stroke();
+        // Arrowhead
+        ctx.beginPath();
+        ctx.moveTo(arrowStartX, arrowStartY + arrowLength);
+        ctx.lineTo(arrowStartX - 3, arrowStartY + arrowLength - 6);
+        ctx.lineTo(arrowStartX + 3, arrowStartY + arrowLength - 6);
+        ctx.closePath();
         ctx.fillStyle = "hsl(var(--destructive))";
-        ctx.fillText("W", objectX + objectDisplayWidth / 2 + 5, objectY + objectDisplayHeight / 2 + 25);
+        ctx.fill();
+        ctx.fillText("W", arrowStartX + 5, arrowStartY + arrowLength - 5);
+      }
 
-
-        // Buoyant Force
-        if (simulationData.buoyantForceN > 0.001) {
-            ctx.beginPath();
-            ctx.moveTo(objectX + objectDisplayWidth / 2, objectY + objectDisplayHeight / 2);
-            ctx.lineTo(objectX + objectDisplayWidth / 2, objectY + objectDisplayHeight / 2 - 25);
-            ctx.strokeStyle = "hsl(var(--primary))";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.fillStyle = "hsl(var(--primary))";
-            ctx.fillText("Fb", objectX + objectDisplayWidth / 2 + 5, objectY + objectDisplayHeight / 2 - 20);
-        }
+      // Buoyant Force Arrow (Fb) - present if buoyant force > 0
+      if (simulationData.buoyantForceN > 0.001) {
+        const buoyantArrowScale = Math.min(1, simulationData.buoyantForceN / Math.max(0.001, simulationData.weightInAirN)); // Scale Fb relative to W
+        const buoyantArrowActualLength = arrowLength * buoyantArrowScale;
+        ctx.beginPath();
+        ctx.moveTo(arrowStartX, arrowStartY);
+        ctx.lineTo(arrowStartX, arrowStartY - buoyantArrowActualLength);
+        ctx.strokeStyle = "hsl(var(--primary))"; // Blue
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Arrowhead
+        ctx.beginPath();
+        ctx.moveTo(arrowStartX, arrowStartY - buoyantArrowActualLength);
+        ctx.lineTo(arrowStartX - 3, arrowStartY - buoyantArrowActualLength + 6);
+        ctx.lineTo(arrowStartX + 3, arrowStartY - buoyantArrowActualLength + 6);
+        ctx.closePath();
+        ctx.fillStyle = "hsl(var(--primary))";
+        ctx.fill();
+        ctx.fillText("Fb", arrowStartX + 5, arrowStartY - buoyantArrowActualLength + 5);
       }
     } else {
+        // Draw object outside fluid (e.g., above beaker)
+        const objectX = CANVAS_WIDTH / 2 - objectDisplayWidth / 2;
+        const objectY = beakerTopY - objectDisplayHeight - 10; // Position above beaker
+        ctx.fillStyle = objProps.color;
+        ctx.fillRect(objectX, objectY, objectDisplayWidth, objectDisplayHeight);
+        ctx.strokeStyle = "hsl(var(--foreground))";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(objectX, objectY, objectDisplayWidth, objectDisplayHeight);
+
         ctx.fillStyle = "hsl(var(--muted-foreground))";
         ctx.textAlign = "center";
         ctx.font = "12px sans-serif";
-        ctx.fillText("Object is out of fluid.", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+        ctx.fillText("Object ready.", CANVAS_WIDTH / 2, beakerTopY / 2);
     }
 
   }, [isObjectInFluid, simulationData, objectProperties, fluidProperties]);
@@ -238,11 +293,10 @@ export default function DensityBuoyancyLabG9Page() {
             <div>
               <CardTitle className="text-3xl flex items-center gap-2">
                 <Anchor className="h-8 w-8 text-primary" />
-                G9: Density & Buoyancy Lab
+                G9: Density &amp; Buoyancy Lab
               </CardTitle>
               <CardDescription>
                 Explore Archimedes' Principle. Observe if objects float or sink in different fluids.
-                (STBB Relevance: Density, Archimedes' Principle, Buoyancy, Flotation - G9, Unit 7)
               </CardDescription>
             </div>
             <Popover>
@@ -257,7 +311,6 @@ export default function DensityBuoyancyLabG9Page() {
                         <li>Select a fluid type.</li>
                         <li>Click "Place in Fluid" to see what happens.</li>
                         <li>Observe the calculated values and the visual simulation.</li>
-                        <li>Click "Remove from Fluid / Reset" to try new parameters.</li>
                     </ul>
                 </PopoverContent>
             </Popover>
@@ -282,12 +335,12 @@ export default function DensityBuoyancyLabG9Page() {
                   {selectedMaterialName === "Custom" && (
                     <div>
                       <Label htmlFor="custom-density">Custom Density (g/cm³)</Label>
-                      <Input id="custom-density" type="number" value={customObjectDensity} onChange={e => setCustomObjectDensity(parseFloat(e.target.value) || 1.0)} step="0.1" min="0.1"/>
+                      <Input id="custom-density" type="number" value={customObjectDensity} onChange={e => setCustomObjectDensity(parseFloat(e.target.value) || 1.0)} step="0.01" min="0.01"/>
                     </div>
                   )}
                   <div>
                     <Label htmlFor="object-volume">Volume: {objectVolumeCm3.toFixed(0)} cm³</Label>
-                    <Slider id="object-volume" min={10} max={200} step={10} value={[objectVolumeCm3]} onValueChange={v => setObjectVolumeCm3(v[0])} />
+                    <Slider id="object-volume" min={10} max={500} step={10} value={[objectVolumeCm3]} onValueChange={v => setObjectVolumeCm3(v[0])} />
                   </div>
                 </CardContent>
               </Card>
@@ -305,8 +358,8 @@ export default function DensityBuoyancyLabG9Page() {
                   </div>
                 </CardContent>
               </Card>
-               <Button onClick={handlePlaceResetObject} className="w-full">
-                {isObjectInFluid ? "Remove from Fluid / Reset" : "Place in Fluid"}
+               <Button onClick={handlePlaceResetObject} className="w-full text-lg py-6">
+                {isObjectInFluid ? "Remove from Fluid & Reset" : "Place in Fluid"}
               </Button>
             </div>
 
@@ -316,7 +369,14 @@ export default function DensityBuoyancyLabG9Page() {
                 <CardHeader><CardTitle className="text-lg">Visual Simulation</CardTitle></CardHeader>
                 <CardContent className="flex flex-col items-center justify-center p-2">
                   <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="bg-muted rounded-md border border-input shadow-inner"></canvas>
-                  <p className="mt-2 text-lg font-semibold text-center h-6">{isObjectInFluid ? simulationData.statusMessage : " "}</p>
+                  <p className={cn(
+                    "mt-3 text-xl font-bold text-center h-8",
+                    simulationData.statusMessage === "Floats" && "text-green-600",
+                    simulationData.statusMessage === "Sinks" && "text-red-600",
+                    simulationData.statusMessage === "Neutrally Buoyant" && "text-blue-600"
+                  )}>
+                    {isObjectInFluid ? simulationData.statusMessage : " "}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -326,8 +386,8 @@ export default function DensityBuoyancyLabG9Page() {
                   <p>Object Density: <span className="font-semibold">{currentObjectProps.density.toFixed(2)} g/cm³</span></p>
                   <p>Fluid Density: <span className="font-semibold">{currentFluidProps.density.toFixed(2)} g/cm³</span></p>
                   <p>Weight in Air: <span className="font-semibold">{simulationData.weightInAirN.toFixed(3)} N</span></p>
-                  <p>Buoyant Force: <span className="font-semibold">{simulationData.buoyantForceN.toFixed(3)} N</span></p>
-                  <p>Apparent Weight: <span className="font-semibold">{simulationData.apparentWeightInFluidN.toFixed(3)} N</span></p>
+                  <p>Buoyant Force (Fb): <span className="font-semibold">{simulationData.buoyantForceN.toFixed(3)} N</span></p>
+                  <p>Apparent Wt. in Fluid: <span className="font-semibold">{simulationData.apparentWeightInFluidN.toFixed(3)} N</span></p>
                   <p>% Submerged: <span className="font-semibold">{simulationData.percentageSubmerged.toFixed(1)}%</span></p>
                 </CardContent>
               </Card>
