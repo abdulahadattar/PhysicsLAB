@@ -16,22 +16,21 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton
-
+  SidebarTrigger
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen,
   ListChecks, Settings as SettingsIcon, UserCog, Bug, ChevronDown, UsersRoundIcon, BarChart3, MessageSquare,
   FileEdit, FileArchive, NotebookText, CalendarDays, ClipboardList, BookCopy, Info, HelpCircle, Map,
-  Ruler, Thermometer, Scale, ClockIcon, Waves, Heater, Sigma, BatteryCharging, Replace, TrendingUp,
-  Weight, MoveVertical, Speaker, Projector, Zap, Network, Binary, Pipette, Magnet, LineChart, Move, Anchor,
-  RefreshCw, GitCommitHorizontal, Sun, Telescope, GraduationCap, FlaskConical, PersonStanding, Orbit, Rocket,
+  Ruler, Thermometer, Scale, ClockIcon, Waves, Heater, Sigma,
+  BatteryCharging, MoveHorizontal, TrendingUp, Orbit, Rocket,
   DraftingCompass, Microscope, SlidersHorizontal, Recycle, Milestone, SquareAsterisk, Dna, Bot, GitFork,
-  BinaryIcon, AreaChart, ArrowDown, Box, Car, CircleDot, Hand, HeaterIcon, Leaf, Layers, Music2, MinusSquare,
-  Plug, Radio, Satellite, Ship, BatteryWarning, Square, SquareRadical, StretchHorizontal, ThermometerSnowflake, Triangle
+  BinaryIcon, AreaChart, ArrowDown, Box, Car, CircleDot, Hand, Heater as HeaterIcon, Leaf, Layers, Music2, MinusSquare,
+  Plug, Radio, Satellite, Ship, BatteryWarning,
+  Square, SquareRadical, StretchHorizontal, ThermometerSnowflake, Triangle,
+  Users as UsersIcon,
+  Loader2,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -107,14 +106,30 @@ const STUDY_GRADES_SEARCH_CACHE_KEY = 'studyGradesSearchCache';
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, isLoggedIn, userRole, viewAsStudent, signInWithGoogle, magicLogin, signOutFirebase, isLoading: isSessionLoading, isFirebaseConfigured, debugSwitchRole, updateSession } = useUserSession();
-  const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
+  // User session management from context
+  const { 
+    currentUser, 
+    isLoggedIn, 
+    userRole, 
+    viewAsStudent, 
+    signInWithGoogle, 
+    magicLogin, 
+    signOutFirebase, 
+    isLoading: isSessionLoading, 
+    isFirebaseConfigured, 
+    debugSwitchRole 
+  } = useUserSession();
+  
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(true);
 
+  // State for simulated login flow
+  const [isLoginFlowActive, setIsLoginFlowActive] = useState(false);
+  // State for debug login form
   const [debugUsername, setDebugUsername] = useState("");
   const [debugPassword, setDebugPassword] = useState("");
 
+  // Global Search State
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -122,6 +137,7 @@ export function AppShell({ children }: AppShellProps) {
   const [isLoadingSearchData, setIsLoadingSearchData] = useState(false);
 
 
+  // Effect for online/offline detection
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsOnline(navigator.onLine);
@@ -136,68 +152,69 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, []);
 
+  // Fetch study grades for search functionality, with caching
   const fetchStudyGradesForSearch = useCallback(async (forceFetch = false) => {
-    if (!forceFetch && studyGradesData.length > 0) return;
-    if (isLoadingSearchData && !forceFetch) return;
+    if (!forceFetch && studyGradesData.length > 0 && !isLoadingSearchData) return;
 
     setIsLoadingSearchData(true);
     let loadedFromCache = false;
 
-    try {
-      const cachedDataString = localStorage.getItem(STUDY_GRADES_SEARCH_CACHE_KEY);
-      if (cachedDataString) {
-        const cachedData = JSON.parse(cachedDataString);
-        if (cachedData && cachedData.length > 0) {
-          setStudyGradesData(cachedData);
-          loadedFromCache = true;
-          if (!isOnline && !forceFetch) {
-            setIsLoadingSearchData(false);
-            return;
-          }
+    if (!forceFetch && typeof window !== 'undefined') {
+        try {
+            const cachedDataString = localStorage.getItem(STUDY_GRADES_SEARCH_CACHE_KEY);
+            if (cachedDataString) {
+                const cachedData = JSON.parse(cachedDataString);
+                if (cachedData && cachedData.length > 0) {
+                    setStudyGradesData(cachedData);
+                    loadedFromCache = true;
+                    if (!isOnline) {
+                        setIsLoadingSearchData(false);
+                        return;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("AppShell Search: Failed to parse study grades from localStorage for search:", e);
+            if (typeof window !== 'undefined') localStorage.removeItem(STUDY_GRADES_SEARCH_CACHE_KEY);
         }
-      }
-    } catch (e) {
-      console.warn("AppShell: Failed to parse study grades from localStorage cache:", e);
-      localStorage.removeItem(STUDY_GRADES_SEARCH_CACHE_KEY);
     }
 
-    if (!isOnline && !forceFetch && !loadedFromCache) {
-      console.log("AppShell: Offline and no cached study grades for search.");
-      setIsLoadingSearchData(false);
-      return;
+    if (!isOnline && !loadedFromCache) {
+        console.log("AppShell Search: Offline and no cached study grades.");
+        setIsLoadingSearchData(false);
+        return;
     }
     
-    console.log("AppShell: Fetching study grades for search from API...");
-    try {
-      const res = await fetch('/api/study-materials');
-      if (res.ok) {
-        const data = await res.json();
-        setStudyGradesData(data);
-        localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
-      } else {
-        console.warn("AppShell Search: Could not fetch study materials for indexing from API. Status:", res.status);
-        if (!loadedFromCache) toast({ title: "Search Data Limited", description: "Could not load full study material index.", variant: "default" });
-      }
-    } catch (e) {
-      console.warn("AppShell Search: Error fetching study materials for indexing:", e);
-      if (!loadedFromCache) toast({ title: "Search Data Error", description: "Error loading study material index.", variant: "destructive" });
+    if (isOnline) {
+        console.log("AppShell Search: Fetching study grades for search from API...");
+        try {
+            const res = await fetch('/api/study-materials');
+            if (res.ok) {
+                const data = await res.json();
+                setStudyGradesData(data);
+                if (typeof window !== 'undefined') localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
+            } else {
+                console.warn("AppShell Search: API fetch failed for study materials. Status:", res.status);
+                if (!loadedFromCache) toast({ title: "Search Data Limited", description: "Could not load full study material index for search.", variant: "default" });
+            }
+        } catch (e) {
+            console.warn("AppShell Search: Error fetching study materials:", e);
+            if (!loadedFromCache) toast({ title: "Search Data Error", description: "Error loading study material index for search.", variant: "destructive" });
+        }
     }
     setIsLoadingSearchData(false);
   }, [isOnline, studyGradesData.length, isLoadingSearchData, toast]);
 
-
   useEffect(() => {
-    // Fetch study grades on mount if not already fetched by another component
-    if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) {
+    // Fetch initial study grades for search on mount if not already populated
+    if (studyGradesData.length === 0 && !isLoadingSearchData) {
       fetchStudyGradesForSearch();
     }
-  }, [fetchStudyGradesForSearch, studyGradesData.length, isOnline, isLoadingSearchData]);
+  }, [fetchStudyGradesForSearch, studyGradesData.length, isLoadingSearchData]);
 
 
+  // Function to perform search across various parts of the app
   const performSearch = useCallback((query: string) => {
-    // Client-side search. For a "high budget" feel with fuzzy/semantic search,
-    // consider libraries like Fuse.js (client-side fuzzy) or backend search engines (Algolia, MeiliSearch).
-    // Current implementation: Substring matching.
     if (!query.trim()) {
       setSearchResults([]);
       setIsSearchOpen(false);
@@ -206,6 +223,8 @@ export function AppShell({ children }: AppShellProps) {
     setIsSearchOpen(true);
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
+    // This comment clarifies that current search is substring matching.
+    // Advanced fuzzy/semantic search would require dedicated libraries or backend services.
 
     // Search Navigation Items
     NAV_ITEMS.forEach(item => {
@@ -244,7 +263,7 @@ export function AppShell({ children }: AppShellProps) {
         if (grade.name.toLowerCase().includes(lowerQuery)) {
           results.push({ id: `grade-${grade.id}`, label: grade.name, href: `/study-material`, category: 'Study Grade', icon: BookOpen });
         }
-        grade.chapters.forEach(chapter => {
+        (grade.chapters || []).forEach(chapter => {
           if (chapter.name.toLowerCase().includes(lowerQuery)) {
             results.push({ id: `chapter-${chapter.id}`, label: `${grade.name} > ${chapter.name}`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Chapter', icon: FileText });
           }
@@ -280,7 +299,6 @@ export function AppShell({ children }: AppShellProps) {
       }
     });
 
-    // Deduplicate results (simple href based, could be more sophisticated)
     const uniqueResults = results.reduce((acc, current) => {
       const x = acc.find(item => item.href === current.href && item.label === current.label);
       if (!x) {
@@ -290,9 +308,10 @@ export function AppShell({ children }: AppShellProps) {
       }
     }, [] as SearchResult[]);
 
-    setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
-  }, [studyGradesData]);
+    setSearchResults(uniqueResults.slice(0, 10));
+  }, [studyGradesData]); // Depends on studyGradesData for comprehensive search
 
+  // Debounced search effect
   useEffect(() => {
     const handler = setTimeout(() => {
       if (searchTerm.trim()) {
@@ -301,19 +320,20 @@ export function AppShell({ children }: AppShellProps) {
         setSearchResults([]);
         setIsSearchOpen(false);
       }
-    }, 300); // Debounce search
+    }, 300); 
 
     return () => {
       clearTimeout(handler);
     };
   }, [searchTerm, performSearch]);
 
+  // Simulated Debug Login Handler
   const handleDebugLogin = useCallback(async () => {
     if (!debugUsername || !debugPassword) {
       toast({ title: "Debug Login", description: "Please enter debug username and password.", variant: "destructive" });
       return;
     }
-    if (magicLogin) { // magicLogin is part of UserSessionContext
+    if (magicLogin) { 
       const success = await magicLogin(debugUsername, debugPassword);
       if (success) {
         setIsLoginFlowActive(false);
@@ -323,9 +343,9 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [debugUsername, debugPassword, magicLogin, toast]);
 
+  // Function to render navigation items, conditionally showing teacher panel
   const renderNavItems = useCallback((items: NavItem[]) => {
     return items.map((item) => {
-      // Hide Teacher Panel if not logged in as teacher OR if teacher is viewing as student
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || (userRole === 'teacher' && viewAsStudent))) {
         return null;
       }
@@ -342,39 +362,41 @@ export function AppShell({ children }: AppShellProps) {
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180",
                   isActive && !isParentActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
                 )}
-                asChild={true} // Pass down props to SidebarMenuButton
+                asChild={true}
               >
-                 <SidebarMenuButton
-                  asChild={true}
+                <SidebarMenuButton
+                  asChild={true} 
                   className="w-full"
-                  isActive={isActive && !isParentActive} // Active if direct link, not if sub-item is active
+                  isActive={isActive && !isParentActive} 
                   tooltip={item.label}
                 >
-                  <span className="flex w-full items-center justify-between"> {/* Single child for AccordionTrigger */}
-                    <span className="flex items-center gap-2">
-                      <item.icon />
-                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                    </span>
-                    {/* Chevron will be rendered by AccordionTrigger itself */}
+                  {/* Single child for AccordionTrigger */}
+                  <span className="flex w-full items-center justify-between">
+                     <span className="flex items-center gap-2">
+                        <item.icon />
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                     </span>
+                     {/* AccordionTrigger itself will render its own ChevronDown */}
                   </span>
                 </SidebarMenuButton>
               </AccordionTrigger>
               <AccordionContent className="pb-0 group-data-[collapsible=icon]:hidden">
-                <SidebarMenuSub>
+                <SidebarMenu>
                   {item.subItems.map(subItem => (
-                    <SidebarMenuSubItem key={subItem.href}>
+                    <SidebarMenuItem key={subItem.href}>
                       <Link href={subItem.href} passHref legacyBehavior>
-                        <SidebarMenuSubButton
-                          asChild={false} // Link is the child, not the button itself
+                        <SidebarMenuButton
+                          asChild={false}
                           isActive={pathname.startsWith(subItem.href)}
+                          className="pl-6"
                         >
                           <subItem.icon />
                           <span>{subItem.label}</span>
-                        </SidebarMenuSubButton>
+                        </SidebarMenuButton>
                       </Link>
-                    </SidebarMenuSubItem>
+                    </SidebarMenuItem>
                   ))}
-                </SidebarMenuSub>
+                </SidebarMenu>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -396,9 +418,9 @@ export function AppShell({ children }: AppShellProps) {
         </SidebarMenuItem>
       )
     });
-  }, [pathname, isLoggedIn, userRole, viewAsStudent]); // Added dependencies
+  }, [pathname, isLoggedIn, userRole, viewAsStudent]);
 
-  if (isSessionLoading && !currentUser) { // Show loader if session is loading and no user data yet
+  if (isSessionLoading && !currentUser) {
     return <div className="flex items-center justify-center h-screen text-lg">Loading Application...</div>;
   }
 
@@ -432,6 +454,30 @@ export function AppShell({ children }: AppShellProps) {
               <p className="text-xs text-muted-foreground">{isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}</p>
             </div>
           </div>
+          
+          {/* Debug View Switcher - Only in Development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="group-data-[collapsible=icon]:hidden pt-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                    <Bug className="mr-2 h-3.5 w-3.5" /> Dev View As...
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" side="top">
+                  <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole(null)}>
+                    <UserCircle className="mr-2 h-4 w-4" /> Guest
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('student')}>
+                    <UserCircle className="mr-2 h-4 w-4" /> Student
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('teacher')}>
+                    <UserCog className="mr-2 h-4 w-4" /> Teacher
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
           <div className="group-data-[collapsible=icon]:hidden text-center text-xs text-muted-foreground mt-2">
             &copy; {new Date().getFullYear()} {APP_NAME}
           </div>
@@ -454,10 +500,10 @@ export function AppShell({ children }: AppShellProps) {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onFocus={() => {
-                        if (searchTerm) setIsSearchOpen(true);
+                        if (!isSearchOpen && searchTerm) setIsSearchOpen(true);
                         if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) fetchStudyGradesForSearch(false);
                     }}
-                    onKeyDown={(e) => {
+                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && searchResults.length > 0 && searchResults[0].href) {
                         e.preventDefault();
                         router.push(searchResults[0].href);
@@ -482,30 +528,32 @@ export function AppShell({ children }: AppShellProps) {
               </PopoverAnchor>
               {isSearchOpen && searchResults.length > 0 && (
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[400px] overflow-y-auto p-1" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                  <div className="flex flex-col gap-0.5">
-                    {searchResults.map(result => {
-                      const Icon = result.icon || FileText;
-                      return (
-                        <Button
-                          key={result.id}
-                          variant="ghost"
-                          className="w-full justify-start h-auto py-2 px-3 text-left"
-                          onClick={() => {
-                            if (result.href) router.push(result.href);
-                            setSearchTerm('');
-                            setSearchResults([]);
-                            setIsSearchOpen(false);
-                          }}
-                        >
-                          <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{result.label}</p>
-                            <p className="text-xs text-muted-foreground">{result.category}</p>
-                          </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
+                  <ScrollArea className="h-full">
+                    <div className="flex flex-col gap-0.5">
+                        {searchResults.map(result => {
+                        const Icon = result.icon || FileText;
+                        return (
+                            <Button
+                            key={result.id}
+                            variant="ghost"
+                            className="w-full justify-start h-auto py-2 px-3 text-left"
+                            onClick={() => {
+                                if (result.href) router.push(result.href);
+                                setSearchTerm('');
+                                setSearchResults([]);
+                                setIsSearchOpen(false);
+                            }}
+                            >
+                            <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <div className="flex-1">
+                                <p className="text-sm font-medium">{result.label}</p>
+                                <p className="text-xs text-muted-foreground">{result.category}</p>
+                            </div>
+                            </Button>
+                        );
+                        })}
+                    </div>
+                  </ScrollArea>
                 </PopoverContent>
               )}
               {isSearchOpen && searchTerm && searchResults.length === 0 && !isLoadingSearchData && (
@@ -518,60 +566,50 @@ export function AppShell({ children }: AppShellProps) {
 
 
           <div className="flex items-center gap-2 ml-auto">
-            {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
+            {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center text-xs"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
             
-            {process.env.NODE_ENV === 'development' && debugSwitchRole && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Bug className="mr-2 h-4 w-4" />
-                    Dev View
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => debugSwitchRole(null)}>
-                    <UserCircle className="mr-2 h-4 w-4" /> Guest View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => debugSwitchRole('student')}>
-                    <UserCircle className="mr-2 h-4 w-4" /> Student View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => debugSwitchRole('teacher')}>
-                    <UserCog className="mr-2 h-4 w-4" /> Teacher View
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
             {isSessionLoading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : !isLoggedIn ? (
               isLoginFlowActive ? (
-                <div className="flex items-center gap-2 flex-wrap justify-end">
+                <>
+                  {/* Offline Debug Login UI - Shows only if offline AND Firebase not configured */}
                   {(!isOnline && !isFirebaseConfigured) && (
-                    <Card className="p-3 w-full md:w-auto shadow-md">
+                    <Card className="p-3 w-full md:w-auto shadow-md absolute top-16 right-4 sm:right-6 z-50 bg-card border">
                       <CardHeader className="p-0 mb-2">
                         <CardTitle className="text-sm flex items-center"><KeyRound className="mr-1 h-4 w-4" /> Offline Debug Login</CardTitle>
                       </CardHeader>
                       <CardContent className="p-0 space-y-2">
                         <div>
-                          <Label htmlFor="debugUser" className="text-xs">Debug Username</Label>
+                          <Label htmlFor="debugUser" className="text-xs">Username</Label>
                           <Input id="debugUser" value={debugUsername} onChange={(e) => setDebugUsername(e.target.value)} placeholder="debug_user" size={3} className="h-8" />
                         </div>
                         <div>
-                          <Label htmlFor="debugPass" className="text-xs">Debug Password</Label>
+                          <Label htmlFor="debugPass" className="text-xs">Password</Label>
                           <Input id="debugPass" type="password" value={debugPassword} onChange={(e) => setDebugPassword(e.target.value)} placeholder="debug_pass" size={3} className="h-8" />
                         </div>
-                        <Button size="sm" onClick={handleDebugLogin} className="w-full h-8">Login (Debug)</Button>
+                        <Button size="sm" onClick={handleDebugLogin} className="w-full h-8 mt-1">Login (Debug)</Button>
                       </CardContent>
                     </Card>
                   )}
-                   {isFirebaseConfigured && (
-                     <Button variant="default" size="sm" onClick={async () => { if (signInWithGoogle) { await signInWithGoogle(); setIsLoginFlowActive(false); } else if (!isFirebaseConfigured) { toast({ title: "Firebase Not Configured", description: "Google Sign-In is unavailable. Please set up Firebase environment variables.", variant: "destructive"}); } }} disabled={!isFirebaseConfigured && !isOnline}>
-                       <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
-                     </Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }}>Cancel</Button>
-                </div>
+                  {/* Main Login Options - Shown if login flow is active */}
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {(isOnline && isFirebaseConfigured) && (
+                        <Button variant="default" size="sm" onClick={async () => { if (signInWithGoogle) { await signInWithGoogle(); setIsLoginFlowActive(false); } }}>
+                        <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
+                        </Button>
+                    )}
+                     {(!isOnline && isFirebaseConfigured) && ( // Google login button disabled if offline but firebase is configured
+                        <Button variant="default" size="sm" disabled>
+                            <LogIn className="mr-2 h-4 w-4" /> Google Login Offline
+                        </Button>
+                    )}
+                    {(!isFirebaseConfigured && isOnline) && ( // Google login button disabled if firebase not configured but online
+                        <Button variant="outline" size="sm" disabled>Google Login N/A</Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }}>Cancel</Button>
+                  </div>
+                </>
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setIsLoginFlowActive(true)}>
                   <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
@@ -583,20 +621,59 @@ export function AppShell({ children }: AppShellProps) {
                   {currentUser?.displayName || currentUser?.email || "User"} (<span className="font-semibold capitalize">{userRole}</span>
                   {userRole === 'teacher' && viewAsStudent && " (Student View)"})
                 </span>
-                {userRole === 'teacher' && updateSession && (
-                  <Button variant="outline" size="sm" onClick={() => { if (updateSession) updateSession({ viewAsStudent: !viewAsStudent });}}>
-                    {viewAsStudent ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                    {viewAsStudent ? "Teacher View" : "Student View"}
-                  </Button>
-                )}
-                {signOutFirebase && ( 
-                    <Button variant="ghost" size="sm" onClick={async () => { await signOutFirebase(); setIsLoginFlowActive(false); }}>
-                        <LogOut className="mr-2 h-4 w-4" /> Logout
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
+                       <Avatar className="h-8 w-8">
+                         <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? (userRole || "User") : "Guest")} data-ai-hint="user avatar"/>
+                         <AvatarFallback>
+                           {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? 'TA' : 'ST') : 'GU')}
+                         </AvatarFallback>
+                       </Avatar>
                     </Button>
-                )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {userRole === 'teacher' && (
+                      <DropdownMenuItem onClick={() => { if (debugSwitchRole) debugSwitchRole(viewAsStudent ? 'teacher' : 'student'); }}>
+                        {viewAsStudent ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                        {viewAsStudent ? "Teacher View" : "Student View"}
+                      </DropdownMenuItem>
+                    )}
+                    {signOutFirebase && ( 
+                        <DropdownMenuItem onClick={async () => { await signOutFirebase(); setIsLoginFlowActive(false); }}>
+                            <LogOut className="mr-2 h-4 w-4" /> Logout
+                        </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
               </>
             )}
             <ThemeToggle />
+            
+            {/* Development Debug View Switcher */}
+            {process.env.NODE_ENV === 'development' && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                        <Bug className="h-4 w-4" />
+                        <span className="sr-only">Developer Debug View</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole(null)}>
+                        <UserCircle className="mr-2 h-4 w-4" /> Guest
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('student')}>
+                        <UserCircle className="mr-2 h-4 w-4" /> Student
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => debugSwitchRole && debugSwitchRole('teacher')}>
+                        <UserCog className="mr-2 h-4 w-4" /> Teacher
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 overflow-auto">
