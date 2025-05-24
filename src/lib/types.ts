@@ -1,4 +1,5 @@
 
+
 export interface MCQ {
   id: string;
   question: string;
@@ -13,22 +14,12 @@ export interface QuestionAnswer {
   answer: string;
 }
 
-/**
- * Represents a philosophical question for critical thinking.
- * @property {string} question - The philosophical question itself.
- * @property {string} [hint] - An optional hint to guide student thinking.
- */
 export interface PhilosophicalQuestionItem {
   id: string;
   question: string;
   hint?: string;
 }
 
-/**
- * Represents a branch of physics for categorizing philosophical questions.
- * @property {string} branchName - The name of the physics branch (e.g., "Classical Mechanics").
- * @property {PhilosophicalQuestionItem[]} questions - An array of philosophical questions for this branch.
- */
 export interface PhilosophicalBranch {
   id: string;
   branchName: string;
@@ -36,14 +27,6 @@ export interface PhilosophicalBranch {
 }
 
 
-/**
- * Describes a prominent physics research center.
- * @property {string} name - The name of the research center.
- * @property {string} location - The primary location of the center.
- * @property {string} primaryFocus - A brief description of its main research areas.
- * @property {string} keyAchievement - A notable achievement or discovery.
- * @property {string} websiteUrl - The official website URL.
- */
 export interface ResearchCenter {
   id: string;
   name: string;
@@ -53,15 +36,6 @@ export interface ResearchCenter {
   websiteUrl: string;
 }
 
-/**
- * Describes a university offering physics programs.
- * @property {string} name - The name of the university.
- * @property {string} city - The city where the university is primarily located.
- * @property {'Public' | 'Private'} type - The type of university.
- * @property {string[]} degreesOffered - A list of physics-related degrees offered (e.g., "BSc Physics", "MS Applied Physics").
- * @property {string[]} keyLabs - A list of notable physics-related labs or research groups.
- * @property {string} departmentUrl - The URL to the physics department or relevant faculty page.
- */
 export interface UniversityProgram {
   id: string;
   name: string;
@@ -72,14 +46,6 @@ export interface UniversityProgram {
   departmentUrl: string;
 }
 
-/**
- * Describes a piece of common physics laboratory equipment.
- * @property {string} name - The name of the equipment.
- * @property {string} purpose - A brief description of what the equipment is used for.
- * @property {string} principle - A concise explanation of its working principle.
- * @property {string[]} typicalExperiments - Examples of experiments where this equipment is used.
- * @property {string} [imagePath] - Relative path to an image in `public/images/labs/`.
- */
 export interface LabEquipmentItem {
   id: string;
   name: string;
@@ -87,12 +53,13 @@ export interface LabEquipmentItem {
   principle: string;
   typicalExperiments: string[];
   imagePath?: string;
+  imagePlaceholderText?: string; // Added for cases where imagePath is not available
 }
 
 
 export interface ChapterContent {
   stbbChapterPdfLink?: string;
-  teacherNotesPdfName?: string;
+  teacherNotesPdfName?: string; // Note: Storing filename implies a convention for base URL or local storage access
   alternativeChapterPdfLink?: string;
   punjabBoardPdfName?: string;
   nationalSyllabusPdfName?: string;
@@ -101,9 +68,12 @@ export interface ChapterContent {
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[];
   longAnswers?: QuestionAnswer[];
-  philosophicalQuestions?: PhilosophicalQuestionItem[];
+  philosophicalQuestions?: { question: string; hint?: string }[];
   dailyLifeExamples?: string[];
-  suggestedSimulations?: string[]; // Array of simulation IDs that are relevant
+  suggestedSimulations?: string[]; 
+  youtubeExperimentLinks?: {title: string, url: string}[];
+  realWorldApplications?: string[];
+  workedExamples?: {problem: string, steps: string[]}[];
   lastUpdated?: string;
 }
 
@@ -118,7 +88,7 @@ export interface StudyGrade {
   id: string;
   name: string;
   chapters: Chapter[];
-  completeTextbookPdfLink?: string; // Primary STBB full textbook link for the grade
+  completeTextbookPdfLink?: string; 
   ziauddinBoardFullPdfLink?: string;
   punjabBoardFullPdfLink?: string;
   nationalSyllabusFullPdfLink?: string;
@@ -151,55 +121,54 @@ export interface ModelPaper {
   year: number;
 }
 
+// Updated Assignment related types
+export type SubmissionStatus = 'Not Submitted' | 'Submitted' | 'Late' | 'Graded' | 'Rejected'; // Added 'Rejected'
+
+export interface StudentSubmission {
+  studentId: string;
+  studentName?: string; // Optional, but good for teacher view
+  submittedAt: string; // ISO date string
+  textSubmission?: string;
+  fileLink?: string; // URL to the cloud-stored file
+  fileName?: string; // Original name of the file student "uploaded" (via link)
+  grade?: string; // e.g., "A", "85/100"
+  feedback?: string; // Teacher's feedback
+  status: SubmissionStatus;
+  rejectionReason?: string; // For 'Rejected' status
+}
+
 export interface Assignment {
   id: string;
   title: string;
   description: string;
-  targetGradeIds: string[]; 
-  dueDate: string; 
-  submissionType: 'online' | 'physical' | 'both';
-  onlineSubmissionEnabled: boolean; 
-  createdAt: string; 
+  dueDate: string; // ISO date string
+  submissionType: 'text' | 'file' | 'text_and_file' | 'none'; // 'file' now implies link submission
+  pointsPossible?: number;
+  associatedSimulations?: string[]; 
+  associatedQuizzes?: string[]; 
+  targetGradeIds: string[]; // Added from teacher assignment management
+  onlineSubmissionEnabled: boolean; // Added from teacher assignment management
+  createdAt: string; // Added from teacher assignment management
+
+  // For student view (populated dynamically or from a larger list)
+  studentSpecificSubmission?: StudentSubmission; 
+  
+  // For teacher view (list of all submissions for this assignment)
+  allStudentSubmissions?: StudentSubmission[];
 }
 
-export interface Submission {
-  id: string; 
-  assignmentId: string;
-  studentId: string; 
-  studentName: string; 
-  submittedAt: string; 
-  submittedContentLink?: string; 
-  marks?: string; 
-  remarks?: string;
-  status: 'pending_review' | 'graded' | 'rejected';
-  rejectionReason?: string;
-}
 
-/**
- * Defines the structure for a simulation topic.
- * @property {string} id - Unique identifier, often used in the route.
- * @property {string} name - Display name of the simulation.
- * @property {string} grade - Target grade level(s).
- * @property {string} description - Brief description of what the simulation covers.
- * @property {LucideIcon} icon - Icon to represent the simulation.
- * @property {string[]} [categories] - Array of category names the simulation belongs to.
- * @property {string} [image] - Optional URL for a thumbnail image.
- * @property {string} [aiHint] - Optional hint for AI image generation tools if placeholders are used.
- */
 export interface SimulationTopic {
   id: string;
   name: string;
   grade: string;
   description: string;
-  icon: React.ElementType; // Changed from LucideIcon to React.ElementType for flexibility
+  icon: React.ElementType;
   categories?: string[];
   image?: string;
   aiHint?: string;
 }
 
-/**
- * Defines the structure for a navigation item in the sidebar.
- */
 export interface NavItem {
   href: string;
   label: string;
@@ -207,4 +176,3 @@ export interface NavItem {
   matchExact?: boolean;
   subItems?: NavItem[];
 }
-
