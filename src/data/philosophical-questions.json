@@ -1,0 +1,125 @@
+[[
+    {
+      "id": "nature-of-reality",
+      "name": "The Nature of Physical Reality",
+      "description": "Exploring the fundamental questions about what constitutes reality, the nature of space, time, and matter from a philosophical standpoint.",
+      "icon": "Brain",
+      "questions": [
+        {
+          "id": "reality-q1",
+          "question": "What is 'real' in physics? Are mathematical structures the ultimate reality, or do they merely describe it?",
+          "prompt": "Quantum mechanics and general relativity offer profound, yet sometimes conflicting, views on the universe's fabric. This has led to deep philosophical debates about the nature of existence itself.",
+          "pointsToConsider": [
+            "The role of observation in quantum mechanics (e.g., Copenhagen interpretation vs. Many-Worlds).",
+            "Is spacetime fundamental or emergent?",
+            "The debate between realism and anti-realism in science.",
+            "Platonism in mathematics and its relation to physical laws."
+          ],
+          "furtherReading": [
+            { "title": "SEP: Quantum Mechanics", "url": "https://plato.stanford.edu/entries/qm/" },
+            { "title": "The Fabric of Reality by David Deutsch", "url": "https://www.goodreads.com/book/show/91905.The_Fabric_of_Reality" }
+          ],
+          "relatedConcepts": ["Quantum Entanglement", "Wave-Particle Duality", "Spacetime", "String Theory", "Cosmology"]
+        },
+        {
+          "id": "reality-q2",
+          "question": "Is the universe deterministic or probabilistic at its core?",
+          "prompt": "Classical physics painted a picture of a clockwork universe. Quantum mechanics introduced inherent randomness. What are the philosophical implications?",
+          "pointsToConsider": [
+            "Laplace's Demon and classical determinism.",
+            "The probabilistic nature of quantum wave functions.",
+            "Implications for free will.",
+            "Interpretations of probability in physics (frequentist, Bayesian, propensity)."
+          ],
+          "relatedConcepts": ["Determinism", "Probability", "Quantum Measurement Problem", "Chaos Theory"]
+        }
+      ]
+    },
+    {
+      "id": "epistemology-of-physics",
+      "name": "Epistemology of Physics",
+      "description": "How do we know what we know in physics? This branch examines the methods, limits, and validity of physical knowledge.",
+      "icon": "BookOpen",
+      "questions": [
+        {
+          "id": "epistemology-q1",
+          "question": "What is the role of unobservable entities (like quarks or dark matter) in physical theories?",
+          "prompt": "Many successful physical theories postulate entities that we cannot directly observe. How do we justify belief in them?",
+          "pointsToConsider": [
+            "Scientific realism vs. instrumentalism.",
+            "Inference to the best explanation.",
+            "The problem of underdetermination of theory by evidence.",
+            "Confirmation holism."
+          ],
+          "furtherReading": [
+            { "title": "SEP: Scientific Realism", "url": "https://plato.stanford.edu/entries/scientific-realism/" }
+          ],
+          "relatedConcepts": ["Scientific Method", "Theory Ladenness of Observation", "Dark Matter", "Particle Physics", "Indirect Evidence"]
+        },
+        {
+          "id": "epistemology-q2",
+          "question": "Can physics ever provide a 'Theory of Everything'?",
+          "prompt": "The quest for a unified theory that explains all physical phenomena is a major driver in physics. Is such a theory achievable, and what would it mean philosophically?",
+          "pointsToConsider": [
+            "Gödel's incompleteness theorems and their potential relevance.",
+            "The limits of human cognition and experimental reach.",
+            "What would count as 'everything'?",
+            "The relationship between physics and other sciences."
+          ],
+          "relatedConcepts": ["Grand Unified Theory (GUT)", "String Theory", "Quantum Gravity", "Reductionism", "Emergence"]
+        }
+      ]
+    },
+    {
+      "id": "ethics-in-physics",
+      "name": "Ethics and Physics",
+      "description": "Considering the ethical implications of physical discoveries and their applications, and the responsibilities of physicists.",
+      "icon": "Scale",
+      "questions": [
+        {
+          "id": "ethics-q1",
+          "question": "What are the ethical responsibilities of physicists regarding the applications of their research (e.g., nuclear weapons, AI)?",
+          "prompt": "Scientific breakthroughs can have profound societal impacts, both positive and negative. What role should physicists play in guiding these applications?",
+          "pointsToConsider": [
+            "The 'dual-use' dilemma of research.",
+            "The history of the Manhattan Project and scientists' responses.",
+            "The role of scientific advisory bodies.",
+            "Public engagement and communication by scientists."
+          ],
+          "relatedConcepts": ["Nuclear Physics", "Artificial Intelligence", "Scientific Responsibility", "Science Policy"]
+        },
+        {
+          "id": "ethics-q2",
+          "question": "Should there be limits on certain types of physics research due to potential risks or ethical concerns?",
+          "prompt": "Some research areas, like high-energy particle collisions or genetic engineering (related to biophysics), raise concerns about safety or unforeseen consequences.",
+          "pointsToConsider": [
+            "The precautionary principle.",
+            "Risk assessment in scientific research.",
+            "Academic freedom vs. societal well-being.",
+            "International collaboration and regulation."
+          ],
+          "relatedConcepts": ["Particle Accelerators (e.g., LHC)", "Biophysics", "Risk Management", "Research Ethics"]
+        }
+      ]
+    },
+    {
+      "id": "time-and-space",
+      "name": "Philosophy of Time and Space",
+      "description": "Delving into the philosophical puzzles surrounding the nature of time and space, as illuminated by physics.",
+      "icon": "ClockIcon",
+      "questions": [
+        {
+          "id": "time-q1",
+          "question": "Is time an illusion, or is its passage real?",
+          "prompt": "Einstein's theory of relativity suggests a 'block universe' where past, present, and future co-exist. How does this reconcile with our experience of time's flow?",
+          "pointsToConsider": [
+            "Presentism vs. Eternalism (Block Universe theory).",
+            "The arrow of time and entropy.",
+            "Psychological perception of time vs. physical time.",
+            "Time in quantum gravity theories."
+          ],
+          "relatedConcepts": ["Special Relativity", "General Relativity", "Thermodynamics", "Entropy", "Arrow of Time"]
+        }
+      ]
+    }
+  ]]

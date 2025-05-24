@@ -78,7 +78,7 @@ export default function PhilosophicalPhysicsPage() {
                 {branch.branchName}
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 pt-0">
-                {branch.questions.length > 0 ? (
+                {branch.questions && Array.isArray(branch.questions) && branch.questions.length > 0 ? (
                   <ul className="space-y-3 list-disc list-inside text-muted-foreground">
                     {branch.questions.map((item) => (
                       <li key={item.id} className="pl-2">

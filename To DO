@@ -1,0 +1,498 @@
+IOkay, this is an ambitious and exciting project! Let's break it down and build it one piece at a time, starting with the Assignments Section, specifically the Individual Assignment Page.
+
+Goal: Create src/app/(app)/assignments/[assignmentId]/page.tsx to display details of a specific assignment.
+
+Part 1.1: Individual Assignment Page ([assignmentId]/page.tsx)
+
+This page will display the full details of a specific assignment.
+
+Assumptions Before We Start:
+
+Data Source: For now, let's assume you have a way to fetch or define assignment data. This could be from a static JSON file (like src/data/assignments.json), a mock API, or eventually a real backend.
+
+User Role: Your application seems to distinguish between "student" and "teacher" views. We'll need to access the current user's role to conditionally render certain parts (e.g., submission form for students, grading interface for teachers). You mentioned a UserSessionContext.
+
+ShadCN UI: We'll leverage ShadCN components for UI elements.
+
+Constants: SIMULATION_TOPICS and QUIZ_TOPICS are available from src/lib/constants.ts.
+
+Step 1: Define Assignment Data Structure
+
+First, let's define what an "Assignment" looks like. You can add this to your src/lib/types.ts or create a new src/lib/assignmentTypes.ts.
+
+// src/lib/types.ts or src/lib/assignmentTypes.ts
+import type { SimulationTopic } from './constants'; // Assuming SimulationTopic is exported
+import type { QuizTopic } from './constants'; // Assuming QuizTopic type might be needed or just their IDs
+
+export type SubmissionStatus = 'Not Submitted' | 'Submitted' | 'Late' | 'Graded';
+
+export interface StudentSubmission {
+  studentId: string; // Or some user identifier
+  submittedAt: string; // ISO date string
+  textSubmission?: string;
+  fileUrl?: string; // URL to the uploaded file
+  fileName?: string;
+  grade?: string; // e.g., "A", "85/100"
+  feedback?: string;
+  status: SubmissionStatus;
+}
+
+export interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string; // ISO date string
+  submissionType: 'text' | 'file' | 'text_and_file' | 'none'; // 'none' for reading assignments
+  pointsPossible?: number;
+  // Links to existing content
+  associatedSimulations?: string[]; // Array of simulation IDs from SIMULATION_TOPICS
+  associatedQuizzes?: string[]; // Array of quiz IDs from QUIZ_TOPICS
+  // For student view primarily (this might be fetched dynamically per student)
+  studentSpecificSubmission?: StudentSubmission; // Represents the logged-in student's submission
+  // For teacher view (list of all submissions for this assignment)
+  allStudentSubmissions?: StudentSubmission[];
+}
+
+
+Step 2: Create Mock Assignment Data (Optional, for early development)
+
+If you don't have a backend yet, create a mock data file.
+
+src/data/mockAssignments.ts:
+
+import type { Assignment } from '@/lib/types'; // Adjust path as needed
+
+export const MOCK_ASSIGNMENTS: Assignment[] = [
+  {
+    id: 'physics-101-lab-report',
+    title: 'Lab Report: Newton\'s Laws',
+    description: 'Complete the experiment on Newton\'s Second Law and submit your findings. Ensure your report includes a hypothesis, methodology, results, and conclusion.',
+    dueDate: '2024-09-15T23:59:00Z',
+    submissionType: 'file',
+    pointsPossible: 100,
+    associatedSimulations: ['phet-forces-motion-basics-g9'], // Example ID from your SIMULATION_TOPICS
+    studentSpecificSubmission: { // Example for a student viewing this
+      studentId: 'student123',
+      status: 'Not Submitted',
+      submittedAt: '',
+    }
+  },
+  {
+    id: 'kinematics-problems',
+    title: 'Kinematics Problem Set 1',
+    description: 'Solve the attached problems related to kinematics. Show all your work. Submit as a text entry.',
+    dueDate: '2024-09-10T23:59:00Z',
+    submissionType: 'text',
+    pointsPossible: 50,
+    associatedQuizzes: ['kinematics-g9'], // Example ID
+    studentSpecificSubmission: {
+      studentId: 'student123',
+      status: 'Graded',
+      submittedAt: '2024-09-09T10:00:00Z',
+      textSubmission: 'Here are my solutions...',
+      grade: '45/50',
+      feedback: 'Good effort! Pay closer attention to unit conversions on question 3.'
+    }
+  },
+  // Add more mock assignments
+];
+
+export const getAssignmentByIdMock = async (id: string): Promise<Assignment | undefined> => {
+  // In a real app, this would be an API call
+  // Simulate fetching student-specific data or teacher view data
+  const assignment = MOCK_ASSIGNMENTS.find(assign => assign.id === id);
+  if (assignment) {
+    // Here you might dynamically populate studentSpecificSubmission based on logged-in user
+    // or allStudentSubmissions if it's a teacher.
+    // For now, we'll use the mock data as is.
+  }
+  return assignment;
+};
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+TypeScript
+IGNORE_WHEN_COPYING_END
+
+Step 3: Create the Page Component (src/app/(app)/assignments/[assignmentId]/page.tsx)
+
+This will be a client component to handle interactions and user-specific views.
+
+// src/app/(app)/assignments/[assignmentId]/page.tsx
+"use client";
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+
+// ShadCN UI Components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ExternalLink, FileText, BookOpen, Orbit, ListChecks, CheckCircle, XCircle, Clock, Paperclip, Send } from 'lucide-react';
+
+// Types and Data
+import type { Assignment, StudentSubmission, SubmissionStatus } from '@/lib/types'; // Adjust path
+import { SIMULATION_TOPICS, QUIZ_TOPICS } from '@/lib/constants'; // Adjust path
+
+// Mock user session (replace with your actual UserSessionContext)
+// import { useUserSession } from '@/hooks/useUserSession';
+
+const MockUserSession = () => {
+  // Simulate user role. In a real app, this would come from your context.
+  // const { user, role } = useUserSession();
+  // return { user: { id: 'student123', email: 'student@example.com' }, role: 'student' }; // or 'teacher'
+  return { user: { id: 'teacher789', email: 'teacher@example.com' }, role: 'teacher' };
+};
+
+
+export default function AssignmentPage() {
+  const params = useParams();
+  const assignmentId = params.assignmentId as string;
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // For student submission
+  const [textSubmission, setTextSubmission] = useState('');
+  const [fileSubmission, setFileSubmission] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { user, role } = MockUserSession(); // Use your actual session hook
+
+  useEffect(() => {
+    if (assignmentId) {
+      const fetchAssignment = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          // TODO: Replace with actual data fetching logic (e.g., API call to your backend)
+          const data = await fetch(`/api/assignments/${assignmentId}`).then(res => res.json()); // Example placeholder API call
+          if (data) {
+            setAssignment(data);
+            // Pre-fill submission text if student has already submitted text
+            if (role === 'student' && data.studentSpecificSubmission?.textSubmission) {
+              setTextSubmission(data.studentSpecificSubmission.textSubmission);
+            }
+          } else {
+            setError('Assignment not found.');
+          } // Add more specific error handling based on API response status
+        } catch (e) {
+          setError('Failed to load assignment details.');
+          console.error(e);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchAssignment();
+    }
+  }, [assignmentId, role]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setFileSubmission(event.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!assignment) return;
+    setIsSubmitting(true);
+    console.log("Submitting:", { textSubmission, fileSubmission });
+    // TODO: Implement actual submission logic
+    // This would involve:
+    // 1. If file exists, upload it (e.g., to Firebase Storage). Get the URL.
+    // 2. Send textSubmission and fileUrl (if any) to your backend/Firebase.
+    // 3. Update the assignment's submission status locally or re-fetch.
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+    alert('Submission (simulated) successful!');
+    // Example: Update local state to reflect submission
+    setAssignment(prev => prev ? ({
+      ...prev,
+      studentSpecificSubmission: {
+        ...(prev.studentSpecificSubmission || { studentId: user.id, submittedAt: '', status: 'Not Submitted'}), // Ensure studentSpecificSubmission exists
+        textSubmission: textSubmission,
+        fileName: fileSubmission?.name,
+        status: 'Submitted',
+        submittedAt: new Date().toISOString(),
+      }
+    }) : null);
+    setIsSubmitting(false);
+  };
+
+  const getStatusBadgeColor = (status?: SubmissionStatus): "default" | "destructive" | "secondary" | "outline" | "warning" => {
+    switch (status) {
+      case 'Graded': return 'default'; // Or a success color if you have one
+      case 'Submitted': return 'secondary'; // Blue or neutral
+      case 'Late': return 'warning';
+      case 'Not Submitted': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  if (isLoading) return <div className="p-4">Loading assignment details...</div>;
+  if (error) return <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>;
+  if (!assignment) return <div className="p-4">Assignment not found.</div>;
+
+  const currentStudentSubmission = assignment.studentSpecificSubmission; // For student view
+
+  return (
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <CardTitle className="text-2xl md:text-3xl">{assignment.title}</CardTitle>
+            {role === 'student' && currentStudentSubmission && (
+              <Badge variant={getStatusBadgeColor(currentStudentSubmission.status)}>
+                {currentStudentSubmission.status}
+              </Badge>
+            )}
+          </div>
+          <CardDescription>
+            Due: {new Date(assignment.dueDate).toLocaleString()}
+            {assignment.pointsPossible && ` | Points: ${assignment.pointsPossible}`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>
+
+          <Separator />
+
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Associated Materials</h3>
+            {(assignment.associatedSimulations?.length || 0) > 0 && (
+              <div className="mb-3">
+                <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-1">Simulations:</h4>
+                <ul className="list-disc list-inside space-y-1">
+                  {assignment.associatedSimulations?.map(simId => {
+                    const sim = SIMULATION_TOPICS.find(s => s.id === simId);
+                    return sim ? (
+                      <li key={simId}>
+                        <Link href={`/simulations/${sim.id}`} className="text-blue-600 hover:underline dark:text-blue-400 flex items-center">
+                          <Orbit className="mr-2 h-4 w-4" /> {sim.name} <ExternalLink className="ml-1 h-3 w-3" />
+                        </Link>
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              </div>
+            )}
+            {(assignment.associatedQuizzes?.length || 0) > 0 && (
+               <div className="mb-3">
+                <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-1">Quizzes:</h4>
+                <ul className="list-disc list-inside space-y-1">
+                  {assignment.associatedQuizzes?.map(quizId => {
+                    const quiz = QUIZ_TOPICS.find(q => q.id === quizId);
+                    return quiz ? (
+                      <li key={quizId}>
+                        <Link href={`/quizzes/${quiz.id}`} className="text-blue-600 hover:underline dark:text-blue-400 flex items-center">
+                          <ListChecks className="mr-2 h-4 w-4" /> {quiz.name} <ExternalLink className="ml-1 h-3 w-3" />
+                        </Link>
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              </div>
+            )}
+            {!(assignment.associatedSimulations?.length || 0) && !(assignment.associatedQuizzes?.length || 0) && (
+              <p className="text-sm text-muted-foreground">No associated materials linked.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Student Submission Area */}
+      {role === 'student' && assignment.submissionType !== 'none' && (!currentStudentSubmission || currentStudentSubmission.status === 'Not Submitted' || currentStudentSubmission.status === 'Late') && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Submit Your Work</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {assignment.submissionType.includes('text') && (
+              <div>
+                <label htmlFor="textSubmission" className="block text-sm font-medium mb-1">Text Submission</label>
+                <Textarea
+                  id="textSubmission"
+                  value={textSubmission}
+                  onChange={(e) => setTextSubmission(e.target.value)}
+                  placeholder="Type your submission here..."
+                  rows={8}
+                />
+              </div>
+            )}
+            {assignment.submissionType.includes('file') && (
+              <div>
+                <label htmlFor="fileSubmission" className="block text-sm font-medium mb-1">File Upload</label>
+                <Input
+                  id="fileSubmission"
+                  type="file"
+                  onChange={handleFileChange}
+                />
+                {fileSubmission && <p className="text-sm text-muted-foreground mt-1">Selected: {fileSubmission.name}</p>}
+              </div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : <><Send className="mr-2 h-4 w-4"/> Submit Assignment</>}
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+      {/* Student's Submitted Work & Feedback Area (Student View) */}
+      {role === 'student' && currentStudentSubmission && (currentStudentSubmission.status === 'Submitted' || currentStudentSubmission.status === 'Graded') && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CheckCircle className="mr-2 h-6 w-6 text-green-500"/> Your Submission
+            </CardTitle>
+            <CardDescription>Submitted on: {new Date(currentStudentSubmission.submittedAt).toLocaleString()}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {currentStudentSubmission.textSubmission && (
+              <div>
+                <h4 className="font-semibold mb-1">Text Submitted:</h4>
+                <p className="whitespace-pre-wrap p-3 bg-muted rounded-md">{currentStudentSubmission.textSubmission}</p>
+              </div>
+            )}
+            {currentStudentSubmission.fileName && (
+              <div>
+                <h4 className="font-semibold mb-1">File Submitted:</h4>
+                <div className="flex items-center p-2 bg-muted rounded-md">
+                  <FileText className="mr-2 h-5 w-5" />
+                  <span>{currentStudentSubmission.fileName}</span>
+                  {/* TODO: Add download link if fileUrl exists */}
+                  {currentStudentSubmission.fileUrl && (
+                    <a href={currentStudentSubmission.fileUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-blue-500 hover:underline">Download</a>
+                  )}
+                </div>
+              </div>
+            )}
+            {currentStudentSubmission.status === 'Graded' && (
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertTitle>Graded!</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  {currentStudentSubmission.grade && <p><strong>Grade:</strong> {currentStudentSubmission.grade}</p>}
+                  {currentStudentSubmission.feedback && <p><strong>Feedback:</strong> {currentStudentSubmission.feedback}</p>}
+                </AlertDescription>
+              </Alert>
+            )}
+             {currentStudentSubmission.status === 'Submitted' && (
+              <Alert variant="default">
+                <Clock className="h-4 w-4" />
+                <AlertTitle>Awaiting Grade</AlertTitle>
+                <AlertDescription>
+                  Your assignment has been submitted and is awaiting grading.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Teacher Feedback/Grading Area (Teacher View - Placeholder) */}
+      {/* This would be more complex, likely listing all student submissions */}
+      {role === 'teacher' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Student Submissions & Grading</CardTitle>
+            <CardDescription>Manage and grade student submissions for this assignment.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* TODO: Implement teacher's view of submissions */}
+            {/* This would typically be a list/table of students who submitted */}
+            {assignment.allStudentSubmissions && assignment.allStudentSubmissions.length > 0 ? (
+              assignment.allStudentSubmissions.map(sub => (
+                <div key={sub.studentId} className="border p-3 rounded-md mb-2">
+                  <p><strong>Student:</strong> {sub.studentId} - <Badge variant={getStatusBadgeColor(sub.status)}>{sub.status}</Badge></p>
+                  {sub.textSubmission && <p className="mt-1 text-sm"><strong>Text:</strong> {sub.textSubmission.substring(0,100)}...</p>}
+                  {sub.fileName && <p className="mt-1 text-sm"><strong>File:</strong> {sub.fileName}</p>}
+                  {/* Add button to view details/grade */}
+                  <Button variant="outline" size="sm" className="mt-2">View & Grade</Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground">No submissions yet for this assignment.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Tsx
+IGNORE_WHEN_COPYING_END
+
+Key Parts of AssignmentPage.tsx:
+
+Data Fetching: Uses useEffect and useParams to get the assignmentId and fetch data. Replace getAssignmentById with your actual data fetching logic (e.g., an API call).
+
+State Management: useState for assignment, isLoading, error, and submission form inputs.
+
+User Role Handling (Mocked): The MockUserSession simulates getting the user's role. You'll need to replace this with your actual useUserSession hook.
+
+Displaying Assignment Details: Uses ShadCN Card components to show title, description, due date, etc.
+
+Associated Materials: Maps over associatedSimulations and associatedQuizzes to create links. It assumes SIMULATION_TOPICS and QUIZ_TOPICS are arrays of objects with id and name (and href for the link).
+
+Student Submission Form:
+
+Conditionally rendered if the user is a 'student' and the assignment allows submissions and hasn't been graded yet.
+
+Includes Textarea for text and Input type="file" for file uploads.
+
+The handleSubmit function is a placeholder for actual submission logic.
+
+Student Feedback/Grade Display:
+
+Conditionally rendered if the student has submitted/been graded.
+
+Shows submitted text/file and any grade/feedback.
+
+Teacher View Placeholder: A basic section for where teacher-specific grading UI would go. This will be a more complex component later.
+
+Styling & Icons: Uses Tailwind CSS (via ShadCN) and lucide-react icons.
+
+Next Steps & Considerations:
+
+Actual Data Fetching: Replace getAssignmentById and MOCK_ASSIGNMENTS with calls to your actual backend or data source.
+
+User Authentication/Authorization: Integrate your actual UserSessionContext to get the real user role and ID.
+
+File Upload Implementation: The current file input is basic. For real file uploads, you'll need:
+
+A backend endpoint to receive the file.
+
+Storage (e.g., Firebase Storage, AWS S3, or server filesystem).
+
+Update the handleSubmit function to upload the file and save its URL/reference with the submission.
+
+Submission Saving: The handleSubmit needs to send the submission data (text, file URL) to your backend to be saved.
+
+Teacher's Grading Interface: The teacher view will need a way to:
+
+List all student submissions for this assignment.
+
+View individual submissions.
+
+Enter grades and feedback.
+
+Save this data. This might be a separate component or page linked from here.
+
+Error Handling & Loading States: The current implementation has basic loading/error states; enhance these for better UX.
+
+Accessibility & Responsiveness: Ensure the page is accessible and responsive, which ShadCN helps with.
+
+Refactor into Sub-components: As it grows, you might want to extract parts like SubmissionForm, FeedbackDisplay, AssociatedMaterialsList into their own components.
+
+This provides a solid foundation for the individual assignment page. Let me know when you're ready to move on to the "Assignment Creation/Editing Forms" or want to refine any part of this!

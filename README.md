@@ -1,16 +1,26 @@
-# PhysicsLab by Sir Abdul Ahad
+# PhysicsLab - Interactive Physics Learning Platform
 
-This is an interactive Next.js web application designed for learning Physics, primarily for Grades 9-12, aligned with the Sindh Textbook Board curriculum. It features simulations, study materials, quizzes, AI-powered assistance, and teacher management tools.
+PhysicsLab is an interactive web application built with Next.js, designed to provide a dynamic and engaging learning experience for Physics students, primarily targeting Grades 9-12. It aligns with the Sindh Textbook Board curriculum but is built with flexibility in mind to potentially adapt to other curricula. The platform offers a rich set of features including interactive simulations, comprehensive study materials, quizzes, an AI-powered learning assistant, and a dedicated dashboard for teachers to manage content and track student progress.
 
 ## Getting Started
 
-To get started with development:
+Follow these steps to set up and run the PhysicsLab project locally for development.
 
-1.  **Prerequisites:**
+### Prerequisites
+
+Ensure you have the following software installed on your system:
+
     *   Node.js (latest LTS version recommended)
     *   npm, yarn, or pnpm
+    *   Git
 
-2.  **Environment Variables:**
+### Installation & Setup
+
+1.  **Clone the Repository:**
+
+
+
+
     *   Create a `.env.local` file in the root of the project.
     *   Copy the contents of `.env` (if it exists, or see variables below) into `.env.local`.
     *   **Firebase Setup (Crucial for Login & some AI features):**
@@ -98,5 +108,29 @@ This project uses Next.js with the App Router. Here's a brief overview of key di
 *   **Simulations:** Are self-contained client components, often using Canvas API or SVG for visuals. Physics logic is in TypeScript within the component.
 *   **Code Comments:** Please add comments to explain complex logic or non-obvious decisions. JSDoc for functions/components is encouraged.
 *   **Testing (Manual for now):** Test your changes across different features and simulated offline/online states.
+*   **Naming Conventions:** Use clear and descriptive names for variables, functions, and components following standard TypeScript/React conventions (camelCase for variables/functions, PascalCase for components).
+*   **Accessibility:** Consider accessibility (ARIA attributes, keyboard navigation) when building or modifying UI components.
+*   **Performance:** Be mindful of performance, especially with complex simulations or data fetching.
 
-This project aims to be a comprehensive learning tool. Your contributions to enhance simulations, add content, improve AI interactions, or refine the UI/UX are welcome!
+This project aims to be a comprehensive and accessible learning tool. Your contributions to enhance simulations, add content, improve AI interactions, refine the UI/UX, or improve testing are welcome!
+
+## Projectile Motion G11 Simulation
+
+This simulation allows users to explore projectile motion by defining an initial velocity, angle, and optional forces acting on the projectile. It calculates and displays the trajectory, and if forces are added, visualizes them and their resultant.
+
+### What's NOT YET Implemented
+
+While the core physics calculations and trajectory display work, the following UI and interaction features are planned but not fully wired up:
+
+*   **Visual Display of x and y Components:** The checkboxes "Show Components" and "Show Resultant Force" are UI placeholders; the logic to toggle these visual elements in the SVG isn't fully wired up yet (though the resultant is always shown if forces exist).
+*   **Editing Existing Forces Inline:** Currently, forces can only be added or removed.
+*   **Drag & Drop Vectors:** This is a more advanced UI feature.
+*   **Scaling of SVG Viewport:** The SVG has a fixed viewBox; dynamic scaling to fit all vectors perfectly would be an enhancement.
+*   **More Advanced Styling:** Vectors are currently simple lines with arrowheads.
+
+### How it Works (Simplified)
+
+1.  The simulation component (`src/app/(app)/simulations/projectile-motion-g11/page.tsx`) is a client component.
+2.  User inputs (initial velocity, angle, forces) are managed via React state.
+3.  Physics calculations (trajectory points, force components, resultant force) are performed in TypeScript based on the user inputs.
+4.  An SVG element is used to render the trajectory and force vectors. The SVG path and line elements are dynamically generated based on the calculation results.
