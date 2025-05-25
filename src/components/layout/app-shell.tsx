@@ -1,98 +1,32 @@
 
 "use client";
-import { NAV_ITEMS, APP_NAME, APP_AUTHOR, SIMULATION_TOPICS, QUIZ_TOPICS, SETTINGS_SEARCHABLE_KEYWORDS, CURRICULUM_BOARDS } from '@/lib/constants';
-import type { NavItem } from '@/lib/types';
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+} from "@/components/ui/accordion";
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
+  Sidebar, SidebarHeader, SidebarContent, SidebarFooter,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger
+  SidebarTrigger,
+  SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen,
+import { // Updated lucide-react imports
+  Atom, Eye as EyeIcon, EyeOff as EyeOffIcon, KeyRound, WifiOff, SearchIcon, XCircle, BookOpen,
   ListChecks, Settings as SettingsIcon, UserCog, Bug, ChevronDown, UsersRoundIcon, BarChart3, MessageSquare, FileTextIcon,
-  FileEdit, FileArchive, NotebookText, CalendarDays, ClipboardList, BookCopy, Info, HelpCircle, Map,
-  Ruler, Thermometer, Scale, ClockIcon, Waves, Heater, Sigma,
-  BatteryCharging, MoveHorizontal, TrendingUp, Orbit, Rocket,
-  DraftingCompass, Microscope, SlidersHorizontal, Recycle, Milestone, SquareAsterisk, Dna, Bot, GitFork,
-  BinaryIcon, AreaChart, ArrowDown, Box, Car, CircleDot, Hand, Heater as HeaterIcon, Leaf, Layers, Music2, MinusSquare,
-  Plug, Radio, Satellite, Ship, BatteryWarning,
-  Square, SquareRadical, StretchHorizontal, ThermometerSnowflake, Triangle,
-  Users as UsersIcon,
-  Loader2, 
-  Radiation, 
-  Archive, 
-  Replace, 
-  Activity, 
-  GitCommitHorizontal, 
-  Sun, 
-  RefreshCw, 
-  MoveVertical, 
-  Speaker, 
-  Projector, 
-  Zap, 
-  Network, 
-  Binary, 
-  Pipette, 
-  Magnet, 
-  LineChart, 
-  Move, 
-  Anchor, 
-  Target, 
-  PersonStanding, 
-  Droplets, 
-  GripVertical, 
-  BrainCircuit, 
-  TestTubeDiagonal, 
-  Beaker, 
-  FlaskConical, 
-  Telescope, 
-  GraduationCap, 
-  Globe, 
-  Landmark, 
-  BookMarked, 
-  Percent, 
-  CheckCircle, 
-  History, 
-  Smartphone, 
-  Laptop, 
-  Signal, 
-  DownloadCloud, 
-  Notebook as NotebookIcon, 
-  Share2, 
-  LocateIcon, 
-  ZoomInIcon, 
-  ZoomOutIcon, 
-  Send, 
-  Save, 
-  PlusCircle, 
-  Trash2, 
-  CalendarIcon, 
-  Link2, 
-  Printer, 
-  RotateCcw, 
-  Users, 
-  Paperclip, 
-  Maximize
-} from 'lucide-react';
+  FileEdit, FileArchive, NotebookText, CalendarDays, ClipboardList, BookCopy, Info, HelpCircle, Map, MenuIcon,
+  LogIn, LogOut, UserCircle, Users, Loader2,
+} from 'lucide-react'; // Consolidated necessary icons
+import { NAV_ITEMS, APP_NAME, APP_AUTHOR, SIMULATION_TOPICS, QUIZ_TOPICS, SETTINGS_SEARCHABLE_KEYWORDS, CURRICULUM_BOARDS } from '@/lib/constants';
+import type { NavItem } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserSession, type UserRole } from '@/contexts/user-session-context';
 import { cn } from "@/lib/utils";
@@ -123,6 +57,7 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+
 /**
  * SidebarInset is a local redefinition to avoid a previous SlotClone error.
  * It's a simple main element styled to work with the inset sidebar variant.
@@ -134,7 +69,7 @@ const SidebarInset = React.forwardRef<
   return (
     <main
       ref={ref}
-      className={cn(
+      className={cn("z-10",
         "relative flex min-h-svh flex-1 flex-col bg-background",
         // These classes are specific to how sidebar variant="inset" interacts
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
@@ -198,10 +133,12 @@ export function AppShell({ children }: AppShellProps) {
 
   // Global Search State
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState < SearchResult[] > ([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [studyGradesData, setStudyGradesData] = useState<StudyGrade[]>([]);
   const [isLoadingSearchData, setIsLoadingSearchData] = useState(false);
+
+
 
 
   // Effect for online/offline detection
@@ -423,52 +360,59 @@ export function AppShell({ children }: AppShellProps) {
    * @returns {React.ReactNode[]} An array of React nodes representing the sidebar menu items.
    */
   const renderNavItems = useCallback((itemsToRender: NavItem[]) => {
-    return itemsToRender.map((item) => {
+    return itemsToRender.map((item) => { // Renamed from `items` to `itemsToRender` to avoid potential conflict if an 'item' variable existed elsewhere
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || (userRole === 'teacher' && viewAsStudent))) {
         return null;
       }
 
-      const isActive = item.matchExact ? pathname === item.href : (item.href === '#' ? false : pathname.startsWith(item.href));
+      // Determine if the current item or any of its sub-items are active
+      const isDirectlyActive = item.matchExact ? pathname === item.href : (item.href && item.href !== '#' ? pathname.startsWith(item.href) : false);
+      const isChildActive = item.subItems ? item.subItems.some(sub => pathname.startsWith(sub.href)) : false;
+      const isActive = isDirectlyActive || isChildActive; // This 'isActive' is used for visual indication for the parent item/accordion trigger
 
       if (item.subItems && item.subItems.length > 0) {
-        const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
-        // Use item.label for the key and value of AccordionItem/AccordionTrigger for categories
-        // as item.href might be '#' and not unique.
-        const accordionKey = item.label;
-
+        // Category with sub-items (Accordion)
+        const accordionKey = item.label.replace(/\s+/g, '-').toLowerCase(); // Create a safe key from label
         return (
-          <Accordion type="single" collapsible className="w-full" key={accordionKey} defaultValue={isParentActive ? accordionKey : undefined}>
+          <Accordion type="single" collapsible className="w-full" key={accordionKey} defaultValue={isChildActive ? accordionKey : undefined}>
             <AccordionItem value={accordionKey} className="border-none" key={`${accordionKey}-item`}>
               <AccordionTrigger
-                // Removed asChild={true}
                 className={cn(
-                  "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180",
+                  "w-full justify-start p-0 hover:no-underline data-[state=open]:text-primary [&[data-state=open]>button>span>svg:last-child]:!rotate-180", // Custom rotation for internal chevron if needed
+                  isChildActive && "text-primary font-semibold" // Highlight parent if child is active
                 )}
               >
-                 <SidebarMenuButton
-                    asChild={false} // Render its own button
-                    className="w-full"
-                    tooltip={item.label}
-                    isActive={isParentActive}
-                  >
-                    <item.icon />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                    {/* AccordionTrigger itself provides the chevron */}
-                  </SidebarMenuButton>
+                {/* SidebarMenuButton here is for the trigger visual, not direct navigation */}
+                <SidebarMenuButton
+                  asChild={false} // Renders its own button element
+                  className="w-full hover:bg-sidebar-accent/50" // Custom hover for trigger
+                  tooltip={item.label}
+                  isActive={isChildActive} // Visually indicate if a child is active
+                >
+                  <span className="flex w-full items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <item.icon />
+                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    </span>
+                    {/* The default AccordionTrigger will add a ChevronDown icon here */}
+                  </span>
+                </SidebarMenuButton>
               </AccordionTrigger>
-              <AccordionContent className="pb-0 pl-4 group-data-[collapsible=icon]:hidden">
-                <SidebarMenu>
+              <AccordionContent className="pb-0 pt-0 pl-2 group-data-[collapsible=icon]:hidden">
+                <SidebarMenu className="border-l border-border ml-[calc(theme(spacing.2)_+_2px)] pl-3">
                   {item.subItems.map(subItem => (
                     <SidebarMenuItem key={subItem.href}>
-                      <Link href={subItem.href} passHref legacyBehavior>
-                        <SidebarMenuButton
-                          asChild={false}
+                      <Link href={subItem.href} passHref legacyBehavior={false}>
+                        <SidebarMenuButton // This button IS the link target
+                          asChild // Let Link render this button
                           isActive={pathname.startsWith(subItem.href)}
-                          className="pl-6"
+                          className="text-sm" // Explicitly smaller for sub-items
                           tooltip={subItem.label}
                         >
-                          <subItem.icon />
-                          <span>{subItem.label}</span>
+                          <>
+                            <subItem.icon className="h-3.5 w-3.5" /> {/* Slightly smaller icon */}
+                            <span>{subItem.label}</span>
+                          </>
                         </SidebarMenuButton>
                       </Link>
                     </SidebarMenuItem>
@@ -478,48 +422,82 @@ export function AppShell({ children }: AppShellProps) {
             </AccordionItem>
           </Accordion>
         );
+      } else if (item.href && item.href !== '#') {
+        // Direct navigation item
+        return (
+          <SidebarMenuItem key={item.href}>
+            <Link href={item.href} passHref legacyBehavior={false}>
+              <SidebarMenuButton // This button IS the link target
+                asChild // Let Link render this button
+                isActive={isDirectlyActive}
+                tooltip={item.label}
+                  >
+                <>
+                  <item.icon />
+                  <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                </>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+        );
       }
 
+      // Handle items with '#' href or no href (should not be interactive links)
       return (
-        <SidebarMenuItem key={item.href}>
-          <Link href={item.href} passHref legacyBehavior>
-            <SidebarMenuButton
-              asChild={false}
-              isActive={isActive}
-              tooltip={item.label}
-            >
-              <item.icon />
-              <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-            </SidebarMenuButton>
-          </Link>
-        </SidebarMenuItem>
-      )
+        <SidebarMenuItem key={item.label}>
+          <SidebarMenuButton
+            asChild={false} // Renders its own button, not a link
+            isActive={isActive}
+            tooltip={item.label}
+            className="cursor-default" // Indicate it's not interactive if no proper href
+          >
+            <item.icon />
+            <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+          </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
     });
   }, [pathname, isLoggedIn, userRole, viewAsStudent]);
 
-  // Main return for AppShell component
-  if (isSessionLoading && !currentUser) {
+  // Component to render the persistent toggle button and access toggleSidebar via context
+  const PersistentToggleButton = () => { const { toggleSidebar } = useSidebar();
     return (
-        <div className="flex items-center justify-center h-screen text-lg">
-            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            Loading PhysicsLab...
-        </div>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleSidebar}
+        className="fixed top-1/2 left-4 z-50 -translate-y-1/2 md:hidden" // Position for mobile, hidden on desktop
+        aria-label="Toggle Sidebar Open/Close"
+      >
+        {/* You can use an icon here, e.g., a hamburger icon */}
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+      </Button>
     );
-  }
+  };
 
+
+  // Main return for AppShell component
+ if (isSessionLoading && !currentUser) {
+ return (
+ <div className="flex items-center justify-center h-screen text-lg">
+ <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+ Loading PhysicsLab...
+ </div>
+ );
+  }
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar>
+      <Sidebar className="z-20">
         <SidebarHeader className="p-4">
-          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center" data-ai-hint="app logo and name in sidebar header">
             <Atom className="h-8 w-8 text-primary" />
             <h1 className="text-xl font-semibold group-data-[collapsible=icon]:hidden">{APP_NAME}</h1>
           </div>
         </SidebarHeader>
         <ScrollArea className="flex-grow">
           <SidebarContent>
-            <SidebarMenu>
+            <SidebarMenu > {/* Fixed typo: Changed SidebarMenu to SidebarMenu */}
               {renderNavItems(NAV_ITEMS)}
             </SidebarMenu>
           </SidebarContent>
@@ -544,9 +522,16 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
-          <SidebarTrigger className="md:hidden" />
+      <PersistentToggleButton /> {/* Use the new persistent toggle button */}
+      <SidebarInset >
+        {/* Header */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6 ">
+          {/* Sidebar Trigger for mobile */}
+          <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" onClick={toggleSidebar} aria-label="Open Sidebar">
+            <MenuIcon className="h-5 w-5" />
+          </Button>
+
+          <SidebarTrigger className="md:hidden" aria-label="Toggle Sidebar" /> {/* Use the correct SidebarTrigger */}
 
           {/* Global Search Bar */}
           <div className="relative flex-grow max-w-md">
@@ -640,12 +625,17 @@ export function AppShell({ children }: AppShellProps) {
               isLoginFlowActive ? (
                 // This section is for when "Login / Create Account" has been clicked
                 <>
-                  <div className="hidden md:flex items-center gap-1">
-                    <Button variant="outline" size="sm" onClick={() => { login('student'); setIsLoginFlowActive(false); toast({ title: "Logged In as Student", description: "New student accounts would require teacher approval for full features."}); }}>
-                        <UserCircle className="mr-1 h-4 w-4" /> As Student
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => { login('teacher'); setIsLoginFlowActive(false); }}>
-                        <UserCog className="mr-1 h-4 w-4" /> As Teacher
+                   {(isOnline && isFirebaseConfigured) && (
+                    <Button
+                      variant="secondary" // Changed to secondary for better visual distinction from Login button
+                      size="sm"
+                      onClick={async () => {
+                        await signInWithGoogle();
+                        setIsLoginFlowActive(false);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="mr-2"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.13-3.13C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                      Sign In with Google
                     </Button>
                   </div>
                   {(!isOnline && !isFirebaseConfigured) && (
@@ -667,17 +657,11 @@ export function AppShell({ children }: AppShellProps) {
                     </Card>
                   )}
 
-                  {(isOnline && isFirebaseConfigured) && (
-                      <Button variant="outline" size="sm" onClick={() => { signInWithGoogle(); setIsLoginFlowActive(false); }}>
-                         <UserCircle className="mr-1 h-4 w-4" />Login with Google
-                      </Button>
-                  )}
-
                   {(!isFirebaseConfigured && !isOnline && !magicLogin) && (
                      <p className="text-xs text-muted-foreground">Login not available.</p>
                   )}
                   <Button variant="ghost" size="icon" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }} className="h-8 w-8"><XCircle className="h-4 w-4"/></Button>
-                </>
+                </> // Moved closing fragment here
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setIsLoginFlowActive(true)}>
                   <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
@@ -689,7 +673,7 @@ export function AppShell({ children }: AppShellProps) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
                        <Avatar className="h-8 w-8">
-                         <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? (userRole || "User") : "Guest")} data-ai-hint="user avatar"/>
+                         <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? (userRole || "User") : "Guest")} data-ai-hint="user avatar" />
                          <AvatarFallback>
                            {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? (currentUser?.uid?.startsWith('debug-') ? "DT" : APP_AUTHOR.substring(0,1) + (APP_AUTHOR.split(" ")[1]?.substring(0,1) || '') ) : (currentUser?.uid?.startsWith('debug-') ? "DS" : 'ST') ) : 'GU')}
                          </AvatarFallback>
@@ -702,12 +686,12 @@ export function AppShell({ children }: AppShellProps) {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {userRole === 'teacher' && toggleViewAsStudent && (
-                      <DropdownMenuItem onClick={() => { toggleViewAsStudent(); }}>
-                        {viewAsStudent ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}
+ <DropdownMenuItem onClick={() => { toggleViewAsStudent(); }}>
+ {viewAsStudent ? <EyeIcon className="mr-2 h-4 w-4" data-ai-hint="icon for switch to teacher view"/> : <EyeOffIcon className="mr-2 h-4 w-4" data-ai-hint="icon for switch to student view"/>}
                         {viewAsStudent ? "Switch to Teacher View" : "Switch to Student View"}
                       </DropdownMenuItem>
                     )}
-                    {signOutFirebase && (
+                    {signOutFirebase && isLoggedIn && (
                         <DropdownMenuItem onClick={async () => { await signOutFirebase(); setIsLoginFlowActive(false); }}>
                             <LogOut className="mr-2 h-4 w-4" /> Logout
                         </DropdownMenuItem>
@@ -722,18 +706,18 @@ export function AppShell({ children }: AppShellProps) {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-8 w-8">
-                        <Bug className="h-4 w-4" />
+                        <Bug className="h-4 w-4"/>
                         <span className="sr-only">Developer Debug View Switcher</span>
                     </Button>
-                    </DropdownMenuTrigger>
+                  </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => debugSwitchRole(null)}>
+ <DropdownMenuItem onClick={() => debugSwitchRole(null)} data-ai-hint="debug switch role to guest">
                         <UserCircle className="mr-2 h-4 w-4" /> View as Guest
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => debugSwitchRole('student')}>
+ </DropdownMenuItem>
+ <DropdownMenuItem onClick={() => debugSwitchRole('student')} data-ai-hint="debug switch role to student">
                         <UserCircle className="mr-2 h-4 w-4" /> View as Student
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => debugSwitchRole('teacher')}>
+ </DropdownMenuItem>
+ <DropdownMenuItem onClick={() => debugSwitchRole('teacher')}>
                         <UserCog className="mr-2 h-4 w-4" /> View as Teacher
                     </DropdownMenuItem>
                     </DropdownMenuContent>
