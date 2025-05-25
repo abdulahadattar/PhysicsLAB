@@ -3,10 +3,102 @@
   {
     "id": "9",
     "name": "Grade 9",
-    "completeTextbookPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link",
+    "completeTextbookPdfLink": "https://ebooks.stbb.edu.pk/storage/uploads/books/1903986337.pdf",
     "chapters": [
       { "id": "g9-chapter-1", "name": "Unit 1: Physical Quantities and Measurement", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
-      { "id": "g9-chapter-2", "name": "Unit 2: Kinematics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [{"question": "If an object has zero velocity for an instant, does it necessarily have zero acceleration at that instant? Discuss with examples."}]} },
+      {
+        "id": "g9-chapter-2",
+        "name": "Unit 2: Kinematics",
+        "content": {
+          "stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link",
+          "teacherNotesPdfName": null,
+          "alternativeChapterPdfLink": null,
+          "punjabBoardPdfName": null,
+          "nationalSyllabusPdfName": null,
+          "ziauddinBoardPdfName": null,
+          "keyPoints": "## Key Concepts in Kinematics (Grade 9)\n\n*   **Rest and Motion:** Understanding that motion is relative. An object is at rest if its position does not change with respect to its surroundings.\n*   **Types of Motion:** \n    *   Translatory Motion (Linear, Circular, Random)\n    *   Rotatory Motion\n    *   Vibratory/Oscillatory Motion\n*   **Scalar and Vector Quantities:** Differentiating between quantities that have only magnitude (scalars, e.g., distance, speed) and those with magnitude and direction (vectors, e.g., displacement, velocity, acceleration).\n*   **Distance and Displacement:** Distance is the total path length. Displacement is the shortest distance between initial and final positions, with direction.\n*   **Speed and Velocity:** Speed is the rate of change of distance. Velocity is the rate of change of displacement (speed with direction).\n    *   Uniform Speed/Velocity\n    *   Variable Speed/Velocity\n    *   Average Speed/Velocity\n    *   Instantaneous Speed/Velocity\n*   **Acceleration:** The rate of change of velocity. It's a vector quantity.\n    *   Uniform Acceleration (e.g., free fall under gravity, ignoring air resistance)\n    *   Variable Acceleration\n    *   Positive Acceleration (speeding up)\n    *   Negative Acceleration / Deceleration / Retardation (slowing down)\n*   **Equations of Motion (for uniformly accelerated linear motion):**\n    1.  `v_f = v_i + at`\n    2.  `s = v_i t + (1/2)at²`\n    3.  `2as = v_f² - v_i²`\n*   **Motion due to Gravity:** Understanding free fall, acceleration due to gravity (g), and applying equations of motion to vertical motion (upwards and downwards).\n*   **Graphical Analysis of Motion:**\n    *   Distance-Time graphs: Slope gives speed/velocity.\n    *   Speed/Velocity-Time graphs: Slope gives acceleration; Area under the graph gives distance/displacement.",
+          "mcqs": [
+            {
+              "id": "g9-ch2-mcq1",
+              "question": "A body is said to be in motion if it changes its position with respect to its:",
+              "options": ["Time", "Surroundings", "Velocity", "Speed"],
+              "correctAnswerIndex": 1,
+              "explanation": "Motion is relative. An object is in motion if its position changes relative to its surroundings (a reference point or frame)."
+            },
+            {
+              "id": "g9-ch2-mcq2",
+              "question": "Which of the following is a vector quantity?",
+              "options": ["Distance", "Speed", "Mass", "Displacement"],
+              "correctAnswerIndex": 3,
+              "explanation": "Displacement is a vector quantity because it has both magnitude (how far) and direction. Distance, speed, and mass are scalar quantities."
+            },
+            {
+              "id": "g9-ch2-mcq3",
+              "question": "A car starts from rest and accelerates uniformly to a speed of 20 m/s in 5 seconds. What is its acceleration?",
+              "options": ["2 m/s²", "4 m/s²", "5 m/s²", "10 m/s²"],
+              "correctAnswerIndex": 1,
+              "explanation": "Using v_f = v_i + at:  20 m/s = 0 + a * 5s. So, a = 20/5 = 4 m/s²."
+            }
+          ],
+          "shortAnswers": [
+            {
+              "id": "g9-ch2-sa1",
+              "question": "Differentiate between distance and displacement.",
+              "answer": "Distance is the total length of the path covered by a body between its initial and final positions; it is a scalar quantity. Displacement is the shortest distance between the initial and final positions of a body in a particular direction; it is a vector quantity. For example, if you walk 5m East and then 5m West, your distance covered is 10m, but your displacement is 0m."
+            },
+            {
+              "id": "g9-ch2-sa2",
+              "question": "Define acceleration and state its S.I. unit.",
+              "answer": "Acceleration is defined as the rate of change of velocity of an object. It is a vector quantity. The S.I. unit of acceleration is meters per second squared (m/s² or ms⁻²)."
+            }
+          ],
+          "longAnswers": [
+            {
+              "id": "g9-ch2-la1",
+              "question": "Derive the second equation of motion, s = v_i t + (1/2)at², using a speed-time graph for uniformly accelerated motion. Clearly label your graph.",
+              "answer": "Consider an object moving with initial velocity 'v_i' that accelerates uniformly to a final velocity 'v_f' in time 't'.\n\n**1. Speed-Time Graph:**\nDraw a speed-time graph. Time (t) is on the x-axis, and speed (v) is on the y-axis.\n*   At t=0, speed is v_i.\n*   At t=t, speed is v_f.\n*   Since acceleration is uniform, the graph will be a straight line with a positive slope (if a>0).\n\n**2. Area under the graph:**\nThe distance (s) covered by the object is equal to the area under the speed-time graph. This area can be divided into a rectangle and a triangle (or viewed as a trapezium).\n\n**Area of Rectangle:**\n*   Length = t (time)\n*   Width = v_i (initial speed)\n*   Area_rectangle = v_i * t\n\n**Area of Triangle:**\n*   Base = t (time)\n*   Height = Change in speed = v_f - v_i\n*   Area_triangle = (1/2) * base * height = (1/2) * t * (v_f - v_i)\n\n**3. Total Distance (s):**\ns = Area_rectangle + Area_triangle\ns = v_i t + (1/2)t(v_f - v_i)\n\n**4. Substitute from the first equation of motion:**\nWe know that v_f = v_i + at. Therefore, (v_f - v_i) = at.\nSubstitute 'at' for (v_f - v_i) in the equation for s:\ns = v_i t + (1/2)t(at)\ns = v_i t + (1/2)at²\n\nThis is the second equation of motion. (A diagram would typically accompany this derivation showing the trapezium OABC, where OA is v_i, BC is v_f, and OC is t)."
+            }
+          ],
+          "philosophicalQuestions": [
+            {"question": "If an object has zero velocity for an instant, does it necessarily have zero acceleration at that instant? Discuss with examples.", "hint": "Consider a ball thrown upwards at its highest point."},
+            {"question": "Is 'absolute rest' a meaningful concept in the universe? Why or why not?", "hint": "Think about reference frames."}
+          ],
+          "dailyLifeExamples": [
+            "A car speeding up from a traffic light demonstrates acceleration.",
+            "A dropped ball falling towards the Earth shows motion under gravity.",
+            "The speedometer in a car shows instantaneous speed, while the GPS might show displacement from a starting point."
+          ],
+          "suggestedSimulations": [
+            "motion-graphing-lab-g9",
+            "phet-projectile-motion-g9",
+            "motion-constant-acceleration-g9"
+          ],
+          "youtubeExperimentLinks": [
+            { "title": "Khan Academy: Distance and Displacement", "url": "https://www.youtube.com/watch?v=V8hG1G3jC_4" },
+            { "title": "Equations of Motion Explained", "url": "https://www.youtube.com/watch?v=rOU139WTp9Y" }
+          ],
+          "realWorldApplications": [
+            "Calculating stopping distances for vehicles.",
+            "Designing roller coasters and amusement park rides.",
+            "Predicting the trajectory of projectiles in sports (e.g., cricket, basketball) and ballistics."
+          ],
+          "workedExamples": [
+            {
+              "problem": "A train starts from rest and accelerates uniformly at 2 m/s² for 10 seconds. Calculate (a) its final velocity and (b) the distance traveled.",
+              "steps": [
+                "Given: v_i = 0 m/s, a = 2 m/s², t = 10 s",
+                "(a) To find final velocity (v_f): Use v_f = v_i + at",
+                "v_f = 0 + (2 m/s²)(10 s) = 20 m/s",
+                "(b) To find distance (s): Use s = v_i t + (1/2)at²",
+                "s = (0)(10 s) + (1/2)(2 m/s²)(10 s)²",
+                "s = 0 + (1/2)(2)(100) = 100 m",
+                "Answer: (a) Final velocity is 20 m/s. (b) Distance traveled is 100 m."
+              ]
+            }
+          ],
+          "lastUpdated": "2024-07-26T10:00:00Z"
+        }
+      },
       { "id": "g9-chapter-3", "name": "Unit 3: Dynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
       { "id": "g9-chapter-4", "name": "Unit 4: Turning Effect of Forces", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
       { "id": "g9-chapter-5", "name": "Unit 5: Forces and Matter", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1OevqwShFRVtzazlQ__S2UNm0XQ3Fo10y/view?usp=drive_link", "philosophicalQuestions": [] } },
@@ -19,7 +111,7 @@
   {
     "id": "10",
     "name": "Grade 10",
-    "completeTextbookPdfLink": "https://drive.google.com/file/d/106DrAms7yHkXafSSHBM9xV6B1F13FbhJ/view?usp=drive_link",
+    "completeTextbookPdfLink": "https://ebooks.stbb.edu.pk/storage/uploads/books/1308453384.pdf",
     "chapters": [
       {
         "id": "g10-chapter-10",
@@ -173,7 +265,7 @@
   {
     "id": "11",
     "name": "Grade 11",
-    "completeTextbookPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link",
+    "completeTextbookPdfLink": "https://ebooks.stbb.edu.pk/storage/uploads/books/1510132284.pdf",
     "chapters": [
       { "id": "g11-chapter-1", "name": "Unit 01: Measurements", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
       { "id": "g11-chapter-2", "name": "Unit 02: Kinematics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1E5i_M1kUk70gDyhqPNDUjbb17zpQePh_/view?usp=drive_link", "philosophicalQuestions": [] } },
@@ -194,7 +286,7 @@
   {
     "id": "12",
     "name": "Grade 12",
-    "completeTextbookPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link",
+    "completeTextbookPdfLink": "https://ebooks.stbb.edu.pk/storage/uploads/books/1240771973.pdf",
     "chapters": [
       { "id": "g12-chapter-1", "name": "Unit 15: Molecular Theory of Gases", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },
       { "id": "g12-chapter-2", "name": "Unit 16: First Law of Thermodynamics", "content": {"stbbChapterPdfLink": "https://drive.google.com/file/d/1VaGUkPP95UWdIyUqWYX-a6bpb9dCf8sb/view?usp=drive_link", "philosophicalQuestions": [] } },

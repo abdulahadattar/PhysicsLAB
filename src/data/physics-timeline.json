@@ -1,0 +1,131 @@
+{
+  "title": "A Journey Through Physics Discoveries",
+  "description": "Explore the pivotal moments, brilliant minds, and groundbreaking discoveries that have shaped our understanding of the universe.",
+  "events": [
+    {
+      "id": "fire-discovery",
+      "year": -500000, "eraAdjust": 100000,
+      "title": "Control of Fire",
+      "shortDescription": "Early humans master fire, a fundamental energy transformation.",
+      "category": "Early Discoveries",
+      "icon": "Flame",
+      "cartoonImage": "/images/timeline/cartoon_fire.png",
+      "details": [
+        {
+          "type": "discovery",
+          "title": "Mastery of Fire",
+          "description": "The ability to control fire marked a significant turning point for early humans. It provided warmth, protection from predators, a way to cook food (making it easier to digest and safer), and a focal point for social gatherings. From a physics perspective, it represents the understanding and utilization of a fundamental chemical reaction (combustion) that releases energy in the form of heat and light.",
+          "image": "/images/timeline/fire_cave.jpg"
+        }
+      ]
+    },
+    {
+      "id": "archimedes",
+      "year": -250, "eraAdjust": 50,
+      "title": "Archimedes",
+      "shortDescription": "Buoyancy principle, levers, early mathematical physics.",
+      "category": "Classical Mechanics",
+      "icon": "Anchor",
+      "image": "/images/timeline/archimedes.jpg",
+      "details": [
+        {
+          "type": "scientist",
+          "title": "Archimedes of Syracuse (c. 287 – c. 212 BC)",
+          "description": "A Greek mathematician, physicist, engineer, inventor, and astronomer. Considered one of the leading scientists in classical antiquity.",
+          "biography": "Archimedes made significant contributions to geometry, hydrostatics, and mechanics. He famously exclaimed 'Eureka!' after discovering the principle of buoyancy while taking a bath. He also developed the law of the lever and designed innovative machines, such as his screw pump and siege engines.",
+          "image": "/images/timeline/archimedes_bust.jpg"
+        },
+        {
+          "type": "discovery",
+          "title": "Archimedes' Principle (Buoyancy)",
+          "description": "States that the upward buoyant force that is exerted on a body immersed in a fluid, whether fully or partially, is equal to the weight of the fluid that the body displaces.",
+          "image": "/images/timeline/archimedes_principle_diagram.png",
+          "experimentDetails": "The apocryphal story involves King Hiero II suspecting a goldsmith of replacing some gold in a crown with silver. Archimedes used his principle to determine the crown's density and thus its composition without damaging it."
+        }
+      ]
+    },
+    {
+      "id": "galileo",
+      "year": 1610, "eraAdjust": 20,
+      "title": "Galileo Galilei",
+      "shortDescription": "Telescopic observations, foundations of kinematics.",
+      "category": "Classical Mechanics",
+      "icon": "Telescope",
+      "image": "/images/timeline/galileo.jpg",
+      "details": [
+        {
+          "type": "scientist",
+          "title": "Galileo Galilei (1564–1642)",
+          "description": "An Italian astronomer, physicist, and engineer, whose inventions and discoveries are considered major breakthroughs in the Scientific Revolution.",
+          "biography": "Galileo made pioneering observations with his telescope, including the phases of Venus, the four largest moons of Jupiter, sunspots, and the rugged surface of the Moon. His work on kinematics laid the groundwork for Newton's laws of motion. He was a staunch supporter of Copernican heliocentrism, which led to conflict with the Catholic Church.",
+          "image": "/images/timeline/galileo_portrait.jpg"
+        },
+        {
+          "type": "discovery",
+          "title": "Observations of Jupiter's Moons",
+          "description": "Galileo's discovery of Jupiter's four largest moons (the Galilean moons) provided strong evidence against the geocentric model, showing that celestial bodies could orbit something other than Earth.",
+          "image": "/images/timeline/galilean_moons.jpg",
+          "date": "1610"
+        }
+      ]
+    },
+    {
+      "id": "newton",
+      "year": 1687, "eraAdjust": 20,
+      "title": "Isaac Newton",
+      "shortDescription": "Laws of Motion, Universal Gravitation, Calculus.",
+      "category": "Classical Mechanics",
+      "icon": "Sigma",
+      "image": "/images/timeline/newton.jpg",
+      "details": [
+        {
+          "type": "scientist",
+          "title": "Sir Isaac Newton (1643–1727)",
+          "description": "An English mathematician, physicist, astronomer, theologian, and author who is widely recognised as one of the most influential scientists of all time and as a key figure in the scientific revolution.",
+          "biography": "Newton formulated the laws of motion and universal gravitation, which dominated scientists' view of the physical universe for the next three centuries. He also made seminal contributions to optics, and he shares credit with Gottfried Wilhelm Leibniz for developing calculus.",
+          "image": "/images/timeline/newton_portrait.jpg"
+        },
+        {
+          "type": "discovery",
+          "title": "Principia Mathematica",
+          "description": "Newton's book 'Philosophiæ Naturalis Principia Mathematica' (Mathematical Principles of Natural Philosophy), published in 1687, laid the foundations for classical mechanics. It formulated his laws of motion and the law of universal gravitation.",
+          "image": "/images/timeline/principia_mathematica.jpg",
+          "relatedFormula": "F = ma; F = G(m₁m₂/r²)"
+        }
+      ]
+    },
+    {
+        "id": "einstein-relativity",
+        "year": 1905, "eraAdjust": 10,
+        "title": "Albert Einstein - Special Relativity",
+        "shortDescription": "Theory of Special Relativity, E=mc².",
+        "category": "Relativity",
+        "icon": "Atom",
+        "image": "/images/timeline/einstein.jpg",
+        "details": [
+            {
+                "type": "scientist",
+                "title": "Albert Einstein (1879–1955)",
+                "description": "A German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics (alongside quantum mechanics).",
+                "biography": "Einstein's work is also known for its influence on the philosophy of science. He received the 1921 Nobel Prize in Physics for his services to theoretical physics, and especially for his discovery of the law of the photoelectric effect, a pivotal step in the development of quantum theory.",
+                "image": "/images/timeline/einstein_tongue.jpg"
+            },
+            {
+                "type": "discovery",
+                "title": "Special Theory of Relativity",
+                "description": "Published in 1905, this theory revolutionized understanding of space and time, proposing that the laws of physics are the same for all non-accelerating observers and that the speed of light in a vacuum is constant, regardless of the speed of the observer or the source.",
+                "relatedFormula": "E = mc²",
+                "image": "/images/timeline/spacetime_fabric.jpg",
+                "date": "1905"
+            },
+            {
+                "type": "discovery",
+                "title": "General Theory of Relativity",
+                "description": "Published in 1915, this theory provides a unified description of gravity as a geometric property of space and time, or spacetime. It explains that massive objects curve spacetime, and this curvature is what we perceive as gravity.",
+                "image": "/images/timeline/gravity_spacetime.jpg",
+                "date": "1915"
+            }
+        ]
+    }
+  ]
+}

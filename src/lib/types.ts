@@ -1,5 +1,31 @@
 
 
+
+export interface TimelineEventDetail {
+  type: 'scientist' | 'discovery' | 'era'; // Type of detail
+  title: string;
+  description: string;
+  image?: string; // URL to an image
+  date?: string; // Specific date if applicable
+  relatedFormula?: string; // e.g., "E=mc²"
+  experimentDetails?: string; // Description of an experiment
+  biography?: string; // For scientists
+  links?: { label: string; url: string }[]; // Further reading
+}
+
+export interface TimelineEventNode {
+  id: string; // Unique ID for the event
+  year: number; // The year the event primarily occurred or is placed
+  eraAdjust?: number; // Optional, for visual grouping, how many years this event conceptually spans or should be grouped with
+  title: string; // Short title for the timeline node
+  shortDescription: string; // Very brief description for the node itself or a tooltip
+  category: 'Early Discoveries' | 'Classical Mechanics' | 'Thermodynamics' | 'Electromagnetism' | 'Relativity' | 'Quantum Mechanics' | 'Modern Physics' | 'Cosmology';
+  icon?: string; // Lucide icon name string, or path to a custom small icon
+  image?: string; // URL to a representative image for the node (scientist photo, discovery diagram)
+  cartoonImage?: string; // URL to a cartoonish representation if real image is unavailable
+  details: TimelineEventDetail[]; // Array of detailed information items to show when clicked
+}
+
 export interface MCQ {
   id: string;
   question: string;
@@ -18,6 +44,12 @@ export interface PhilosophicalQuestionItem {
   id: string;
   question: string;
   hint?: string;
+}
+
+export interface PhysicsTimelineData {
+  title: string;
+  description: string;
+  events: TimelineEventNode[];
 }
 
 export interface PhilosophicalBranch {

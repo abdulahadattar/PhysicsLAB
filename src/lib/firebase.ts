@@ -36,7 +36,7 @@ for (const key of requiredConfigKeys) {
 let app: FirebaseApp | undefined = undefined;
 let auth: Auth | undefined = undefined;
 let db: Firestore | undefined = undefined; // Firestore database instance
-let googleProvider: GoogleAuthProvider | {} = {}; // Use {} as a fallback if Firebase doesn't init
+let googleProvider: GoogleAuthProvider | undefined = undefined; // Use undefined as a fallback if Firebase doesn't init
 
 if (!allKeysPresent) {
   // If essential keys are missing, log a prominent warning and do not attempt to initialize Firebase.

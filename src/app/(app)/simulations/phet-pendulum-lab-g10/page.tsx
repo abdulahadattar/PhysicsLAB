@@ -18,7 +18,8 @@ const G_JUPITER = 24.79;
 const CANVAS_WIDTH = 300;
 const CANVAS_HEIGHT = 250;
 const PIVOT_X = CANVAS_WIDTH / 2;
-const PIVOT_Y = 30;
+const PIVOT_Y = 30; // Y-coordinate of the pivot point
+const MAX_VISUAL_PENDULUM_DRAW_HEIGHT = CANVAS_HEIGHT - PIVOT_Y - BOB_RADIUS - 10; // Max pixels for pendulum arm
 const VISUAL_SCALE_FACTOR = 80; // pixels per meter for pendulum length
 const BOB_RADIUS = 10;
 
@@ -61,8 +62,11 @@ export default function PhetPendulumLabG10Page() {
   const drawPendulum = useCallback((ctx: CanvasRenderingContext2D, currentAngleRad: number) => {
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    const bobX = PIVOT_X + (length * VISUAL_SCALE_FACTOR) * Math.sin(currentAngleRad);
-    const bobY = PIVOT_Y + (length * VISUAL_SCALE_FACTOR) * Math.cos(currentAngleRad);
+    // Dynamic visual length based on available space and length
+    const actualVisualLength = length * VISUAL_SCALE_FACTOR;
+    const displayLengthPx = Math.min(MAX_VISUAL_PENDULUM_DRAW_HEIGHT, actualVisualLength);
+    const bobX = PIVOT_X + displayLengthPx * Math.sin(currentAngleRad);
+    const bobY = PIVOT_Y + displayLengthPx * Math.cos(currentAngleRad);
 
     // Draw string
     ctx.beginPath();
@@ -87,7 +91,7 @@ export default function PhetPendulumLabG10Page() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-  }, [length]);
+  }, [length]); // VISUAL_SCALE_FACTOR and constants related to canvas size are implicitly used here
 
   const animate = useCallback((timestamp: number) => {
     if (!lastFrameTimeRef.current) {
@@ -220,9 +224,27 @@ export default function PhetPendulumLabG10Page() {
                 <CardHeader><CardTitle className="text-lg">Controls</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <Label htmlFor="length-slider">Length (L): {length.toFixed(2)} m</Label>
+                    <Label htmlFor="length-slider">Length (L): <span className="font-semibold">{length.toFixed(2)}</span> m</Label>
                     <Slider id="length-slider" min={0.1} max={2.0} step={0.05} value={[length]} onValueChange={(v) => setLength(v[0])} />
-                    <Input type="number" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0.1)} className="h-8 mt-1 text-sm" step="0.05"/>
+                    <Input
+                      type="number"
+                      value={length}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        setLength(isNaN(val) ? 0.1 : Math.max(0.1, Math.min(2.0, val)));
+                      }}
+                      className="h-8 mt-1 text-sm" step="0.05" min="0.1" max="2.0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mass-slider">Mass (m): <span className="font-semibold">{mass.toFixed(2)}</span> kg</Label>
+                    <Slider id="mass-slider" min={0.1} max={2.0} step={0.05} value={[mass]} onValueChange={(v) => setMass(v[0])} />
+                     <Input
+                       type="number"
+                       value={mass}
+                       onChange={e => { const val = parseFloat(e.target.value); setMass(isNaN(val) ? 0.1 : Math.max(0.1, Math.min(2.0, val))); }}
+                       className="h-8 mt-1 text-sm" step="0.05" min="0.1" max="2.0"
+                     />
                   </div>
                   <div>
                     <Label htmlFor="mass-slider">Mass (m): {mass.toFixed(2)} kg</Label>
@@ -239,9 +261,14 @@ export default function PhetPendulumLabG10Page() {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="angle-slider">Initial Angle (θ₀): {initialAngleDegrees.toFixed(1)}°</Label>
+                    <Label htmlFor="angle-slider">Initial Angle (θ₀): <span className="font-semibold">{initialAngleDegrees.toFixed(1)}</span>°</Label>
                     <Slider id="angle-slider" min={1} max={45} step={0.5} value={[initialAngleDegrees]} onValueChange={(v) => setInitialAngleDegrees(v[0])} />
-                     <Input type="number" value={initialAngleDegrees} onChange={e => setInitialAngleDegrees(parseFloat(e.target.value) || 1)} className="h-8 mt-1 text-sm" step="0.5"/>
+                     <Input
+                       type="number"
+                       value={initialAngleDegrees}
+                       onChange={e => { const val = parseFloat(e.target.value); setInitialAngleDegrees(isNaN(val) ? 1 : Math.max(1, Math.min(45, val))); }}
+                       className="h-8 mt-1 text-sm" step="0.5" min="1" max="45"
+                     />
                   </div>
                   <div className="flex gap-2 pt-2">
                     <Button onClick={handleToggleRun} className="flex-1">
@@ -255,7 +282,9 @@ export default function PhetPendulumLabG10Page() {
               <Card>
                 <CardHeader><CardTitle className="text-lg">Calculated Properties</CardTitle></CardHeader>
                 <CardContent className="space-y-1 text-sm">
-                  <p>Period (T): <span className="font-semibold">{period > 0 ? period.toFixed(3) : "N/A"} s</span></p>
+                  <p>Period (T): <span className="font-semibold">{period > 0 ? period.toFixed(3) : "N/A"} s</span>
+                     {initialAngleDegrees > 20 && <span className="text-xs text-amber-600 dark:text-amber-400 ml-1">(Small angle approx.)</span>}
+                  </p>
                   <p>Frequency (f): <span className="font-semibold">{frequency > 0 ? frequency.toFixed(3) : "N/A"} Hz</span></p>
                   <p>Angular Freq. (ω): <span className="font-semibold">{angularFrequency > 0 ? angularFrequency.toFixed(3) : "N/A"} rad/s</span></p>
                    <p className="text-xs text-muted-foreground pt-1">Sim. Time: {simulationTime.toFixed(2)}s</p>
@@ -267,7 +296,15 @@ export default function PhetPendulumLabG10Page() {
             <div className="md:col-span-2">
               <Card className="h-full">
                 <CardHeader><CardTitle className="text-lg">Pendulum Animation</CardTitle></CardHeader>
-                <CardContent className="flex items-center justify-center p-2 h-[300px]"> {/* Increased height for pendulum */}
+                <CardContent className="flex items-center justify-center p-2 h-[300px]">
+                  <canvas
+                    ref={canvasRef}
+                    width={CANVAS_WIDTH}
+                    height={CANVAS_HEIGHT}
+                    className="bg-muted rounded-md border border-input shadow-inner"
+                    role="img"
+                    aria-label={`Animation of a pendulum. Current length ${length.toFixed(2)}m, initial angle ${initialAngleDegrees.toFixed(1)} degrees. Simulation is ${isRunning ? 'running' : 'paused'}.`}
+                  ></canvas>
                   <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="bg-muted rounded-md border border-input shadow-inner"></canvas>
                 </CardContent>
                 <CardFooter>

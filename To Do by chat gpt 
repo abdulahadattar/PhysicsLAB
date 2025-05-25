@@ -1,119 +1,166 @@
-1. Simulations
+## Project To-Do and Enhancement Suggestions
+
+### PhysicsDashboard: Teacher Dashboard
 Suggestions:
 
-Core Simulations by Chapter: Build one interactive simulation per key chapter (e.g., Projectile Motion, Free Fall, Ohm’s Law, Capacitor Charging).
+- Class-wise Progress Tracking: Show student-wise and topic-wise progress based on quiz/simulation usage.
+- Upload & Share Notes: Let teachers upload their PDFs or typed content, tag them to chapters, and share with students.
+- Broadcast Notifications: Enable one-way teacher announcements (e.g., “Quiz on Friday,” “Revise Projectile Motion”).
+- (from file list) src/app/(app)/teacher-dashboard/layout.tsx
+- (from file list) src/app/(app)/teacher-dashboard/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/accounts/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/analytics/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/announcements/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/assignments/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/content-management/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/daily-diary/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/lesson-planner/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/my-portfolio/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/scheme-of-study/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/timetable/page.tsx
 
-Real-Time Variables: Add sliders or input fields so students can change variables (mass, velocity, angle) and see instant results.
-
-Lab Mode: Create a "virtual lab" where students follow guided experiments (SLO-aligned) with checklists and input fields.
-
-Tool Suggestions: Use Canvas, SVG, or three.js (for 3D). Keep logic modular for reuse.
-
-📘 2. Study Material Section
+### Study Materials: Study Material Section
 Suggestions:
 
-SLO Tagging System: Tag each concept/note with the relevant SLO number (e.g., 1.1.2) so teachers/students can filter accordingly.
+- SLO Tagging System: Tag each concept/note with the relevant SLO number (e.g., 1.1.2) so teachers/students can filter accordingly.
+- Note View Toggle: Allow switching between detailed notes and a summarized bullet-point revision mode.
+- Bonus: Add PDF export/download options for teachers.
+- (from file list) src/app/(app)/study-material/page.tsx
+- (from file list) src/app/(app)/study-material/[grade]/[chapterId]/page.tsx
+- (from file list) src/data/study-materials.json
+- (from file list) src/app/api/study-materials/route.ts
 
-Mind Maps + Flashcards: Generate concept maps and quick revision flashcards auto-linked to the topic.
-
-Note View Toggle: Allow switching between detailed notes and a summarized bullet-point revision mode.
-
-Bonus: Add PDF export/download options for teachers.
-
-🧠 3. AI Assistant Features
+### Simulations: Simulations
 Suggestions:
 
-"Explain Like I'm 15" Mode: Simplify explanations into conversational Urdu-English mix for struggling students.
+- Core Simulations by Chapter: Build one interactive simulation per key chapter (e.g., Projectile Motion, Free Fall, Ohm’s Law, Capacitor Charging).
+- Real-Time Variables: Add sliders or input fields so students can change variables (mass, velocity, angle) and see instant results.
+- Lab Mode: Create a "virtual lab" where students follow guided experiments (SLO-aligned) with checklists and input fields.
+- Tool Suggestions: Use Canvas, SVG, or three.js (for 3D). Keep logic modular for reuse.
+- (from file list) src/app/(app)/simulations/page.tsx
+- (from file list) (Many simulation pages from file list - listing all is too long, e.g., src/app/(app)/simulations/ac-power-g12/page.tsx)
 
-Ask the AI a Numerical Problem: Let users input physics problems and get step-by-step solutions (LaTeX formatted).
-
-Teacher Mode for Question Paper Creation: Let the AI suggest MCQs, short questions, or numericals based on selected chapters/SLOs.
-
-🎓 4. Teacher Dashboard
+### Quizzes: Daily auto-generated quizzes
 Suggestions:
 
-Class-wise Progress Tracking: Show student-wise and topic-wise progress based on quiz/simulation usage.
+- Adaptive Quiz Mode: Based on performance, adapt the difficulty of the next question.
+- Quick Practice (10 MCQs in 5 Min): For revision before exams or class.
+- Explanation After Answer: Let students see the correct answer + brief explanation (like YouTube learning quizzes).
+- (from file list) src/app/(app)/quizzes/page.tsx
+- (from file list) src/app/(app)/quizzes/daily/page.tsx
+- (from file list) src/app/(app)/quizzes/dashboard/page.tsx
+- (from file list) src/app/(app)/quizzes/topic/[topicId]/page.tsx
 
-Upload & Share Notes: Let teachers upload their PDFs or typed content, tag them to chapters, and share with students.
-
-Broadcast Notifications: Enable one-way teacher announcements (e.g., “Quiz on Friday,” “Revise Projectile Motion”).
-
-📝 5. Quizzes
+### Assignments:
 Suggestions:
 
-Adaptive Quiz Mode: Based on performance, adapt the difficulty of the next question.
+- (from file list) src/data/mockAssignments.ts
+- (from file list) src/app/(app)/assignments/page.tsx
+- (from file list) src/app/(app)/assignments/[assignmentId]/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/assignments/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/assignments/[assignmentId]/edit/page.tsx
 
-Quick Practice (10 MCQs in 5 Min): For revision before exams or class.
-
-Explanation After Answer: Let students see the correct answer + brief explanation (like YouTube learning quizzes).
-
-⚙️ 6. Offline Functionality
+### Explore & Practice AI: AI Assistant Features
 Suggestions:
 
-IndexedDB or Local Storage: Store simulations and notes locally for offline access.
+- "Explain Like I'm 15" Mode: Simplify explanations into conversational Urdu-English mix for struggling students.
+- Ask the AI a Numerical Problem: Let users input physics problems and get step-by-step solutions (LaTeX formatted).
+- Teacher Mode for Question Paper Creation: Let the AI suggest MCQs, short questions, or numericals based on selected chapters/SLOs.
+- Contextual Fun Facts (from blueprint.md)
+- (from file list) src/ai/flows/generate-fun-fact.ts
+- (from file list) src/ai/flows/ai-learning-assistant-flow.ts
+- (from file list) src/components/fun-fact-panel.tsx
+- (from file list) src/hooks/use-fun-facts-settings.ts
 
-"Downloaded Content" Page: Allow students to pre-download selected chapters or quizzes.
-
-🌐 7. UI/UX Enhancements
+### Concept Maps:
 Suggestions:
 
-Dark Mode Toggle
+- Mind Maps + Flashcards (from the current file)
+- (from file list) src/app/(app)/mind-maps/page.tsx
+- (from file list) src/ai/flows/generate-mind-map-flow.ts
+- (from file list) src/data/mind-map-data.json
+- (from file list) src/app/api/mind-maps/route.ts
+- (from file list) src/components/mind-maps/custom-mindmap-node.tsx
+- (from file list) src/components/mind-maps/visual-mind-map.tsx
 
-Bookmarking Topics
+### Physics Milestones:
+Suggestions:
 
-Search by Formula or Law: A student can search “F = ma” and land on Newton’s Second Law content.
+- (from file list) src/app/(app)/physics-timeline/page.tsx
+- (from file list) src/data/physics-timeline.json
+- (from file list) src/components/timeline/PhysicsTimeline.tsx
 
-🚀 Next Development Priorities (Roadmap Idea)
+### Exam Practice:
+Suggestions:
+
+- Past Papers: Let students practice real papers categorized by year/board.
+- (from file list) src/app/(app)/mdcat-preparation/page.tsx
+- (from file list) src/app/(app)/model-papers/page.tsx
+- (from file list) src/app/(app)/teacher-dashboard/manage-model-papers/page.tsx
+
+### Practical Work:
+Suggestions:
+
+- (from file list) src/app/(app)/practicals/page.tsx
+
+### MDCAT Prep:
+Suggestions:
+
+- (from file list) src/app/(app)/mdcat-preparation/page.tsx
+
+### Discover Physics World:
+Suggestions:
+
+- (from file list) src/app/(app)/philosophical-physics/page.tsx
+- (from file list) src/data/philosophical-questions.json
+- Current Research page (from file list - check blueprint.md for this)
+- (from file list) src/app/(app)/universities/page.tsx
+- (from file list) src/app/(app)/university-programs/page.tsx
+- (from file list) src/app/(app)/lab-equipment/page.tsx
+- (from file list) src/data/lab-equipment.json
+
+### App & Support:
+Suggestions:
+
+- About page (from file list)
+- Help & Feedback page (from file list)
+- Settings page (from file list)
+- (from file list) src/components/theme-provider.tsx
+- (from file list) src/components/theme-toggle.tsx
+- (from file list) src/contexts/user-session-context.tsx
+- (from file list) src/hooks/use-fun-facts-settings.ts (already listed under AI, but relevant here too)
+- (from file list) src/lib/constants.ts
+- (from file list) src/lib/types.ts
+- (from file list) src/lib/utils.ts
+- (from file list) src/app/(app)/about-us/page.tsx
+- (from file list) src/app/(app)/feedback/page.tsx
+- (from file list) src/app/(app)/settings/page.tsx
+
+### ⚙️ Offline Functionality
+Suggestions:
+
+- IndexedDB or Local Storage: Store simulations and notes locally for offline access.
+- "Downloaded Content" Page: Allow students to pre-download selected chapters or quizzes.
+
+### 🌐 UI/UX Enhancements
+Suggestions:
+
+- Dark Mode Toggle
+- Bookmarking Topics
+- Search by Formula or Law: A student can search “F = ma” and land on Newton’s Second Law content.
+- Sticky Sidebar: Keep the sidebar fixed on scroll so that students can quickly switch sections while reading long content or quizzes.
+- Use Real Graphics Instead of 600x400 Placeholders: Add subject-relevant images or illustrations for Simulations, Study Materials, and Quizzes. Use platforms like https://undraw.co or https://icons8.com for free SVGs.
+- Add Titles to Cards (Not Just Buttons): Each card should have a bold, clear title (e.g., “Interactive Simulations”) on top, and your button can say something more specific like “Start Simulating”, “View Notes”, “Take a Quiz”.
+- Homepage Welcome Section - Text Readability: Split the intro into two lines with emphasis.
+- Homepage Welcome Section - Call to Action (CTA): Add one bold button like 🚀 Start Learning Now! or Browse Topics →.
+- 📱 Responsive Design: Make sure the sidebar collapses into a hamburger menu on mobile and stack the content cards vertically on small screens.
+- Change “Explore” to something more action-driven like: "Open", "Learn", "Try Now", or icon + text (📘 Explore).
+- Guest User Indicator: In bottom-left, "Guest — Not Logged In" is fine, but add a subtle “Login for full access” tooltip or indicator.
+
+### 🚀 Next Development Priorities (Roadmap Idea)
+
 Finish one full chapter simulation (e.g., Projectile Motion with 2D visuals).
-
 Add MCQ generator with explanations.
-
 Launch basic AI chat assistant for study help.
-
 Upload STBB-aligned study notes with SLO tags.
-
-Create Teacher Upload + Quiz Assign tool.  Sticky Sidebar:
-Keep the sidebar fixed on scroll so that students can quickly switch sections while reading long content or quizzes.
-Content Cards & Layout
-🟨 Use Real Graphics Instead of 600x400 Placeholders
-Suggestion: Add subject-relevant images or illustrations for:
-
-Simulations: an animation icon or graph image.
-
-Study Materials: open book or physics formula image.
-
-Quizzes: checklist or ticking clock image.
-
-Use platforms like https://undraw.co or https://icons8.com for free SVGs.
-
-🟨 Add Titles to Cards (Not Just Buttons)
-Each card should have a bold, clear title (e.g., “Interactive Simulations”) on top, and your button can say something more specific like:
-
-“Start Simulating”
-
-“View Notes”
-
-“Take a Quiz” Bonus: Add “Continue as Guest” with limited access. Homepage Welcome Section
-🟩 Text Readability
-The current intro is good, but consider splitting into 2 lines with emphasis:
-
-"Welcome to PhysicsLab!
-Your interactive guide to mastering physics, by Sir Abdul Ahad."
-
-Then continue with:
-
-"Aligned with the Sindh Textbook Board curriculum for grades 9–12, explore simulations, quizzes, and study materials."
-
-🟩 Call to Action (CTA)
-Below your welcome message, add one bold button:
-
-🚀 Start Learning Now!
-
-Or Browse Topics → — leads to study materials or chapter selection. 📱 Responsive Design
-Make sure the sidebar collapses into a hamburger menu on mobile.
-
-Stack the content cards vertically on small screens. "Past Papers" Section
-Let students practice real papers categorized by year/board. Change “Explore” to something more action-driven like:
- In bottom-left:
-
-"Guest — Not Logged In" is fine, but add a subtle “Login for full access” tooltip or indicator."Open", "Learn", "Try Now", or icon + text (📘 Explore)
+Create Teacher Upload + Quiz Assign tool.

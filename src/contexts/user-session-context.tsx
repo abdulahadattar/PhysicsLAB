@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview User Session Management Context.
  * This context handles user authentication state (Firebase-based and simulated offline debug),
@@ -11,7 +10,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, googleProvider, db } from '@/lib/firebase'; // Import db for Firestore
-import { signInWithPopup, signOut, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { signInWithPopup, signOut, onAuthStateChanged, type User as FirebaseUser, GoogleAuthProvider as FirebaseGoogleAuthProviderInstance } from 'firebase/auth';
 import { doc, getDoc, type FirestoreError } from 'firebase/firestore'; // Firestore imports
 import { useToast } from '@/hooks/use-toast';
 import { APP_AUTHOR } from '@/lib/constants';
@@ -81,7 +80,6 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
           setCurrentUser(appUser);
           setIsLoggedIn(true);
 
-          // Attempt to fetch role from Firestore
           let roleFromDb: UserRole = null;
           try {
             const userDocRef = doc(db, "users", firebaseUser.uid);
@@ -100,14 +98,11 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
           } catch (error) {
             const firestoreError = error as FirestoreError;
             console.error("UserSessionProvider: Error fetching user role from Firestore:", firestoreError.message);
-            // Potentially show a non-critical toast if Firestore read fails but auth succeeds
-            // toast({ title: "Profile Info", description: "Could not fetch custom profile details. Using default role.", variant: "default" });
           }
 
           if (roleFromDb) {
             setUserRole(roleFromDb);
           } else {
-            // Fallback to email-based teacher detection if no role from Firestore
             const teacherEmail = process.env.NEXT_PUBLIC_TEACHER_EMAIL;
             if (appUser.email && teacherEmail && appUser.email.toLowerCase() === teacherEmail.toLowerCase()) {
               setUserRole('teacher');
@@ -117,7 +112,7 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
               console.log("UserSessionProvider: Role set to student (default fallback) for", appUser.email);
             }
           }
-          setViewAsStudent(false); // Reset viewAsStudent on any auth change
+          setViewAsStudent(false);
         } else {
           setCurrentUser(null);
           setIsLoggedIn(false);
@@ -146,24 +141,21 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     }
-  }, []); // Empty dependency array: runs once on mount
+  }, [router, toast]); // Added router and toast as they are used in callbacks, though not directly in this useEffect. Better safe.
 
   const signInWithGoogle = useCallback(async () => {
-    if (!auth || !isFirebaseConfigured) {
+    if (!auth || !googleProvider || !isFirebaseConfigured) {
       toast({
         title: "Google Login Unavailable",
-        description: "Firebase is not configured. Please check environment variables.",
+        description: "Firebase is not configured or Google Provider is not initialized. Please check environment variables.",
         variant: "destructive",
       });
-      console.error("signInWithGoogle: Firebase auth is not available or configured.");
+      console.error("signInWithGoogle: Firebase auth, Google Provider, or configuration is not available.");
       return;
     }
-    setIsLoading(true); // Set loading true before starting sign-in
+    setIsLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle setting user state, including Firestore role check.
-      // Toast for successful login is now handled by onAuthStateChanged or can be added here if needed.
-      // router.prefetch('/'); // Prefetch dashboard after login (already there)
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       toast({
@@ -171,62 +163,59 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
         description: error.message || "Could not sign in with Google. Please try again.",
         variant: "destructive",
       });
-      setIsLoading(false); // Ensure loading is false if sign-in process itself fails
+    } finally {
+      // setIsLoading(false); // onAuthStateChanged will handle this
     }
-    // Note: onAuthStateChanged will also set isLoading to false eventually.
-  }, [toast, isFirebaseConfigured]);
+  }, [toast, isFirebaseConfigured, setIsLoading]); // Added setIsLoading
 
   const magicLogin = useCallback(async (username: string, pass: string): Promise<boolean> => {
-     if (typeof window !== 'undefined' && navigator.onLine && isFirebaseConfigured) {
-        toast({ title: "Magic Login Not Permitted", description: "Firebase is configured; please use Google Sign-In or debug role switcher.", variant: "default" });
-        return false;
+    if (typeof window !== 'undefined' && navigator.onLine && isFirebaseConfigured) {
+      toast({ title: "Magic Login Not Permitted", description: "Firebase is configured; please use Google Sign-In or debug role switcher.", variant: "default" });
+      return false;
     }
     setIsLoading(true);
     try {
-        const credsString = process.env.NEXT_PUBLIC_DEBUG_TEACHER_CREDENTIALS;
-        if (!credsString) {
-            toast({ title: "Magic Login Error", description: "Debug credentials not configured.", variant: "destructive" });
-            setIsLoading(false);
-            return false;
-        }
-        const debugCredentialsArray: {user: string; pass: string}[] = JSON.parse(credsString);
-        const matchedCred = debugCredentialsArray.find(cred => cred.user === username && cred.pass === pass);
-
-        if (matchedCred) {
-            const mockTeacherUser: AppUser = {
-                uid: `debug-teacher-${username}`,
-                email: `${username}@debug.local`,
-                displayName: `Debug Teacher (${username})`,
-                photoURL: null,
-            };
-            setCurrentUser(mockTeacherUser);
-            setIsLoggedIn(true);
-            setUserRole('teacher');
-            setViewAsStudent(false);
-            localStorage.setItem('debugUserRole', 'teacher'); // Persist for non-Firebase sessions
-            toast({ title: "Debug Login Successful", description: `Logged in as Teacher (${username}).` });
-            router.prefetch('/');
-            setIsLoading(false);
-            return true;
-        } else {
-            toast({ title: "Magic Login Failed", description: "Invalid debug credentials.", variant: "destructive" });
-            setIsLoading(false);
-            return false;
-        }
-    } catch (error: any) {
-        console.error("Magic Login Error:", error);
-        toast({ title: "Magic Login Error", description: "An error occurred. Check console.", variant: "destructive" });
-        setIsLoading(false);
+      const credsStringEnv = process.env.NEXT_PUBLIC_DEBUG_TEACHER_CREDENTIALS; // Renamed to avoid conflict if there was a local credsString
+      if (!credsStringEnv) {
+        toast({ title: "Magic Login Error", description: "Debug credentials not configured.", variant: "destructive" });
         return false;
+      }
+      const debugCredentialsArray: {user: string; pass: string}[] = JSON.parse(credsStringEnv);
+      const matchedCred = debugCredentialsArray.find(cred => cred.user === username && cred.pass === pass);
+
+      if (matchedCred) {
+        const mockTeacherUser: AppUser = {
+          uid: `debug-teacher-${username}`,
+          email: `${username}@debug.local`,
+          displayName: `Debug Teacher (${username})`,
+          photoURL: null,
+        };
+        setCurrentUser(mockTeacherUser);
+        setIsLoggedIn(true);
+        setUserRole('teacher');
+        setViewAsStudent(false);
+        localStorage.setItem('debugUserRole', 'teacher');
+        toast({ title: "Debug Login Successful", description: `Logged in as Teacher (${username}).` });
+        router.prefetch('/');
+        return true;
+      } else {
+        toast({ title: "Magic Login Failed", description: "Invalid debug credentials.", variant: "destructive" });
+        return false;
+      }
+    } catch (error: any) {
+      console.error("Magic Login Error (inside catch):", error);
+      toast({ title: "Magic Login Error", description: "An error occurred. Check console.", variant: "destructive" });
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [toast, isFirebaseConfigured, router]);
+  }, [toast, isFirebaseConfigured, router, setIsLoading, setCurrentUser, setIsLoggedIn, setUserRole, setViewAsStudent]);
 
   const signOutFirebase = useCallback(async () => {
     if (auth && isFirebaseConfigured && currentUser && !currentUser.uid.startsWith('debug-')) {
       setIsLoading(true);
       try {
         await signOut(auth);
-        // onAuthStateChanged will handle setting user to null and thus isLoading to false.
       } catch (error: any) {
         console.error("Firebase Sign Out Error:", error);
         toast({
@@ -234,11 +223,10 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
           description: error.message || "Could not sign out. Please try again.",
           variant: "destructive",
         });
-        setIsLoading(false); // Ensure loading is false if sign-out itself fails
+        setIsLoading(false);
         return;
       }
     }
-    // For both Firebase logout and debug/local logout, clear local state immediately
     setCurrentUser(null);
     setIsLoggedIn(false);
     setUserRole(null);
@@ -247,15 +235,15 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
     
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
     if (!auth || !isFirebaseConfigured || (currentUser && currentUser.uid.startsWith('debug-'))) {
-        setIsLoading(false); // Ensure loading is reset for non-Firebase or debug logouts
+        setIsLoading(false);
     }
-  }, [toast, isFirebaseConfigured, currentUser]);
+  }, [toast, isFirebaseConfigured, currentUser, setIsLoading, setCurrentUser, setIsLoggedIn, setUserRole, setViewAsStudent]);
 
   const toggleViewAsStudent = useCallback(() => {
     if (isLoggedIn && userRole === 'teacher') {
       setViewAsStudent(prev => !prev);
     }
-  }, [isLoggedIn, userRole]);
+  }, [isLoggedIn, userRole, setViewAsStudent]); // Added setViewAsStudent
 
   const debugSwitchRole = useCallback((newRole: UserRole) => {
     console.log("UserSessionContext: debugSwitchRole called with role:", newRole);
@@ -271,7 +259,7 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
       newIsLoggedIn = true;
       newUser = { uid: 'debug-student', email: 'debug.student@example.com', displayName: 'Debug Student', photoURL: null };
       localStorage.setItem('debugUserRole', 'student');
-    } else { // Guest
+    } else {
       localStorage.removeItem('debugUserRole');
     }
     
@@ -282,9 +270,8 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
 
     toast({ title: "Debug View Changed", description: `Now viewing as: ${newRole || 'Guest'}` });
     
-    setTimeout(() => setIsLoading(false), 50); // Short delay for UI to settle if needed
+    setTimeout(() => setIsLoading(false), 50);
   }, [toast, setIsLoading, setCurrentUser, setIsLoggedIn, setUserRole, setViewAsStudent]);
-
 
   const contextValue = useMemo(() => ({
     currentUser,
@@ -310,7 +297,7 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
       {children}
     </UserSessionContext.Provider>
   );
-}
+} // <-- This is the closing brace for UserSessionProvider
 
 /**
  * Custom hook to use the UserSessionContext.

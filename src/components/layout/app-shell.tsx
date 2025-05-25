@@ -1,3 +1,4 @@
+
 "use client";
 import { NAV_ITEMS, APP_NAME, APP_AUTHOR, SIMULATION_TOPICS, QUIZ_TOPICS, SETTINGS_SEARCHABLE_KEYWORDS, CURRICULUM_BOARDS } from '@/lib/constants';
 import type { NavItem } from '@/lib/types';
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/accordion";
 import {
   Atom, LogIn, LogOut, UserCircle, Eye, EyeOff, KeyRound, WifiOff, SearchIcon, XCircle, FileText, BookOpen,
-  ListChecks, Settings as SettingsIcon, UserCog, Bug, ChevronDown, UsersRoundIcon, BarChart3, MessageSquare,
+  ListChecks, Settings as SettingsIcon, UserCog, Bug, ChevronDown, UsersRoundIcon, BarChart3, MessageSquare, FileTextIcon,
   FileEdit, FileArchive, NotebookText, CalendarDays, ClipboardList, BookCopy, Info, HelpCircle, Map,
   Ruler, Thermometer, Scale, ClockIcon, Waves, Heater, Sigma,
   BatteryCharging, MoveHorizontal, TrendingUp, Orbit, Rocket,
@@ -35,61 +36,61 @@ import {
   Plug, Radio, Satellite, Ship, BatteryWarning,
   Square, SquareRadical, StretchHorizontal, ThermometerSnowflake, Triangle,
   Users as UsersIcon,
-  Loader2, // Ensured Loader2 is imported for other uses
-  Radiation, // Added from a previous step
-  Archive, // Added from a previous step
-  Replace, // Added from a previous step
-  Activity, // Added from a previous step
-  GitCommitHorizontal, // Added from a previous step
-  Sun, // Added from a previous step
-  RefreshCw, // Added from a previous step
-  MoveVertical, // Added from a previous step
-  Speaker, // Added from a previous step
-  Projector, // Added from a previous step
-  Zap, // Added from a previous step
-  Network, // Added from a previous step
-  Binary, // Added from a previous step
-  Pipette, // Added from a previous step
-  Magnet, // Added from a previous step
-  LineChart, // Added from a previous step
-  Move, // Added from a previous step
-  Anchor, // Added from a previous step
-  Target, // Added from a previous step
-  PersonStanding, // Added from a previous step
-  Droplets, // Added from a previous step
-  GripVertical, // Added from a previous step
-  BrainCircuit, // Added from a previous step
-  TestTubeDiagonal, // Added from a previous step
-  Beaker, // Added from a previous step
-  FlaskConical, // Added from a previous step
-  Telescope, // Added from a previous step
-  GraduationCap, // Added from a previous step
-  Globe, // Added from a previous step
-  Landmark, // Added from a previous step
-  BookMarked, // Added from a previous step
-  Percent, // Added from a previous step
-  CheckCircle, // Added from a previous step
-  History, // Added from a previous step
-  Smartphone, // Added from a previous step
-  Laptop, // Added from a previous step
-  Signal, // Added from a previous step
-  DownloadCloud, // Added from a previous step
-  Notebook as NotebookIcon, // Added from a previous step
-  Share2, // Added from a previous step
-  LocateIcon, // Added from a previous step
-  ZoomInIcon, // Added from a previous step
-  ZoomOutIcon, // Added from a previous step
-  Send, // Added from a previous step
-  Save, // Added from a previous step
-  PlusCircle, // Added from a previous step
-  Trash2, // Added from a previous step
-  CalendarIcon, // Added from a previous step
-  Link2, // Added from a previous step
-  Printer, // Added from a previous step
-  RotateCcw, // Added from a previous step
-  Users, // For Student Account Approvals
-  Paperclip, // For file attachments in assignments
-  Maximize // For simulation fullscreen
+  Loader2, 
+  Radiation, 
+  Archive, 
+  Replace, 
+  Activity, 
+  GitCommitHorizontal, 
+  Sun, 
+  RefreshCw, 
+  MoveVertical, 
+  Speaker, 
+  Projector, 
+  Zap, 
+  Network, 
+  Binary, 
+  Pipette, 
+  Magnet, 
+  LineChart, 
+  Move, 
+  Anchor, 
+  Target, 
+  PersonStanding, 
+  Droplets, 
+  GripVertical, 
+  BrainCircuit, 
+  TestTubeDiagonal, 
+  Beaker, 
+  FlaskConical, 
+  Telescope, 
+  GraduationCap, 
+  Globe, 
+  Landmark, 
+  BookMarked, 
+  Percent, 
+  CheckCircle, 
+  History, 
+  Smartphone, 
+  Laptop, 
+  Signal, 
+  DownloadCloud, 
+  Notebook as NotebookIcon, 
+  Share2, 
+  LocateIcon, 
+  ZoomInIcon, 
+  ZoomOutIcon, 
+  Send, 
+  Save, 
+  PlusCircle, 
+  Trash2, 
+  CalendarIcon, 
+  Link2, 
+  Printer, 
+  RotateCcw, 
+  Users, 
+  Paperclip, 
+  Maximize
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +101,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
 import type { StudyGrade, Chapter } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -221,35 +222,29 @@ export function AppShell({ children }: AppShellProps) {
   /**
    * Fetches study grades data for the global search.
    * Tries to load from localStorage first, then falls back to API if online.
-   * @param {boolean} forceApiFetch - If true, bypasses cache and fetches from API.
+   * This function is now called once on mount.
    */
-  const fetchStudyGradesForSearch = useCallback(async (forceApiFetch = false) => {
-    if (!forceApiFetch && studyGradesData.length > 0) {
-      return; // Already have data
+  const fetchStudyGradesForSearch = useCallback(async () => {
+    if (studyGradesData.length > 0) { // Don't refetch if already loaded
+      return;
     }
-
     setIsLoadingSearchData(true);
     let loadedFromCache = false;
 
-    if (!forceApiFetch && typeof window !== 'undefined') {
-        try {
-            const cachedDataString = localStorage.getItem(STUDY_GRADES_SEARCH_CACHE_KEY);
-            if (cachedDataString) {
-                const cachedData = JSON.parse(cachedDataString);
-                if (cachedData && cachedData.length > 0) {
-                    setStudyGradesData(cachedData);
-                    loadedFromCache = true;
-                    console.log("AppShell Search: Loaded study grades for search from localStorage.");
-                    if (!isOnline) {
-                        setIsLoadingSearchData(false);
-                        return;
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn("AppShell Search: Failed to parse study grades from localStorage for search:", e);
-            if (typeof window !== 'undefined') localStorage.removeItem(STUDY_GRADES_SEARCH_CACHE_KEY);
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedDataString = localStorage.getItem(STUDY_GRADES_SEARCH_CACHE_KEY);
+        if (cachedDataString) {
+          const cachedData = JSON.parse(cachedDataString);
+          if (cachedData && cachedData.length > 0) {
+            setStudyGradesData(cachedData);
+            loadedFromCache = true;
+          }
         }
+      } catch (e) {
+        console.warn("AppShell Search: Failed to parse study grades from localStorage:", e);
+        if (typeof window !== 'undefined') localStorage.removeItem(STUDY_GRADES_SEARCH_CACHE_KEY);
+      }
     }
 
     if (isOnline) {
@@ -260,32 +255,25 @@ export function AppShell({ children }: AppShellProps) {
           setStudyGradesData(data);
           if (typeof window !== 'undefined') {
             localStorage.setItem(STUDY_GRADES_SEARCH_CACHE_KEY, JSON.stringify(data));
-            console.log("AppShell Search: Updated study grades from API and cached to localStorage.");
           }
         } else {
-          console.warn("AppShell Search: API fetch failed for study materials. Status:", res.status);
           if (!loadedFromCache) {
-            // toast({ title: "Search Data Limited", description: "Could not load full study material index for search.", variant: "default" });
+            toast({ title: "Search Data Limited", description: "Could not load full study material index for search. Some results may be missing.", variant: "default" });
           }
         }
       } catch (e) {
-        console.error("AppShell Search: Error fetching study materials for search:", e);
+        console.error("AppShell Search: Error fetching study materials:", e);
         if (!loadedFromCache) {
-          // toast({ title: "Search Data Error", description: "Error loading study material index for search.", variant: "destructive" });
+          toast({ title: "Search Data Error", description: "Error loading study material index. Search may be incomplete.", variant: "destructive" });
         }
       }
-    } else if (!loadedFromCache) {
-        console.log("AppShell Search: Offline and no cached study grades for search.");
     }
     setIsLoadingSearchData(false);
-  }, [isOnline, studyGradesData.length]);
+  }, [isOnline, toast, studyGradesData.length]);
 
-  // Fetch initial study grades for search on mount
   useEffect(() => {
-    if (studyGradesData.length === 0 && !isLoadingSearchData) {
-      fetchStudyGradesForSearch();
-    }
-  }, [fetchStudyGradesForSearch, studyGradesData.length, isLoadingSearchData]);
+    fetchStudyGradesForSearch(); // Fetch once on mount
+  }, [fetchStudyGradesForSearch]);
 
 
   /**
@@ -294,6 +282,10 @@ export function AppShell({ children }: AppShellProps) {
    * @param {string} query - The search query string.
    */
   const performSearch = useCallback((query: string) => {
+    // This is client-side substring matching.
+    // Advanced fuzzy/semantic search would require dedicated libraries or backend services.
+    // The comment below acknowledges this limitation.
+    // For very large datasets (especially deep content search), a backend search index (Algolia, MeiliSearch) or a client-side pre-built index (Lunr.js) would be more performant.
     if (!query.trim()) {
       setSearchResults([]);
       setIsSearchOpen(false);
@@ -303,12 +295,10 @@ export function AppShell({ children }: AppShellProps) {
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
 
-    // Note: This is client-side substring matching.
-    // Advanced fuzzy/semantic search would require dedicated libraries (e.g., Fuse.js) or backend search services.
-
+    // Search Navigation Items
     NAV_ITEMS.forEach(item => {
       if (item.label.toLowerCase().includes(lowerQuery)) {
-        results.push({ id: `nav-${item.href}`, label: item.label, href: item.href, category: 'Navigation', icon: item.icon });
+        results.push({ id: `nav-${item.href || item.label}`, label: item.label, href: item.href === '#' ? (item.subItems && item.subItems.length > 0 ? item.subItems[0].href : '/') : item.href, category: 'Navigation', icon: item.icon });
       }
       item.subItems?.forEach(subItem => {
         if (subItem.label.toLowerCase().includes(lowerQuery)) {
@@ -317,6 +307,7 @@ export function AppShell({ children }: AppShellProps) {
       });
     });
 
+    // Search Simulations
     SIMULATION_TOPICS.forEach(sim => {
       let match = false;
       if (sim.name.toLowerCase().includes(lowerQuery)) match = true;
@@ -328,12 +319,14 @@ export function AppShell({ children }: AppShellProps) {
       }
     });
 
+    // Search Quiz Topics
     QUIZ_TOPICS.forEach(quiz => {
       if (quiz.name.toLowerCase().includes(lowerQuery) || (quiz.description && quiz.description.toLowerCase().includes(lowerQuery))) {
         results.push({ id: `quiz-${quiz.id}`, label: quiz.name, href: `/quizzes/topic/${quiz.id}`, category: 'Quiz Topic', icon: ListChecks, description: quiz.description });
       }
     });
 
+    // Search Study Materials (Grades, Chapters, and basic content)
     if (studyGradesData && studyGradesData.length > 0) {
       studyGradesData.forEach(grade => {
         if (grade.name.toLowerCase().includes(lowerQuery)) {
@@ -348,17 +341,17 @@ export function AppShell({ children }: AppShellProps) {
             if (content.keyPoints && content.keyPoints.toLowerCase().includes(lowerQuery)) {
               results.push({ id: `chapter-kp-${chapter.id}`, label: `${chapter.name} (Key Points)`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Material - Key Point', icon: FileTextIcon });
             }
-            content.mcqs?.forEach(mcq => {
+            (content.mcqs || []).forEach(mcq => {
               if (mcq.question.toLowerCase().includes(lowerQuery)) {
                 results.push({ id: `chapter-mcq-${mcq.id}`, label: `${chapter.name} (MCQ: ${mcq.question.substring(0, 30)}...)`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Material - MCQ', icon: ListChecks });
               }
             });
-            content.shortAnswers?.forEach(sa => {
+            (content.shortAnswers || []).forEach(sa => {
               if (sa.question.toLowerCase().includes(lowerQuery)) {
                 results.push({ id: `chapter-sa-${sa.id}`, label: `${chapter.name} (Short Q: ${sa.question.substring(0, 30)}...)`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Material - Short Answer', icon: ListChecks });
               }
             });
-            content.longAnswers?.forEach(la => {
+            (content.longAnswers || []).forEach(la => {
               if (la.question.toLowerCase().includes(lowerQuery)) {
                 results.push({ id: `chapter-la-${la.id}`, label: `${chapter.name} (Long Q: ${la.question.substring(0, 30)}...)`, href: `/study-material/${grade.id}/${chapter.id}`, category: 'Study Material - Long Answer', icon: ListChecks });
               }
@@ -368,12 +361,14 @@ export function AppShell({ children }: AppShellProps) {
       });
     }
 
+    // Search Settings Keywords
     SETTINGS_SEARCHABLE_KEYWORDS.forEach(setting => {
       if (setting.term.toLowerCase().includes(lowerQuery) || setting.label.toLowerCase().includes(lowerQuery)) {
         results.push({ id: `setting-${setting.term}`, label: setting.label, href: setting.href, category: 'Settings', icon: SettingsIcon });
       }
     });
 
+    // Deduplicate results (simple check based on href and label)
     const uniqueResults = results.reduce((acc, current) => {
       const x = acc.find(item => item.href === current.href && item.label === current.label);
       if (!x) {
@@ -383,8 +378,8 @@ export function AppShell({ children }: AppShellProps) {
       }
     }, [] as SearchResult[]);
 
-    setSearchResults(uniqueResults.slice(0, 10));
-  }, [studyGradesData]);
+    setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
+  }, [studyGradesData]); // Dependency on studyGradesData ensures search re-runs if this data updates
 
   // Debounced search effect
   useEffect(() => {
@@ -395,7 +390,7 @@ export function AppShell({ children }: AppShellProps) {
         setSearchResults([]);
         setIsSearchOpen(false);
       }
-    }, 300);
+    }, 300); // 300ms debounce
 
     return () => {
       clearTimeout(handler);
@@ -418,7 +413,7 @@ export function AppShell({ children }: AppShellProps) {
         setDebugPassword("");
       }
     }
-  }, [debugUsername, debugPassword, magicLogin, toast, setIsLoginFlowActive]);
+  }, [debugUsername, debugPassword, magicLogin, toast]);
 
 
   /**
@@ -427,40 +422,41 @@ export function AppShell({ children }: AppShellProps) {
    * @param {NavItem[]} items - The array of navigation items to render.
    * @returns {React.ReactNode[]} An array of React nodes representing the sidebar menu items.
    */
-  const renderNavItems = useCallback((items: NavItem[]) => {
-    return items.map((item) => {
+  const renderNavItems = useCallback((itemsToRender: NavItem[]) => {
+    return itemsToRender.map((item) => {
       if (item.href === '/teacher-dashboard' && (!isLoggedIn || userRole !== 'teacher' || (userRole === 'teacher' && viewAsStudent))) {
         return null;
       }
 
-      const isActive = item.matchExact ? pathname === item.href : pathname.startsWith(item.href);
+      const isActive = item.matchExact ? pathname === item.href : (item.href === '#' ? false : pathname.startsWith(item.href));
 
       if (item.subItems && item.subItems.length > 0) {
         const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
+        // Use item.label for the key and value of AccordionItem/AccordionTrigger for categories
+        // as item.href might be '#' and not unique.
+        const accordionKey = item.label;
+
         return (
-          <Accordion type="single" collapsible className="w-full" key={item.href} defaultValue={isParentActive ? item.href : undefined}>
-            <AccordionItem value={item.href} className="border-none">
+          <Accordion type="single" collapsible className="w-full" key={accordionKey} defaultValue={isParentActive ? accordionKey : undefined}>
+            <AccordionItem value={accordionKey} className="border-none" key={`${accordionKey}-item`}>
               <AccordionTrigger
+                // Removed asChild={true}
                 className={cn(
                   "w-full justify-start p-0 hover:no-underline [&[data-state=open]>svg:last-child]:rotate-180",
                 )}
               >
-                <SidebarMenuButton
-                  asChild={true}
-                  className="w-full"
-                  tooltip={item.label}
-                >
-                  {/* This span becomes the single child for SidebarMenuButton's Slot */}
-                  <span className="flex w-full items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <item.icon />
-                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                    </span>
-                    {/* AccordionTrigger itself adds the chevron */}
-                  </span>
-                </SidebarMenuButton>
+                 <SidebarMenuButton
+                    asChild={false} // Render its own button
+                    className="w-full"
+                    tooltip={item.label}
+                    isActive={isParentActive}
+                  >
+                    <item.icon />
+                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    {/* AccordionTrigger itself provides the chevron */}
+                  </SidebarMenuButton>
               </AccordionTrigger>
-              <AccordionContent className="pb-0 group-data-[collapsible=icon]:hidden">
+              <AccordionContent className="pb-0 pl-4 group-data-[collapsible=icon]:hidden">
                 <SidebarMenu>
                   {item.subItems.map(subItem => (
                     <SidebarMenuItem key={subItem.href}>
@@ -469,6 +465,7 @@ export function AppShell({ children }: AppShellProps) {
                           asChild={false}
                           isActive={pathname.startsWith(subItem.href)}
                           className="pl-6"
+                          tooltip={subItem.label}
                         >
                           <subItem.icon />
                           <span>{subItem.label}</span>
@@ -501,9 +498,13 @@ export function AppShell({ children }: AppShellProps) {
   }, [pathname, isLoggedIn, userRole, viewAsStudent]);
 
   // Main return for AppShell component
-  if (isSessionLoading && !currentUser) { // Initial load before Firebase auth state is resolved
-    // Simplified initial loading state to prevent hydration mismatch
-    return <div className="flex items-center justify-center h-screen text-lg">Loading PhysicsLab...</div>;
+  if (isSessionLoading && !currentUser) {
+    return (
+        <div className="flex items-center justify-center h-screen text-lg">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Loading PhysicsLab...
+        </div>
+    );
   }
 
 
@@ -524,16 +525,15 @@ export function AppShell({ children }: AppShellProps) {
           </SidebarContent>
         </ScrollArea>
         <SidebarFooter className="p-4 mt-auto space-y-2">
-          {/* User Avatar and Info */}
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
             <Avatar>
               <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? (userRole || "User") : "Guest")} data-ai-hint="user avatar"/>
               <AvatarFallback>
-                {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? 'TA' : 'ST') : 'GU')}
+                {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR.substring(0,1) + (APP_AUTHOR.split(" ")[1]?.substring(0,1) || '') : 'ST') : 'GU')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-medium">{currentUser?.displayName || (isLoggedIn ? (userRole === 'teacher' ? APP_AUTHOR : 'Student User') : 'Guest')}</p>
+              <p className="text-sm font-medium">{currentUser?.displayName || (isLoggedIn ? (userRole === 'teacher' ? currentUser?.uid === 'debug-teacher' ? "Debug Teacher" : APP_AUTHOR : currentUser?.uid === 'debug-student' ? "Debug Student" : 'Student User') : 'Guest')}</p>
               <p className="text-xs text-muted-foreground">
                 {isLoggedIn ? (userRole === 'teacher' ? (viewAsStudent ? 'Teacher (Student View)' : 'Teacher') : 'Student') : 'Not Logged In'}
               </p>
@@ -559,8 +559,8 @@ export function AppShell({ children }: AppShellProps) {
                     placeholder="Search app..."
                     className="pl-10 w-full"
                     value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); if(e.target.value.trim()) setIsSearchOpen(true); else setIsSearchOpen(false);}}
-                    onFocus={() => { if (searchTerm.trim()) setIsSearchOpen(true); if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) fetchStudyGradesForSearch(false);}}
+                    onChange={(e) => { setSearchTerm(e.target.value); if(e.target.value.trim()) {setIsSearchOpen(true); if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) fetchStudyGradesForSearch();} else setIsSearchOpen(false);}}
+                    onFocus={() => { if (searchTerm.trim()) {setIsSearchOpen(true);} if (studyGradesData.length === 0 && isOnline && !isLoadingSearchData) {fetchStudyGradesForSearch();}}}
                      onKeyDown={(e) => {
                       if (e.key === 'Enter' && searchResults.length > 0 && searchResults[0].href) {
                         e.preventDefault();
@@ -632,13 +632,22 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Right side of header: Network Status, Login/User Info, Theme Toggle, Dev View Switcher */}
           <div className="flex items-center gap-1 sm:gap-2 ml-auto">
-            {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center text-xs h-7"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
+            {!isOnline && <Badge variant="destructive" className="hidden md:flex items-center text-xs h-7 animate-pulse"><WifiOff className="mr-1 h-3 w-3" />Offline</Badge>}
 
             {isSessionLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : !isLoggedIn ? (
               isLoginFlowActive ? (
+                // This section is for when "Login / Create Account" has been clicked
                 <>
+                  <div className="hidden md:flex items-center gap-1">
+                    <Button variant="outline" size="sm" onClick={() => { login('student'); setIsLoginFlowActive(false); toast({ title: "Logged In as Student", description: "New student accounts would require teacher approval for full features."}); }}>
+                        <UserCircle className="mr-1 h-4 w-4" /> As Student
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { login('teacher'); setIsLoginFlowActive(false); }}>
+                        <UserCog className="mr-1 h-4 w-4" /> As Teacher
+                    </Button>
+                  </div>
                   {(!isOnline && !isFirebaseConfigured) && (
                      <Card className="p-3 w-full md:w-auto shadow-md absolute top-16 right-4 sm:right-6 z-50 bg-card border">
                       <CardHeader className="p-0 mb-2">
@@ -659,27 +668,22 @@ export function AppShell({ children }: AppShellProps) {
                   )}
 
                   {(isOnline && isFirebaseConfigured) && (
-                      <Button variant="outline" size="sm" onClick={() => { login('student'); setIsLoginFlowActive(false); toast({ title: "Logged In as Student.", description: "New student accounts require teacher approval for full features." });}}>
-                         <UserCircle className="mr-1 h-4 w-4" />Proceed as Student
-                      </Button>
-                  )}
-                   {(isOnline && isFirebaseConfigured) && (
-                      <Button variant="outline" size="sm" onClick={() => { login('teacher'); setIsLoginFlowActive(false); }}>
-                        <UserCog className="mr-1 h-4 w-4" />Proceed as Teacher
+                      <Button variant="outline" size="sm" onClick={() => { signInWithGoogle(); setIsLoginFlowActive(false); }}>
+                         <UserCircle className="mr-1 h-4 w-4" />Login with Google
                       </Button>
                   )}
 
                   {(!isFirebaseConfigured && !isOnline && !magicLogin) && (
                      <p className="text-xs text-muted-foreground">Login not available.</p>
                   )}
-                  <Button variant="ghost" size="sm" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }}>Cancel</Button>
+                  <Button variant="ghost" size="icon" onClick={() => { setIsLoginFlowActive(false); setDebugUsername(""); setDebugPassword(""); }} className="h-8 w-8"><XCircle className="h-4 w-4"/></Button>
                 </>
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setIsLoginFlowActive(true)}>
                   <LogIn className="mr-2 h-4 w-4" /> Login / Create Account
                 </Button>
               )
-            ) : (
+            ) : ( // User is logged in
               <>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -687,7 +691,7 @@ export function AppShell({ children }: AppShellProps) {
                        <Avatar className="h-8 w-8">
                          <AvatarImage src={currentUser?.photoURL || (isLoggedIn && userRole === 'teacher' ? "https://placehold.co/40x40.png?text=TA" : "https://placehold.co/40x40.png?text=ST")} alt={currentUser?.displayName || (isLoggedIn ? (userRole || "User") : "Guest")} data-ai-hint="user avatar"/>
                          <AvatarFallback>
-                           {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? 'TA' : 'ST') : 'GU')}
+                           {currentUser?.displayName ? currentUser.displayName.substring(0, 2).toUpperCase() : (isLoggedIn ? (userRole === 'teacher' ? (currentUser?.uid?.startsWith('debug-') ? "DT" : APP_AUTHOR.substring(0,1) + (APP_AUTHOR.split(" ")[1]?.substring(0,1) || '') ) : (currentUser?.uid?.startsWith('debug-') ? "DS" : 'ST') ) : 'GU')}
                          </AvatarFallback>
                        </Avatar>
                     </Button>
@@ -697,8 +701,8 @@ export function AppShell({ children }: AppShellProps) {
                       Signed in as: <span className="font-semibold">{currentUser?.displayName || currentUser?.email || "User"}</span> (<span className="capitalize">{userRole}</span>)
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {userRole === 'teacher' && (
-                      <DropdownMenuItem onClick={() => { if (toggleViewAsStudent) toggleViewAsStudent(); }}>
+                    {userRole === 'teacher' && toggleViewAsStudent && (
+                      <DropdownMenuItem onClick={() => { toggleViewAsStudent(); }}>
                         {viewAsStudent ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}
                         {viewAsStudent ? "Switch to Teacher View" : "Switch to Student View"}
                       </DropdownMenuItem>

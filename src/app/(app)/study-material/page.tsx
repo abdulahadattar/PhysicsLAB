@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import Link from "next/link"; // Keep Link for chapter navigation
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookText, ChevronRight, AlertTriangle, Loader2, FileText, Landmark, Globe, BookCopy } from "lucide-react";
 import { APP_AUTHOR } from "@/lib/constants";
@@ -11,6 +11,7 @@ import type { StudyGrade, TeacherGradeOverride } from '@/lib/types';
 import { useEffect, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from 'next/navigation'; // ADD THIS IMPORT for router.push
 
 interface FullTextbookLinkConfig {
   key: keyof Pick<StudyGrade, 'completeTextbookPdfLink' | 'ziauddinBoardFullPdfLink' | 'punjabBoardFullPdfLink' | 'nationalSyllabusFullPdfLink'>;
@@ -56,6 +57,7 @@ function applyGradeOverrides(grades: StudyGrade[], overrides: Record<string, Par
 }
 
 export default function StudyMaterialPage() {
+  const router = useRouter(); // INITIALIZE THE ROUTER
   const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -235,28 +237,50 @@ export default function StudyMaterialPage() {
                         <BookText className="h-6 w-6 text-primary" />
                         {grade.name}
                     </div>
-                     <div className="flex items-center gap-1 flex-wrap justify-end max-w-[60%]">
+                    {/* Wrap buttons in a non-interactive div to avoid nested button error */}
+                    <div className="flex items-center gap-1 flex-wrap justify-end max-w-[60%]">
                         {fullTextbookConfigs.map(config => {
-                            const link = grade[config.key as keyof StudyGrade] as string | undefined;
-                            if (link) {
+                            const pdfUrl = grade[config.key as keyof StudyGrade] as string | undefined;
+                            if (pdfUrl) {
+                                // Handle STBB Full Textbook with internal navigation
+                                if (config.key === 'completeTextbookPdfLink') {
+                                    return (
+                                        <Button
+                                            key={config.key}
+                                            variant="link"
+                                            size="sm"
+                                            className="text-primary hover:underline px-1.5 py-1 h-auto text-xs"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent accordion toggle
+                                                // Programmatic navigation using Next.js router
+                                                router.push(`/study-material/${grade.id}/full-textbook?url=${encodeURIComponent(pdfUrl)}&title=${encodeURIComponent(config.label.replace(" Full Textbook", ""))}`);
+                                            }}
+                                        >
+                                            <config.icon className="mr-1 h-3.5 w-3.5"/>
+                                            {config.label.replace(" Full Textbook", "")}
+                                        </Button>
+                                    );
+                                }
+                                // Handle other full textbook types with external link (or modify similarly if needed)
                                 return (
                                     <Button
-                                        key={config.key}
-                                        variant="link"
-                                        asChild
-                                        size="sm"
-                                        className="text-primary hover:underline px-1.5 py-1 h-auto text-xs"
-                                        onClick={(e) => e.stopPropagation()} 
+                                        key={config.key} // Use config key for unique key prop
+                                        variant="link" // Style as a link
+                                        asChild // Render as the child element (the <a> tag)
+                                        size="sm" // Small button size
+                                        className="text-primary hover:underline px-1.5 py-1 h-auto text-xs" // Custom styling
+                                        onClick={(e) => e.stopPropagation()} // Prevent the parent accordion item from toggling
                                     >
-                                        <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                                        <config.icon className="h-3.5 w-3.5"/> {config.label.replace(" Full Textbook", "")}
-                                        </a>
+                                        {/* The actual anchor tag for external link */}
+                                        <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                                        <config.icon className="h-3.5 w-3.5"/> {config.label.replace(" Full Textbook", "")} {/* Display icon and label */}
+                                        </a> {/* Closing anchor tag */}
                                     </Button>
                                 );
                             }
                             return null;
                         })}
-                    </div>
+                    </div> {/* Close the non-interactive div */}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-0">

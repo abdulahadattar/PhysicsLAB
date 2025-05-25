@@ -1,6 +1,6 @@
 
 "use client";
-
+import { useMemo } from "react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 
 const G_ACCELERATION = 9.81; // m/s^2
-const CANVAS_WIDTH = 150; // Narrower for vertical motion
+const CANVAS_WIDTH = 150;
 const CANVAS_HEIGHT = 400;
 const OBJECT_RADIUS = 10;
 const GROUND_Y = CANVAS_HEIGHT - 20;
-const PIXELS_PER_METER = 3; // Adjust for visual scaling of height
 
 export default function MotionUnderGravityG9Page() {
   const { toast } = useToast();
@@ -31,13 +30,18 @@ export default function MotionUnderGravityG9Page() {
 
   // Simulation state
   const [time, setTime] = useState(0); // seconds
-  const [positionY, setPositionY] = useState(initialHeight); // meters from ground
-  const [velocityY, setVelocityY] = useState(0); // m/s (positive downwards for simplicity in physics logic)
-  const [accelerationY, setAccelerationY] = useState(G_ACCELERATION); // m/s^2
+  const [positionY, setPositionY] = useState(initialHeight); // m, height from ground (positive UP)
+  const [velocityY, setVelocityY] = useState(0); // m/s (positive UP)
+  const [accelerationY, setAccelerationY] = useState(-G_ACCELERATION); // m/s^2 (positive UP, gravity is negative)
   const [isRunning, setIsRunning] = useState(false);
   const [isObjectDropped, setIsObjectDropped] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Refs for use inside rAF loop
+  const isRunningRef = useRef(isRunning);
+  const isObjectDroppedRef = useRef(isObjectDropped);
+
   const animationFrameIdRef = useRef<number>();
   const lastFrameTimeRef = useRef<number>(performance.now());
 
@@ -46,13 +50,19 @@ export default function MotionUnderGravityG9Page() {
     return GROUND_Y - (metresFromGround * PIXELS_PER_METER) - OBJECT_RADIUS;
   };
 
+  // Dynamic scaling for visual representation
+  const PIXELS_PER_METER = useMemo(() => {
+    const availableHeight = GROUND_Y - 20 - OBJECT_RADIUS; // Usable canvas height for motion
+    if (initialHeight <= 0.1) return 20; // Default scale for very small heights
+    return Math.max(1, availableHeight / initialHeight);
+  }, [initialHeight]);
+
   const resetSimulationState = useCallback(() => {
     setIsRunning(false);
     setTime(0);
     setPositionY(initialHeight);
-    setVelocityY(0);
-    setAccelerationY(enableAirResistance ? calculateAcceleration(0) : G_ACCELERATION);
-    setIsObjectDropped(false);
+    setVelocityY(0); // Start from rest when dropped
+    setIsObjectDropped(false); // Not dropped until user clicks "Drop"
     if (animationFrameIdRef.current) {
       cancelAnimationFrame(animationFrameIdRef.current);
     }
@@ -66,19 +76,29 @@ export default function MotionUnderGravityG9Page() {
   }, [initialHeight, mass, enableAirResistance, airResistanceFactor, isRunning, resetSimulationState]);
 
   const calculateAcceleration = useCallback((currentVelocity: number): number => {
-    if (!enableAirResistance) {
-      return G_ACCELERATION;
+    let netAcc = -G_ACCELERATION; // Gravity always acts downwards (negative in positive-up convention)
+    if (enableAirResistance && currentVelocity !== 0) {
+      // Simplified drag: F_drag = C * v^2. Let C = airResistanceFactor.
+      // Drag force opposes motion. If velocityY is positive (up), drag is down (negative).
+      // If velocityY is negative (down), drag is up (positive).
+      const dragMagnitude = airResistanceFactor * currentVelocity * currentVelocity;
+      const dragDirection = currentVelocity > 0 ? -1 : 1; // Opposes velocity
+      const dragForce = dragMagnitude * dragDirection;
+      netAcc += (dragForce / mass); // Add drag acceleration (can be positive or negative)
     }
-    // Simplified drag: F_drag = C * v^2. Let C = airResistanceFactor.
-    // Here, velocityY is positive downwards. Drag force is upwards (negative).
-    const dragForce = airResistanceFactor * currentVelocity * currentVelocity;
-    const netForce = (mass * G_ACCELERATION) - dragForce; // Gravity down, Drag up
-    return netForce / mass;
+    return netAcc;
   }, [mass, enableAirResistance, airResistanceFactor]);
 
+  // Update acceleration state whenever parameters that affect it change (except velocity)
+  useEffect(() => {
+     // When parameters change while not running, update the displayed acceleration
+     if (!isRunning) {
+       setAccelerationY(calculateAcceleration(0)); // Calculate initial acceleration (velocity is 0)
+     }
+  }, [initialHeight, mass, enableAirResistance, airResistanceFactor, isRunning, calculateAcceleration]);
 
   const gameLoop = useCallback((timestamp: number) => {
-    if (!isObjectDropped) {
+    if (!isObjectDroppedRef.current) { // Use ref here
       animationFrameIdRef.current = undefined;
       return;
     }
@@ -88,18 +108,18 @@ export default function MotionUnderGravityG9Page() {
 
     // Calculate current acceleration based on current velocity if air resistance is on
     const currentAccY = calculateAcceleration(velocityY);
-    setAccelerationY(currentAccY);
-
     const newVelocityY = velocityY + currentAccY * deltaTime;
-    const newPositionY = positionY - (velocityY * deltaTime + 0.5 * currentAccY * deltaTime * deltaTime); // positive Y is up
+    // Using the standard kinematic equation s = ut + 0.5at^2 with positive Y up
+    const newPositionY = positionY + velocityY * deltaTime + 0.5 * currentAccY * deltaTime * deltaTime;
 
     if (newPositionY <= 0) {
+      // Landed
       setPositionY(0);
       setVelocityY(0); // Or some bounce logic if desired
       setAccelerationY(0);
       setIsRunning(false);
       setIsObjectDropped(false); // Reset for next drop
-      toast({ title: "Landed!", description: `Time taken: ${time.toFixed(2)}s` });
+      toast({ title: "Landed!", description: `Time taken: ${(time + deltaTime).toFixed(2)}s` }); // Use time + deltaTime for more accurate final time
       animationFrameIdRef.current = undefined;
       return;
     }
@@ -108,17 +128,21 @@ export default function MotionUnderGravityG9Page() {
     setVelocityY(newVelocityY);
     setTime(prevTime => prevTime + deltaTime);
 
+     // Update acceleration state (done here to show instantaneous acceleration during fall)
+    setAccelerationY(currentAccY);
+
     if (isRunningRef.current) { // Use ref for checking isRunning inside rAF
-        animationFrameIdRef.current = requestAnimationFrame((ts) => gameLoop(ts, timestamp));
+        animationFrameIdRef.current = requestAnimationFrame(gameLoop); // No need for second arg
     } else {
         animationFrameIdRef.current = undefined; // Ensure it's cleared if paused
     }
-  }, [isObjectDropped, velocityY, positionY, calculateAcceleration, time, toast]);
+  }, [velocityY, positionY, calculateAcceleration, toast]); // Added timeRef if you create it
 
-  const isRunningRef = useRef(isRunning);
+  // Update refs whenever the corresponding state changes
   useEffect(() => {
     isRunningRef.current = isRunning;
-  }, [isRunning]);
+    isObjectDroppedRef.current = isObjectDropped;
+  }, [isRunning, isObjectDropped]);
 
   useEffect(() => {
     if (isRunning && isObjectDropped) {
@@ -155,7 +179,7 @@ export default function MotionUnderGravityG9Page() {
     ctx.lineWidth = 0.5;
     ctx.font = "10px sans-serif";
     ctx.fillStyle = "hsl(var(--muted-foreground))";
-    const maxDisplayHeight = Math.max(initialHeight, 10); // Ensure at least 10m scale
+    const maxDisplayHeight = Math.max(initialHeight, 20); // Ensure at least 20m scale for better visualization
     for (let h = 0; h <= maxDisplayHeight; h += 10) {
         if (h === 0 && initialHeight < 5) continue; // Avoid cluttering 0m if initial height is very low
         const yPos = getCanvasY(h) + OBJECT_RADIUS; // Center text on mark
@@ -178,7 +202,7 @@ export default function MotionUnderGravityG9Page() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-  }, [positionY, initialHeight]);
+  }, [positionY, initialHeight, PIXELS_PER_METER]); // Added PIXELS_PER_METER as a dependency
 
 
   const handleDrop = () => {
@@ -282,8 +306,8 @@ export default function MotionUnderGravityG9Page() {
                 <CardContent className="space-y-1 text-sm">
                   <p>Time (t): <span className="font-semibold">{time.toFixed(2)} s</span></p>
                   <p>Position (y): <span className="font-semibold">{positionY.toFixed(2)} m</span> (from ground)</p>
-                  <p>Velocity (v_y): <span className="font-semibold">{(velocityY * -1).toFixed(2)} m/s</span> (negative for upwards)</p>
-                  <p>Acceleration (a_y): <span className="font-semibold">{(accelerationY * -1).toFixed(2)} m/s²</span></p>
+                  <p>Velocity (v_y): <span className="font-semibold">{velocityY.toFixed(2)} m/s</span> (positive upwards)</p>
+                  <p>Acceleration (a_y): <span className="font-semibold">{accelerationY.toFixed(2)} m/s²</span></p>
                 </CardContent>
               </Card>
             </div>
