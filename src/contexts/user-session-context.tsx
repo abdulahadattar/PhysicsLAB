@@ -81,23 +81,27 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
           setIsLoggedIn(true);
 
           let roleFromDb: UserRole = null;
-          try {
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-              const userData = userDocSnap.data();
-              if (userData.role && (userData.role === 'teacher' || userData.role === 'student')) {
-                roleFromDb = userData.role as UserRole;
-                console.log(`UserSessionProvider: Role '${roleFromDb}' fetched from Firestore for ${appUser.email}.`);
+
+          // Only attempt to fetch role from Firestore if db is defined
+          if (db) {
+            try {
+              const userDocRef = doc(db, "users", firebaseUser.uid);
+              const userDocSnap = await getDoc(userDocRef);
+              if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                if (userData.role && (userData.role === 'teacher' || userData.role === 'student')) {
+                  roleFromDb = userData.role as UserRole;
+                  console.log(`UserSessionProvider: Role '${roleFromDb}' fetched from Firestore for ${appUser.email}.`);
+                } else {
+                  console.warn(`UserSessionProvider: User document for ${appUser.email} exists in Firestore but missing/invalid 'role' field.`);
+                }
               } else {
-                console.warn(`UserSessionProvider: User document for ${appUser.email} exists in Firestore but missing/invalid 'role' field.`);
+                console.log(`UserSessionProvider: No custom role document found in Firestore for ${appUser.email}. Will use fallback logic.`);
               }
-            } else {
-              console.log(`UserSessionProvider: No custom role document found in Firestore for ${appUser.email}. Will use fallback logic.`);
+            } catch (error) {
+              const firestoreError = error as FirestoreError;
+              console.error("UserSessionProvider: Error fetching user role from Firestore:", firestoreError.message);
             }
-          } catch (error) {
-            const firestoreError = error as FirestoreError;
-            console.error("UserSessionProvider: Error fetching user role from Firestore:", firestoreError.message);
           }
 
           if (roleFromDb) {
