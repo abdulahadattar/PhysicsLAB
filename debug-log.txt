@@ -1,0 +1,16 @@
+# Debug Log
+
+This file will be used to collect and save bug and error information encountered while navigating the app. Please copy and paste any error messages, stack traces, or bug descriptions here as you encounter them during manual testing or app usage.
+
+---
+
+## [Date: 2025-05-26]
+
+- Debug log initialized. No errors recorded yet.
+
+---
+
+## How to use:
+- Whenever you see an error or bug in the app, copy the error message or describe the bug and paste it below this line.
+- Include the page, action, and any relevant details.
+- This log can be reviewed and used for future debugging and fixes.
