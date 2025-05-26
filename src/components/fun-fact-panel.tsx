@@ -1,23 +1,23 @@
-
 "use client";
 
-import { generateFunContentBatch, type GenerateFunContentInput, type FunContentItem } from '@/ai/flows/generate-fun-fact';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Lightbulb, RefreshCw, WifiOff, X } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useFunFactsSettings } from '@/hooks/use-fun-facts-settings';
 import { Skeleton } from './ui/skeleton';
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile } from '@/hooks/use-mobile';
+import funFacts from '@/data/fun-facts.json';
+import { getNextFunFactForUser, getGuestId } from '@/data/fun-facts-util';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const LOCAL_STORAGE_KEY_BATCH = 'physicsFunContentBatch';
 const LOCAL_STORAGE_KEY_CURRENT_INDEX = 'physicsFunContentBatch_currentIndex';
 
+// Use the type from the JSON structure
+type FunFact = { content: string; explanation: string };
+
 export function FunFactPanel() {
-  const [batch, setBatch] = useState<FunContentItem[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [currentFactToDisplay, setCurrentFactToDisplay] = useState<FunContentItem | null>(null);
-  
+  const [currentFactToDisplay, setCurrentFactToDisplay] = useState<FunFact | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState<boolean>(false);
@@ -47,94 +47,39 @@ export function FunFactPanel() {
   }, [isMobile, isMounted]);
 
 
-  const fetchNewBatch = useCallback(async (topic: string = "general physics", gradeLevel: number = 10) => {
-    if (isOffline) {
-      setError("You are offline. Fun facts will load when you're back online.");
-      setIsLoading(false);
-      if (batch.length === 0) setCurrentFactToDisplay(null);
-      return;
-    }
+  // Helper: get user or guest id
+  function getUserOrGuestId() {
+    // If you have a user session, use user.id, else use guest id
+    // For now, just use guest id
+    return getGuestId();
+  }
+
+  // Show a new, unique fun fact
+  const showNextFunFact = useCallback(() => {
     setIsLoading(true);
     setError(null);
     try {
-      const input: GenerateFunContentInput = { topic, gradeLevel };
-      const result = await generateFunContentBatch(input);
-      
-      if (result.items && result.items.length > 0) {
-        setBatch(result.items);
-        setCurrentIndex(0);
-        setCurrentFactToDisplay(result.items[0]);
-        localStorage.setItem(LOCAL_STORAGE_KEY_BATCH, JSON.stringify(result.items));
-        localStorage.setItem(LOCAL_STORAGE_KEY_CURRENT_INDEX, JSON.stringify(0));
+      const userId = getUserOrGuestId();
+      const fact = getNextFunFactForUser(userId) as FunFact | undefined;
+      if (fact && typeof fact === 'object' && 'content' in fact && 'explanation' in fact) {
+        setCurrentFactToDisplay(fact);
       } else {
-        setError("No fun content received. Try again later.");
-        setBatch([]); 
+        setError('Could not load a new fun fact.');
         setCurrentFactToDisplay(null);
       }
-    } catch (err) {
-      console.error("Failed to generate fun content batch:", err);
-      setError("Could not fetch fun content. Please try again.");
+    } catch (e) {
+      setError('Could not load a new fun fact.');
+      setCurrentFactToDisplay(null);
     } finally {
       setIsLoading(false);
     }
-  }, [isOffline, batch.length]);
-
-  const loadFromLocalStorage = useCallback(() => {
-    try {
-      const storedBatchJson = localStorage.getItem(LOCAL_STORAGE_KEY_BATCH);
-      const storedIndexJson = localStorage.getItem(LOCAL_STORAGE_KEY_CURRENT_INDEX);
-      
-      let loadedBatch: FunContentItem[] = [];
-      if (storedBatchJson) {
-        loadedBatch = JSON.parse(storedBatchJson);
-      }
-      
-      let loadedIndex = 0;
-      if (storedIndexJson) {
-        loadedIndex = JSON.parse(storedIndexJson);
-      }
-
-      if (loadedBatch.length > 0) {
-        setBatch(loadedBatch);
-        const validIndex = Math.min(Math.max(0, loadedIndex), loadedBatch.length - 1);
-        setCurrentIndex(validIndex);
-        setCurrentFactToDisplay(loadedBatch[validIndex]);
-        return true; 
-      }
-    } catch (e) {
-      console.error("Error loading fun facts from localStorage:", e);
-      localStorage.removeItem(LOCAL_STORAGE_KEY_BATCH); 
-      localStorage.removeItem(LOCAL_STORAGE_KEY_CURRENT_INDEX);
-    }
-    return false; 
   }, []);
 
   useEffect(() => {
     if (isPanelVisible && isMounted) {
-      const dataLoaded = loadFromLocalStorage();
-      if (!dataLoaded) {
-        if (!isOffline) {
-          fetchNewBatch();
-        } else {
-           setError("No fun facts cached. Connect to the internet to load them.");
-           setCurrentFactToDisplay(null);
-        }
-      }
+      showNextFunFact();
     }
-  }, [isPanelVisible, isMounted, loadFromLocalStorage, fetchNewBatch, isOffline]);
-
-  const handleShowNextFact = () => {
-    if (isLoading) return;
-
-    let nextIndex = currentIndex + 1;
-    if (batch.length > 0 && nextIndex < batch.length) {
-      setCurrentIndex(nextIndex);
-      setCurrentFactToDisplay(batch[nextIndex]);
-      localStorage.setItem(LOCAL_STORAGE_KEY_CURRENT_INDEX, JSON.stringify(nextIndex));
-    } else {
-      fetchNewBatch();
-    }
-  };
+  }, [isPanelVisible, isMounted, showNextFunFact]);
 
   const handleCloseOrCollapse = () => {
     if (isMobile) {
@@ -206,12 +151,12 @@ export function FunFactPanel() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleShowNextFact}
-          disabled={isLoading || (isOffline && batch.length === 0)}
+          onClick={showNextFunFact}
+          disabled={isLoading || (isOffline && !currentFactToDisplay)}
           className="mt-3 w-full"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          {isOffline && batch.length === 0 ? "Offline" : "Next Tidbit"}
+          {isOffline && !currentFactToDisplay ? "Offline" : "Next Tidbit"}
         </Button>
       </CardContent>
     </Card>

@@ -1,4 +1,3 @@
-
 "use client";
 import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
@@ -477,17 +476,20 @@ export function AppShell({ children }: AppShellProps) {
 
 
   // Main return for AppShell component
- if (isSessionLoading && !currentUser) {
- return (
- <div className="flex items-center justify-center h-screen text-lg">
- <Loader2 className="mr-2 h-6 w-6 animate-spin" />
- Loading PhysicsLab...
- </div>
- );
+  if (isSessionLoading && !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen text-lg">
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+        Loading PhysicsLab...
+      </div>
+    );
   }
 
+  // Get toggleSidebar from useSidebar for header button
+  const { toggleSidebar } = useSidebar();
+
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider>
       <Sidebar className="z-20">
         <SidebarHeader className="p-4">
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center" data-ai-hint="app logo and name in sidebar header">
@@ -497,7 +499,7 @@ export function AppShell({ children }: AppShellProps) {
         </SidebarHeader>
         <ScrollArea className="flex-grow">
           <SidebarContent>
-            <SidebarMenu > {/* Fixed typo: Changed SidebarMenu to SidebarMenu */}
+            <SidebarMenu>
               {renderNavItems(NAV_ITEMS)}
             </SidebarMenu>
           </SidebarContent>
@@ -522,16 +524,15 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </SidebarFooter>
       </Sidebar>
-      <PersistentToggleButton /> {/* Use the new persistent toggle button */}
-      <SidebarInset >
+      <PersistentToggleButton />
+      <SidebarInset>
         {/* Header */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6 ">
           {/* Sidebar Trigger for mobile */}
           <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" onClick={toggleSidebar} aria-label="Open Sidebar">
             <MenuIcon className="h-5 w-5" />
           </Button>
-
-          <SidebarTrigger className="md:hidden" aria-label="Toggle Sidebar" /> {/* Use the correct SidebarTrigger */}
+          <SidebarTrigger className="md:hidden" aria-label="Toggle Sidebar" />
 
           {/* Global Search Bar */}
           <div className="relative flex-grow max-w-md">

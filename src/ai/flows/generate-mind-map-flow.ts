@@ -1,15 +1,13 @@
-
 'use server';
 /**
- * @fileOverview A Genkit flow for generating structured mind map data.
- * This flow is intended to be a developer tool to pre-generate mind map content
+ * Genkit flow for generating structured mind map data.
+ * This flow is intended as a developer tool to pre-generate mind map content
  * for different grades and curricula, which can then be stored as static JSON.
- * It's NOT intended for direct client-side calls in the student-facing app.
  *
- * - generateMindMapData - Generates mind map node data.
- * - GenerateMindMapInput - Input type for the flow.
- * - AIMindMapNode - Type for a single node in the AI's output structure.
- * - GenerateMindMapOutput - Output type for the flow, containing the title and hierarchical nodes.
+ * - generateMindMapData: Generates mind map node data.
+ * - GenerateMindMapInput: Input type for the flow.
+ * - AIMindMapNode: Type for a single node in the output structure.
+ * - GenerateMindMapOutput: Output type for the flow, containing the title and hierarchical nodes.
  */
 
 import { ai } from '@/ai/genkit';
@@ -161,4 +159,3 @@ const generateMindMapDataFlow = ai.defineFlow(
   }
 );
 
-    

@@ -1,3 +1,6 @@
+// This file contains temporary mock assignment data for demonstration and testing purposes only.
+// In future releases, all assignments and submissions will be dynamically populated from real student activity and backend integration.
+// Do not use this file for production data or permanent storage.
 
 import type { Assignment } from '@/lib/types'; // Adjust path as needed
 
@@ -10,8 +13,11 @@ const MOCK_ASSIGNMENTS_INTERNAL: Assignment[] = [
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     submissionType: 'file', // 'file' will now imply link submission on student side
     pointsPossible: 100,
-    associatedSimulations: ['phet-forces-motion-basics-g9'], 
-    studentSpecificSubmission: { 
+    associatedSimulations: ['phet-forces-motion-basics-g9'],
+    targetGradeIds: [],
+    onlineSubmissionEnabled: true,
+    createdAt: new Date().toISOString(),
+    studentSpecificSubmission: {
       studentId: 'student123', // This would be dynamically set based on logged-in user
       status: 'Not Submitted',
       submittedAt: '',
@@ -40,14 +46,17 @@ const MOCK_ASSIGNMENTS_INTERNAL: Assignment[] = [
   },
   {
     id: 'kinematics-problems',
-    title: 'Kinematics Problem Set 1',
+    title: 'Kinematics Problems',
     description: 'Solve the attached problems related to kinematics. Show all your work. Submit as a text entry, or provide a link to a document with your solutions.',
     dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
     submissionType: 'text_and_file', // Allow both text and/or a file link
     pointsPossible: 50,
-    associatedQuizzes: ['kinematics-g9'], 
+    associatedQuizzes: ['kinematics-g9'],
+    targetGradeIds: [],
+    onlineSubmissionEnabled: true,
+    createdAt: new Date().toISOString(),
     // studentSpecificSubmission will be populated dynamically in getAssignmentById for 'student123'
-  },
+  }
 ];
 
 // Helper function to get a single assignment
@@ -94,6 +103,62 @@ export const getAssignmentById = async (id: string, currentStudentId?: string): 
     }
   }
   return assignment; // Return as is if no currentStudentId or no specific logic matches
+};
+
+// Function to simulate updating assignment data (TEMPORARY HACK)
+// In a real app, this would be a backend API call.
+export const updateAssignmentData = async (assignmentId: string, studentId: string) => {
+  console.log(`Mock Update: updateAssignmentData, assignmentId: ${assignmentId}, studentId: ${studentId}`);
+  await new Promise(resolve => setTimeout(resolve, 200)); // Simulate async
+
+  // Find the assignment in the mock data
+  const assignmentIndex = MOCK_ASSIGNMENTS_INTERNAL.findIndex(assign => assign.id === assignmentId);
+
+  if (assignmentIndex !== -1) {
+    const assignment = MOCK_ASSIGNMENTS_INTERNAL[assignmentIndex];
+
+    // Find the student's submission in allStudentSubmissions
+    let studentSubmission = assignment.allStudentSubmissions?.find(sub => sub.studentId === studentId);
+
+    if (studentSubmission) {
+      // Update the existing submission (e.g., change status, add feedback)
+      studentSubmission.status = 'Submitted';
+      studentSubmission.submittedAt = new Date().toISOString();
+    } else {
+      // Create a new submission
+      studentSubmission = {
+        studentId: studentId,
+        studentName: 'New Student', // Replace with actual student name
+        submittedAt: new Date().toISOString(),
+        status: 'Submitted',
+      };
+      assignment.allStudentSubmissions = assignment.allStudentSubmissions || [];
+      assignment.allStudentSubmissions.push(studentSubmission);
+    }
+
+    // Update the studentSpecificSubmission as well
+    assignment.studentSpecificSubmission = studentSubmission;
+
+    // Optionally, update lastPracticeDate in localStorage
+    try {
+      localStorage.setItem('lastPracticeDate', new Date().toISOString());
+    } catch (e) {
+      console.error('Error writing lastPracticeDate to localStorage:', e);
+    }
+
+    // Replace the assignment in the array
+    MOCK_ASSIGNMENTS_INTERNAL[assignmentIndex] = assignment;
+  }
+};
+
+// Function to get the last practice date from localStorage
+export const getLastPracticeDate = (): string | null => {
+  try {
+    return localStorage.getItem('lastPracticeDate');
+  } catch (e) {
+    console.error('Error reading lastPracticeDate from localStorage:', e);
+    return null;
+  }
 };
 
 // Expose the internal mock array for modification by the page (TEMPORARY HACK for client-side demo)

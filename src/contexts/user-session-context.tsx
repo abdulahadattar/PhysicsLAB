@@ -133,7 +133,12 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
     } else {
       console.warn("UserSessionProvider: Firebase auth or Firestore (db) is NOT configured. Google Sign-In and Firestore features will be disabled. Offline debug login may be available.");
       setIsFirebaseConfigured(false);
-      const localRole = localStorage.getItem('debugUserRole') as UserRole;
+      let localRole: UserRole = null;
+      try {
+        localRole = localStorage.getItem('debugUserRole') as UserRole;
+      } catch (e) {
+        console.error('Error reading debugUserRole from localStorage:', e);
+      }
       if (localRole) {
         setUserRole(localRole);
         setIsLoggedIn(true);
@@ -235,7 +240,11 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
     setIsLoggedIn(false);
     setUserRole(null);
     setViewAsStudent(false);
-    localStorage.removeItem('debugUserRole');
+    try {
+      localStorage.removeItem('debugUserRole');
+    } catch (e) {
+      console.error('Error removing debugUserRole from localStorage:', e);
+    }
     
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
     if (!auth || !isFirebaseConfigured || (currentUser && currentUser.uid.startsWith('debug-'))) {
@@ -258,13 +267,25 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
     if (newRole === 'teacher') {
       newIsLoggedIn = true;
       newUser = { uid: 'debug-teacher', email: 'debug.teacher@example.com', displayName: `Teacher (${APP_AUTHOR})`, photoURL: null };
-      localStorage.setItem('debugUserRole', 'teacher');
+      try {
+        localStorage.setItem('debugUserRole', 'teacher');
+      } catch (e) {
+        console.error('Error writing debugUserRole to localStorage:', e);
+      }
     } else if (newRole === 'student') {
       newIsLoggedIn = true;
       newUser = { uid: 'debug-student', email: 'debug.student@example.com', displayName: 'Debug Student', photoURL: null };
-      localStorage.setItem('debugUserRole', 'student');
+      try {
+        localStorage.setItem('debugUserRole', 'student');
+      } catch (e) {
+        console.error('Error writing debugUserRole to localStorage:', e);
+      }
     } else {
-      localStorage.removeItem('debugUserRole');
+      try {
+        localStorage.removeItem('debugUserRole');
+      } catch (e) {
+        console.error('Error removing debugUserRole from localStorage:', e);
+      }
     }
     
     setCurrentUser(newUser);

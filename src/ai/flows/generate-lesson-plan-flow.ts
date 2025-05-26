@@ -1,11 +1,10 @@
-
 'use server';
 /**
- * @fileOverview A Genkit flow for generating a 4A's model lesson plan for a physics chapter.
+ * Genkit flow for generating a 4A's model lesson plan for a physics chapter.
  *
- * - generateLessonPlan - Generates a lesson plan.
- * - GenerateLessonPlanInput - Input type for the flow.
- * - GenerateLessonPlanOutput - Output type for the flow.
+ * - generateLessonPlan: Generates a lesson plan.
+ * - GenerateLessonPlanInput: Input type for the flow.
+ * - GenerateLessonPlanOutput: Output type for the flow.
  */
 
 import { ai } from '@/ai/genkit';

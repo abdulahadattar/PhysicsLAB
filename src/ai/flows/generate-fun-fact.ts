@@ -1,13 +1,12 @@
-
 'use server';
 /**
- * @fileOverview A flow for generating a batch of contextually relevant fun physics content
+ * Flow for generating a batch of contextually relevant fun physics content
  * (facts, quotes, historical notes, experiment summaries).
  *
- * - generateFunContentBatch - A function that generates a batch of fun physics content.
- * - GenerateFunContentInput - The input type for the generateFunContentBatch function.
- * - FunContentItem - The type for an individual item in the batch.
- * - GenerateFunContentOutput - The return type for the generateFunContentBatch function, containing a list of items.
+ * - generateFunContentBatch: Generates a batch of fun physics content.
+ * - GenerateFunContentInput: Input type for the function.
+ * - FunContentItem: Type for an individual item in the batch.
+ * - GenerateFunContentOutput: Return type for the function, containing a list of items.
  */
 
 import {ai} from '@/ai/genkit';

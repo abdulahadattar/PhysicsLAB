@@ -1,19 +1,40 @@
-
 # PhysicsLab - Interactive Physics Learning Platform
 
-PhysicsLab is an interactive web application built with Next.js, designed to provide a dynamic and engaging learning experience for Physics students, primarily targeting Grades 9-12. It aligns with the Sindh Textbook Board curriculum but is built with flexibility in mind to potentially adapt to other curricula. The platform offers a rich set of features including interactive simulations, comprehensive study materials, quizzes, an AI-powered learning assistant, and a dedicated dashboard for teachers to manage content and track student progress.
+PhysicsLab is a modern web application for interactive physics learning, primarily targeting Grades 9-12. The platform is designed to align with the Sindh Textbook Board curriculum but is adaptable for other curricula. It features interactive simulations, comprehensive study materials, quizzes, an AI-powered learning assistant, and a teacher dashboard for content management and student progress tracking.
 
-**The application is currently under active development. Many features are placeholders or use mock data, especially backend-dependent functionalities and advanced simulations.**
+**Current Status:**
+- The application is under active development. Many features use placeholder or mock data, especially for backend-dependent and advanced simulation features.
+- Student data, assignments, and analytics currently use mock data for demonstration and testing. In the future, these will be populated automatically through real student activity, login, and progress tracking.
+
+## What We're Building
+- **Interactive Simulations:** Hands-on physics labs and visualizations for core topics.
+- **Study Materials:** Chapter-wise notes, MCQs, and exercises for each grade.
+- **Quizzes & Self-Assessment:** Daily quizzes, performance tracking, and identification of weak areas.
+- **AI Learning Assistant:** Context-aware help for students, including image analysis and tailored explanations.
+- **Teacher Dashboard:** Tools for content management, assignment creation, analytics, and student account approval.
+- **Offline-First PWA:** Local caching of study materials and user data for robust offline use.
+
+## How It Works
+- **Student Experience:** Students can explore simulations, access study materials, take quizzes, and interact with the AI assistant. Progress and activity are tracked locally for now.
+- **Teacher Experience:** Teachers can manage content, create assignments, review analytics, and approve student accounts. All data is currently stored in the browser (localStorage/IndexedDB) and will be migrated to a backend in future releases.
+- **Mock Data:** All student names, submissions, and analytics are generated for demonstration. These will be replaced by real user data once authentication and backend integration are complete.
+
+## What Needs Work / Roadmap
+- Replace all mock data with real-time student tracking, login, and progress data.
+- Implement backend integration for persistent storage and multi-user support.
+- Complete interactivity for all placeholder simulations.
+- Expand and refine study materials and quizzes for all grades.
+- Enhance offline capabilities and service worker caching.
+- Improve accessibility and performance across devices.
 
 ## Core Technologies
-
-*   **Framework:** Next.js 15+ (App Router - Server & Client Components)
-*   **Language:** TypeScript
-*   **UI:** React 18+, ShadCN UI components, Tailwind CSS
-*   **AI Integration:** Genkit with Google's Gemini 2.0 Flash model (optimized for free tier).
-*   **Offline Storage:** `localStorage` (settings, feedback queues, simple caches), `IndexedDB` (for PDF blobs in chapter details).
-*   **Authentication:** Firebase (Google Sign-In + Firestore role detection), client-side "Magic Login" for offline teacher debug.
-*   **PWA:** Basic `manifest.json` and `sw.js` for asset caching.
+- **Framework:** Next.js 15+ (App Router)
+- **Language:** TypeScript
+- **UI:** React 18+, ShadCN UI, Tailwind CSS
+- **AI Integration:** Genkit with Google Gemini 2.0 Flash
+- **Offline Storage:** localStorage, IndexedDB
+- **Authentication:** Firebase (Google Sign-In, Firestore roles)
+- **PWA:** manifest.json, sw.js
 
 ## Getting Started
 
@@ -140,3 +161,48 @@ This project uses Next.js with the App Router. Here's a brief overview of key di
 *   **Performance:** Be mindful of performance, especially for simulations and data-heavy components.
 
 This project aims to be a comprehensive and accessible learning tool. Your contributions to enhance simulations, add content, improve AI interactions, refine the UI/UX, or bolster offline capabilities are highly welcome! Please refer to the `CHANGELOG.md` for recent developments.
+
+# Educational App: Study Material Management
+
+## Overview
+This app allows teachers to manage study materials, including dynamic PDF resources, key points, exercises, and more for each grade and chapter. The system is modular, future-proof, and designed for easy collaboration and extension.
+
+## Features
+- **Modular PDF Resource Management:**
+  - Teachers can add, label, and manage any type of PDF (uploaded or linked) for any grade/chapter.
+  - Flexible support for both uploaded files and external links.
+  - No hardcoded or legacy PDF fields—everything is managed via a `pdfResources` array in each chapter's content.
+- **User-Friendly Dashboard:**
+  - Intuitive UI for adding, editing, and removing PDF resources.
+  - File upload and external link support.
+  - Label and icon selection for each PDF resource.
+- **Content Editing:**
+  - Key points, summaries, formulas, real-world examples, and diagram descriptions can be managed for each chapter.
+- **Local Storage Drafts:**
+  - Changes are saved to the browser's local storage for review before updating the main data file.
+
+## Data Model
+- All PDF resources are stored in a `pdfResources` array within each chapter's content in `study-materials.json`.
+- Each resource includes a label, icon, and URL (either uploaded or external).
+
+## How to Update Study Materials
+1. Use the teacher dashboard to manage content and PDF resources.
+2. When ready, copy the updated data from local storage and update `src/data/study-materials.json` in the project code.
+
+## Contributing
+- Code is modular and readable for easy collaboration.
+- All legacy/hardcoded PDF fields and AI-generated hints have been removed.
+- Please follow best practices for maintainability and extensibility.
+
+## Getting Started
+1. Install dependencies: `npm install`
+2. Run the development server: `npm run dev`
+3. Access the teacher dashboard to manage study materials.
+
+## File Structure
+- `src/data/study-materials.json`: Main data file for grades, chapters, and resources.
+- `src/app/(app)/teacher-dashboard/content-management/page.tsx`: Main UI for content management.
+- `src/lib/types.ts`: Type definitions for grades, chapters, and PDF resources.
+
+## License
+MIT

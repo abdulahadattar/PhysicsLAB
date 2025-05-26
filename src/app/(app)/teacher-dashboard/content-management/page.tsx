@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -48,21 +47,18 @@ export default function TeacherContentManagementPage() {
   const [editableChapterContent, setEditableChapterContent] = useState<Partial<ChapterContent>>({});
   const [editableGradeOverrides, setEditableGradeOverrides] = useState<Partial<TeacherGradeOverride>>({});
   const [isGeneratingAiContent, setIsGeneratingAiContent] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
-  const chapterPdfConfig: ChapterPdfConfigItem[] = [
-    { key: 'stbbChapterPdfLink', label: 'STBB Chapter PDF Link', placeholder: 'Sindh Board Chapter Google Drive PDF link', icon: BookCopy },
-    { key: 'ziauddinBoardPdfName', label: 'Ziauddin Board Chapter PDF Link', placeholder: 'Ziauddin Board Chapter Google Drive PDF link', icon: Landmark },
-    { key: 'punjabBoardPdfName', label: 'Punjab Board Chapter PDF Link', placeholder: 'Punjab Board Chapter Google Drive PDF link', icon: BookCopy },
-    { key: 'nationalSyllabusPdfName', label: 'National Syllabus Chapter PDF Link', placeholder: 'National Syllabus Chapter Google Drive PDF link', icon: Globe },
-    { key: 'teacherNotesPdfName', label: "Teacher's Notes PDF Link", placeholder: "Teacher's Notes Google Drive PDF link", icon: NotebookText },
-    { key: 'alternativeChapterPdfLink', label: 'Other Alternative Chapter PDF Link', placeholder: 'Alternative Chapter Google Drive PDF link', icon: BookOpen },
-  ];
-
-  const gradePdfConfig: GradePdfConfigItem[] = [
-    { key: 'completeTextbookPdfLink', label: 'STBB Full Textbook PDF Link', placeholder: 'Sindh Board Full Google Drive PDF link', icon: BookCopy },
-    { key: 'ziauddinBoardFullPdfLink', label: 'Ziauddin Board Full PDF Link', placeholder: 'Ziauddin Board Full Google Drive PDF link', icon: Landmark },
-    { key: 'punjabBoardFullPdfLink', label: 'Punjab Board Full PDF Link', placeholder: 'Punjab Board Full Google Drive PDF link', icon: BookCopy },
-    { key: 'nationalSyllabusFullPdfLink', label: 'National Syllabus Full PDF Link', placeholder: 'National Syllabus Full Google Drive PDF link', icon: Globe },
+  // PDF resource icons
+  const pdfResourceIcons = [
+    { value: 'book', label: 'Book', icon: BookCopy },
+    { value: 'notes', label: 'Notes', icon: NotebookText },
+    { value: 'alternative', label: 'Alternative', icon: BookOpen },
+    { value: 'syllabus', label: 'Syllabus', icon: Globe },
+    { value: 'custom', label: 'Custom', icon: FileEdit },
   ];
 
 
@@ -171,26 +167,8 @@ export default function TeacherContentManagementPage() {
     setEditableChapterContent(prev => ({ ...prev, [pdfType]: link }));
   };
 
-  const handleRemoveChapterPdfLink = (pdfType: ChapterPdfTypeKey) => {
-    setEditableChapterContent(prev => {
-      const newContent = {...prev};
-      delete newContent[pdfType]; 
-      return newContent;
-    });
-    toast({ title: "Chapter PDF Link Cleared", description: `The link for ${chapterPdfConfig.find(p=>p.key === pdfType)?.label || pdfType} will be removed upon saving.` });
-  };
-  
   const handleGradePdfLinkChange = (pdfType: GradePdfTypeKey, link: string) => {
     setEditableGradeOverrides(prev => ({ ...prev, [pdfType]: link }));
-  };
-
-  const handleRemoveGradePdfLink = (pdfType: GradePdfTypeKey) => {
-    setEditableGradeOverrides(prev => {
-      const newContent = {...prev};
-      delete newContent[pdfType];
-      return newContent;
-    });
-    toast({ title: "Grade PDF Link Cleared", description: `The link for ${gradePdfConfig.find(p=>p.key === pdfType)?.label || pdfType} will be removed upon saving.` });
   };
 
 
@@ -292,9 +270,9 @@ export default function TeacherContentManagementPage() {
       const allOverrides: TeacherChapterOverrides = overridesRaw ? JSON.parse(overridesRaw) : {};
       
       const contentToSave: Partial<ChapterContent> = { ...editableChapterContent };
-      chapterPdfConfig.forEach(pdf => {
-        if (!(contentToSave as any)[pdf.key]?.trim()) delete (contentToSave as any)[pdf.key];
-      });
+      // chapterPdfConfig.forEach(pdf => {
+      //   if (!(contentToSave as any)[pdf.key]?.trim()) delete (contentToSave as any)[pdf.key];
+      // });
 
       allOverrides[selectedChapterId] = {
         ...contentToSave,
@@ -339,9 +317,6 @@ export default function TeacherContentManagementPage() {
         const allGradeOverrides: TeacherGradeOverrides = gradeOverridesRaw ? JSON.parse(gradeOverridesRaw) : {};
 
         const gradeContentToSave: Partial<TeacherGradeOverride> = { ...editableGradeOverrides, gradeId: selectedGradeId };
-        gradePdfConfig.forEach(pdf => {
-            if (!(gradeContentToSave as any)[pdf.key]?.trim()) delete (gradeContentToSave as any)[pdf.key];
-        });
         gradeContentToSave.lastUpdated = new Date().toISOString();
         
         allGradeOverrides[selectedGradeId] = gradeContentToSave as TeacherGradeOverride;
@@ -368,6 +343,39 @@ export default function TeacherContentManagementPage() {
 
   if (isLoadingGrades && studyGrades.length === 0) return <div className="flex justify-center items-center p-10"><Loader2 className="h-10 w-10 animate-spin text-primary"/> <span className="ml-2">Loading grades...</span></div>;
   
+
+  // --- PDF Upload Handler ---
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
+    setUploadSuccess(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!selectedGradeId || !selectedChapterId) {
+      setUploadError('Please select a grade and chapter first.');
+      return;
+    }
+    setUploading(true);
+    try {
+      // Build the upload path: public/textbooks/{gradeId}/{chapterId}.pdf
+      const uploadPath = `/textbooks/${selectedGradeId}/${selectedChapterId}.pdf`;
+      // Use a backend API to handle the upload (not client-side, but UI is ready)
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('gradeId', selectedGradeId);
+      formData.append('chapterId', selectedChapterId);
+      formData.append('uploadPath', uploadPath);
+      const res = await fetch('/api/upload-pdf', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed.');
+      setUploadSuccess('PDF uploaded successfully!');
+      // Optionally, update the chapter's stbbChapterPdfLink in study-materials.json via API
+      // (Or instruct teacher to refresh to see the new link)
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -400,34 +408,6 @@ export default function TeacherContentManagementPage() {
                {studyGrades.length === 0 && !isLoadingGrades && <p className="text-xs text-muted-foreground mt-1">No grades found. Check API or data source.</p>}
             </CardContent>
           </Card>
-
-         {selectedGradeId && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">Manage Full Textbook PDFs for {selectedGradeName}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {gradePdfConfig.map(pdf => (
-                        <div key={pdf.key} className="space-y-1">
-                            <Label htmlFor={`${pdf.key}-gradeinput`} className="font-medium text-sm flex items-center gap-1"><pdf.icon className="h-4 w-4"/>{pdf.label}</Label>
-                            <div className="flex gap-2 items-center">
-                                <Input 
-                                    id={`${pdf.key}-gradeinput`} 
-                                    type="url" 
-                                    placeholder={pdf.placeholder} 
-                                    value={(editableGradeOverrides as any)[pdf.key] || ""}
-                                    onChange={(e) => handleGradePdfLinkChange(pdf.key, e.target.value)}
-                                    className="flex-grow"
-                                />
-                                {(editableGradeOverrides as any)[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveGradePdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
-                            </div>
-                        </div>
-                    ))}
-                    <Button onClick={saveGradeOverrides} className="w-full mt-2"><Save className="mr-2 h-4 w-4"/>Save Grade PDF Links</Button>
-                    {editableGradeOverrides.lastUpdated && <p className="text-xs text-muted-foreground text-center mt-1">Grade links last saved: {new Date(editableGradeOverrides.lastUpdated).toLocaleString()}</p>}
-                </CardContent>
-            </Card>
-          )}
         </div>
 
         <div className="md:col-span-2">
@@ -444,28 +424,97 @@ export default function TeacherContentManagementPage() {
                                 <AccordionTrigger className="text-base py-3 hover:bg-muted/50 px-2 rounded-md">{chapter.name}</AccordionTrigger>
                                 <AccordionContent className="pt-4 space-y-6 bg-muted/10 p-4 rounded-b-md mt-[-1px] border-t">
                                   <div className="space-y-4 p-4 border rounded-md bg-background shadow-sm">
-                                    <h3 className="font-semibold text-lg border-b pb-2 mb-3">Chapter-Specific PDF Links for "{chapter.name}"</h3>
-                                    {chapterPdfConfig.map(pdf => (
-                                      <div key={pdf.key} className="space-y-1 border-b pb-3 last:border-b-0 last:pb-0">
-                                        <Label htmlFor={`${pdf.key}-chapterinput-${chapter.id}`} className="font-medium flex items-center gap-1 text-sm"><pdf.icon className="h-4 w-4"/>{pdf.label}</Label>
-                                        <div className="flex gap-2 items-center">
-                                          <Input 
-                                            id={`${pdf.key}-chapterinput-${chapter.id}`} 
-                                            type="url" 
-                                            placeholder={pdf.placeholder} 
-                                            value={(editableChapterContent as any)[pdf.key] || ""}
-                                            onChange={(e) => handleChapterPdfLinkChange(pdf.key, e.target.value)}
-                                            className="flex-grow h-9"
-                                          />
-                                          {(editableChapterContent as any)[pdf.key] && <Button variant="ghost" size="icon" onClick={() => handleRemoveChapterPdfLink(pdf.key)} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>}
-                                        </div>
+                                    <h3 className="font-semibold text-lg border-b pb-2 mb-3">PDF Resources for "{chapter.name}"</h3>
+                                    {(editableChapterContent['pdfResources'] as any[] || []).map((res, idx) => (
+                                      <div key={idx} className="flex flex-col md:flex-row gap-2 items-center border-b pb-3 last:border-b-0 last:pb-0">
+                                        <Select
+                                          value={res.icon || 'book'}
+                                          onValueChange={icon => {
+                                            const updated = [...(editableChapterContent['pdfResources'] as any[] || [])];
+                                            updated[idx] = { ...updated[idx], icon };
+                                            handleContentChange('pdfResources' as keyof ChapterContent, updated);
+                                          }}
+                                        >
+                                          <SelectTrigger className="w-32">
+                                            <SelectValue placeholder="Icon" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {pdfResourceIcons.map(opt => (
+                                              <SelectItem key={opt.value} value={opt.value}><opt.icon className="inline h-4 w-4 mr-1" />{opt.label}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <Input
+                                          type="text"
+                                          placeholder="Label (e.g. Academy Notes, Alternate Textbook)"
+                                          value={res.label || ''}
+                                          onChange={e => {
+                                            const updated = [...(editableChapterContent['pdfResources'] as any[] || [])];
+                                            updated[idx] = { ...updated[idx], label: e.target.value };
+                                            handleContentChange('pdfResources' as keyof ChapterContent, updated);
+                                          }}
+                                          className="flex-grow"
+                                        />
+                                        <Input
+                                          type="url"
+                                          placeholder="PDF URL or upload below"
+                                          value={res.url || ''}
+                                          onChange={e => {
+                                            const updated = [...(editableChapterContent['pdfResources'] as any[] || [])];
+                                            updated[idx] = { ...updated[idx], url: e.target.value };
+                                            handleContentChange('pdfResources' as keyof ChapterContent, updated);
+                                          }}
+                                          className="flex-grow"
+                                        />
+                                        <Button variant="ghost" size="icon" onClick={() => {
+                                          const updated = [...(editableChapterContent['pdfResources'] as any[] || [])];
+                                          updated.splice(idx, 1);
+                                          handleContentChange('pdfResources' as keyof ChapterContent, updated);
+                                        }} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                       </div>
                                     ))}
+                                    <Button variant="outline" size="sm" onClick={() => handleContentChange('pdfResources' as keyof ChapterContent, [...(editableChapterContent['pdfResources'] as any[] || []), { label: '', icon: 'book', url: '' }])} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add PDF Resource</Button>
+                                    <div className="flex flex-col md:flex-row gap-2 items-center mt-2">
+                                      <input ref={fileInputRef} type="file" accept="application/pdf" onChange={async (e) => {
+                                        setUploadError(null);
+                                        setUploadSuccess(null);
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        if (!selectedGradeId || !selectedChapterId) {
+                                          setUploadError('Please select a grade and chapter first.');
+                                          return;
+                                        }
+                                        setUploading(true);
+                                        try {
+                                          const uploadPath = `/textbooks/${selectedGradeId}/${selectedChapterId}-${Date.now()}.pdf`;
+                                          const formData = new FormData();
+                                          formData.append('file', file);
+                                          formData.append('gradeId', selectedGradeId);
+                                          formData.append('chapterId', selectedChapterId);
+                                          formData.append('uploadPath', uploadPath);
+                                          const res = await fetch('/api/upload-pdf', { method: 'POST', body: formData });
+                                          if (!res.ok) throw new Error('Upload failed.');
+                                          setUploadSuccess('PDF uploaded successfully!');
+                                          // Add new resource with uploaded file URL
+                                          const updated = [...(editableChapterContent['pdfResources'] as any[] || []), { label: file.name, icon: 'book', url: uploadPath }];
+                                          handleContentChange('pdfResources' as keyof ChapterContent, updated);
+                                        } catch (err: any) {
+                                          setUploadError(err.message || 'Upload failed.');
+                                        } finally {
+                                          setUploading(false);
+                                          if (fileInputRef.current) fileInputRef.current.value = '';
+                                        }
+                                      }} className="block" disabled={uploading || !selectedGradeId || !selectedChapterId} />
+                                      {uploading && <Loader2 className="animate-spin h-5 w-5 text-primary" />}
+                                      {uploadError && <Alert variant="destructive" className="mt-2"><AlertDescription>{uploadError}</AlertDescription></Alert>}
+                                      {uploadSuccess && <Alert variant="default" className="mt-2"><AlertDescription>{uploadSuccess}</AlertDescription></Alert>}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">You can upload a PDF or paste a link. Both are supported and optional.</p>
                                   </div>
 
                                   <Button 
                                     onClick={handleAiGenerate} 
-                                    disabled={isGeneratingAiContent || !chapterPdfConfig.some(pdf => !!(editableChapterContent as any)[pdf.key]?.trim())} 
+                                    disabled={isGeneratingAiContent || !Array.isArray(editableChapterContent.pdfResources) || editableChapterContent.pdfResources.length === 0 || editableChapterContent.pdfResources.every(r => !r.url?.trim())}
                                     className="w-full"
                                     variant="outline"
                                     >
@@ -483,57 +532,118 @@ export default function TeacherContentManagementPage() {
                                     />
                                   </div>
 
+                                  {/* --- NEW: Summary field --- */}
+                                  <div className="space-y-2 p-4 border rounded-md bg-background shadow-sm">
+                                    <h3 className="font-semibold text-lg border-b pb-2 mb-3">Chapter Summary</h3>
+                                    <Textarea
+                                      value={editableChapterContent.summary || ""}
+                                      onChange={e => handleContentChange('summary', e.target.value)}
+                                      placeholder="Enter a 2-4 sentence summary of the chapter... (AI can help generate this)"
+                                      rows={4}
+                                    />
+                                  </div>
+
+                                  {/* --- NEW: Formulas (LaTeX) --- */}
                                   <Card>
-                                    <CardHeader><CardTitle className="text-md">Multiple Choice Questions (MCQs)</CardTitle></CardHeader>
+                                    <CardHeader><CardTitle className="text-md">Important Formulas (LaTeX)</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
-                                      {(editableChapterContent.mcqs || []).map((mcq, index) => (
-                                        <Card key={mcq.id || index} className="p-3 bg-secondary/30 shadow-inner">
-                                          <Label className="font-semibold">MCQ {index + 1}:</Label>
-                                          <Textarea placeholder="Question" value={mcq.question} onChange={e => handleContentChange('mcqs', e.target.value, index, 'question')} className="mb-1 bg-white" rows={2}/>
-                                          {mcq.options.map((opt, optIndex) => (
-                                            <Input key={optIndex} placeholder={`Option ${optIndex + 1}`} value={opt} onChange={e => handleContentChange('mcqs', {optionIndex: optIndex, optionValue: e.target.value}, index, 'options')} className="mb-1 text-sm bg-white h-9"/>
-                                          ))}
-                                          <Select value={mcq.correctAnswerIndex?.toString() || "0"} onValueChange={val => handleContentChange('mcqs', val, index, 'correctAnswerIndex')}>
-                                            <SelectTrigger className="text-sm h-9 bg-white"><SelectValue placeholder="Correct Answer" /></SelectTrigger>
-                                            <SelectContent>
-                                              {mcq.options.map((_, optIdx) => <SelectItem key={optIdx} value={optIdx.toString()}>Option {optIdx + 1}</SelectItem>)}
-                                            </SelectContent>
-                                          </Select>
-                                          <Textarea placeholder="Explanation" value={mcq.explanation} onChange={e => handleContentChange('mcqs', e.target.value, index, 'explanation')} className="mt-1 text-sm bg-white" rows={2}/>
-                                          <Button variant="ghost" size="sm" onClick={() => removeMcq(index)} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove MCQ</Button>
+                                      {(editableChapterContent.formulas || []).map((f, index) => (
+                                        <Card key={index} className="p-3 bg-secondary/30 shadow-inner">
+                                          <Label className="font-semibold">Formula {index + 1}:</Label>
+                                          <Input
+                                            placeholder="LaTeX formula (no $ or $$)"
+                                            value={f.formula}
+                                            onChange={e => {
+                                              const updated = [...(editableChapterContent.formulas || [])];
+                                              updated[index] = { ...updated[index], formula: e.target.value };
+                                              handleContentChange('formulas', updated);
+                                            }}
+                                            className="mb-1 text-sm bg-white h-9"
+                                          />
+                                          <Textarea
+                                            placeholder="Description/context for this formula"
+                                            value={f.description}
+                                            onChange={e => {
+                                              const updated = [...(editableChapterContent.formulas || [])];
+                                              updated[index] = { ...updated[index], description: e.target.value };
+                                              handleContentChange('formulas', updated);
+                                            }}
+                                            className="mb-1 text-sm bg-white"
+                                            rows={2}
+                                          />
+                                          <Button variant="ghost" size="sm" onClick={() => {
+                                            const updated = [...(editableChapterContent.formulas || [])];
+                                            updated.splice(index, 1);
+                                            handleContentChange('formulas', updated);
+                                          }} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove Formula</Button>
                                         </Card>
                                       ))}
-                                      <Button variant="outline" size="sm" onClick={addMcq} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add MCQ</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleContentChange('formulas', [...(editableChapterContent.formulas || []), { formula: '', description: '' }])} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Formula</Button>
                                     </CardContent>
                                   </Card>
 
+                                  {/* --- NEW: Real-World Examples --- */}
                                   <Card>
-                                    <CardHeader><CardTitle className="text-md">Short Answer Questions (CRQs)</CardTitle></CardHeader>
+                                    <CardHeader><CardTitle className="text-md">Real-World Examples</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
-                                      {(editableChapterContent.shortAnswers || []).map((qa, index) => (
-                                        <Card key={qa.id || index} className="p-3 bg-secondary/30 shadow-inner">
-                                          <Label className="font-semibold">Short Question {index + 1}:</Label>
-                                          <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'question')} className="mb-1 bg-white" rows={2}/>
-                                          <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('shortAnswers', e.target.value, index, 'answer')} className="text-sm bg-white" rows={3}/>
-                                          <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('shortAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove Short Q</Button>
-                                        </Card>
+                                      {(editableChapterContent.realWorldExamples || []).map((ex, index) => (
+                                        <div key={index} className="flex gap-2 items-center">
+                                          <Input
+                                            placeholder={`Example ${index + 1}`}
+                                            value={ex}
+                                            onChange={e => {
+                                              const updated = [...(editableChapterContent.realWorldExamples || [])];
+                                              updated[index] = e.target.value;
+                                              handleContentChange('realWorldExamples', updated);
+                                            }}
+                                            className="flex-grow text-sm bg-white h-9"
+                                          />
+                                          <Button variant="ghost" size="icon" onClick={() => {
+                                            const updated = [...(editableChapterContent.realWorldExamples || [])];
+                                            updated.splice(index, 1);
+                                            handleContentChange('realWorldExamples', updated);
+                                          }} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                        </div>
                                       ))}
-                                      <Button variant="outline" size="sm" onClick={() => addQuestionAnswer('shortAnswers')} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Short Question</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleContentChange('realWorldExamples', [...(editableChapterContent.realWorldExamples || []), ''])} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Example</Button>
                                     </CardContent>
                                   </Card>
 
+                                  {/* --- NEW: Diagram Descriptions --- */}
                                   <Card>
-                                    <CardHeader><CardTitle className="text-md">Long Answer Questions (ERQs)</CardTitle></CardHeader>
+                                    <CardHeader><CardTitle className="text-md">Diagram Descriptions</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
-                                      {(editableChapterContent.longAnswers || []).map((qa, index) => (
-                                        <Card key={qa.id || index} className="p-3 bg-secondary/30 shadow-inner">
-                                          <Label className="font-semibold">Long Question {index + 1}:</Label>
-                                          <Textarea placeholder="Question" value={qa.question} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'question')} className="mb-1 bg-white" rows={3}/>
-                                          <Textarea placeholder="Answer" value={qa.answer} onChange={e => handleContentChange('longAnswers', e.target.value, index, 'answer')} className="text-sm bg-white" rows={5}/>
-                                          <Button variant="ghost" size="sm" onClick={() => removeQuestionAnswer('longAnswers', index)} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove Long Q</Button>
+                                      {(editableChapterContent.diagramDescriptions || []).map((d, index) => (
+                                        <Card key={index} className="p-3 bg-secondary/30 shadow-inner">
+                                          <Input
+                                            placeholder="Diagram Title"
+                                            value={d.title}
+                                            onChange={e => {
+                                              const updated = [...(editableChapterContent.diagramDescriptions || [])];
+                                              updated[index] = { ...updated[index], title: e.target.value };
+                                              handleContentChange('diagramDescriptions', updated);
+                                            }}
+                                            className="mb-1 text-sm bg-white h-9"
+                                          />
+                                          <Textarea
+                                            placeholder="Diagram description/explanation"
+                                            value={d.description}
+                                            onChange={e => {
+                                              const updated = [...(editableChapterContent.diagramDescriptions || [])];
+                                              updated[index] = { ...updated[index], description: e.target.value };
+                                              handleContentChange('diagramDescriptions', updated);
+                                            }}
+                                            className="mb-1 text-sm bg-white"
+                                            rows={2}
+                                          />
+                                          <Button variant="ghost" size="sm" onClick={() => {
+                                            const updated = [...(editableChapterContent.diagramDescriptions || [])];
+                                            updated.splice(index, 1);
+                                            handleContentChange('diagramDescriptions', updated);
+                                          }} className="mt-1 text-destructive hover:bg-destructive/10 h-8 px-2"><Trash2 className="mr-1 h-3 w-3"/>Remove Diagram</Button>
                                         </Card>
                                       ))}
-                                      <Button variant="outline" size="sm" onClick={() => addQuestionAnswer('longAnswers')} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Long Question</Button>
+                                      <Button variant="outline" size="sm" onClick={() => handleContentChange('diagramDescriptions', [...(editableChapterContent.diagramDescriptions || []), { title: '', description: '' }])} className="h-9"><PlusCircle className="mr-2 h-4 w-4"/>Add Diagram</Button>
                                     </CardContent>
                                   </Card>
 
@@ -553,7 +663,37 @@ export default function TeacherContentManagementPage() {
           )}
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><FileEdit className="h-6 w-6 text-primary"/>PDF Upload (Easy Teacher Tool)</CardTitle>
+          <CardDescription>
+            Select a grade and chapter, then upload a PDF. The file will be saved automatically and linked for students. No code editing needed!
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <Select onValueChange={setSelectedGradeId} value={selectedGradeId || undefined}>
+              <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
+              <SelectContent>
+                {studyGrades.map(grade => <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select onValueChange={setSelectedChapterId} value={selectedChapterId || undefined}>
+              <SelectTrigger><SelectValue placeholder="Select Chapter" /></SelectTrigger>
+              <SelectContent>
+                {(selectedGradeObject?.chapters || []).map(chapter => <SelectItem key={chapter.id} value={chapter.id}>{chapter.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <input ref={fileInputRef} type="file" accept="application/pdf" onChange={handlePdfUpload} className="block" disabled={uploading || !selectedGradeId || !selectedChapterId} />
+            {uploading && <Loader2 className="animate-spin h-5 w-5 text-primary" />}
+          </div>
+          {uploadError && <Alert variant="destructive" className="mt-2"><AlertDescription>{uploadError}</AlertDescription></Alert>}
+          {uploadSuccess && <Alert variant="default" className="mt-2"><AlertDescription>{uploadSuccess}</AlertDescription></Alert>}
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
 

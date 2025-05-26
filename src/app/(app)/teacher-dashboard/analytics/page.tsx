@@ -23,6 +23,11 @@ import type { StudyGrade } from "@/lib/types"; // Assuming StudentAnalyticsData,
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Ensure AlertTitle is used if provided by your component
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading states
+import { useToast, toast } from "@/hooks/use-toast";
+
+// NOTE: All mock data below is for demonstration and UI testing only.
+// In future releases, these will be replaced by real student tracking, analytics, and backend integration.
+// Do not use these for production or permanent data.
 
 // --- MOCK DATA (Keep for now, replace with API calls eventually) ---
 const overallPerformanceData = [
@@ -106,6 +111,14 @@ const chartConfigEngagement = {
 // Example: <OverallPerformanceChart data={overallPerformanceData} config={chartConfigOverall} />
 // Example: <StudentPerformanceTable students={filteredStudentData} />
 
+// Utility: Determine if data is mock (all mockStudentData have id starting with 's00' and avatars are placeholder URLs)
+function isMockStudentData(data: typeof mockStudentData) {
+  return (
+    data.length > 0 &&
+    data.every(s => s.id.startsWith('s00') && s.avatar?.includes('placehold.co'))
+  );
+}
+
 export default function TeacherAnalyticsPage() {
   const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
   const [isLoadingGrades, setIsLoadingGrades] = useState(true);
@@ -137,16 +150,22 @@ export default function TeacherAnalyticsPage() {
     fetchGradesForFilter();
   }, []);
 
+  // Replace mock data with real data if available (simulate with empty array for now)
+  // In a real app, fetch realStudentData from backend/API
+  const realStudentData: typeof mockStudentData = [];
+  const studentData = realStudentData.length > 0 ? realStudentData : mockStudentData;
+  const usingMockData = isMockStudentData(studentData);
+
   const filteredStudentData = useMemo(() => {
     if (selectedGradeFilter === "all") {
-      return mockStudentData;
+      return studentData;
     }
     const selectedGradeName = studyGrades.find(sg => sg.id === selectedGradeFilter)?.name;
     if (!selectedGradeName) {
-        return mockStudentData; // Or [] if no grade name found means filter should show nothing
+        return studentData;
     }
-    return mockStudentData.filter(student => student.grade === selectedGradeName);
-  }, [mockStudentData, selectedGradeFilter, studyGrades]);
+    return studentData.filter(student => student.grade === selectedGradeName);
+  }, [studentData, selectedGradeFilter, studyGrades]);
 
 
   // --- RENDER HELPER FOR NO DATA ---
@@ -165,6 +184,17 @@ export default function TeacherAnalyticsPage() {
     </div>
   );
 
+  // Example: Show a toast notification for demo/mock data
+  const { toast: showToast } = useToast();
+  useEffect(() => {
+    if (usingMockData) {
+      showToast({
+        title: "Demo Data in Use",
+        description: "The analytics below are currently using mock/demo data. Once real student activity is tracked, this notice will disappear and real data will be shown automatically.",
+        variant: "default", // fallback to default, as 'warning' is not supported
+      });
+    }
+  }, [usingMockData, showToast]);
 
   return (
     <div className="space-y-8">
@@ -187,30 +217,27 @@ export default function TeacherAnalyticsPage() {
                         <CardTitle className="text-sm font-medium flex items-center gap-1"><UserCheck className="h-4 w-4"/>Active Students</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{mockStudentData.length}</p>
-                        {/* <p className="text-xs text-muted-foreground">+2 since last week</p> */}
+                        <p className="text-2xl font-bold">{studentData.length}</p>
                     </CardContent>
                 </Card>
-                 <Card>
+                <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-1"><Percent className="h-4 w-4"/>Overall Avg. Score</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-2xl font-bold">
-                            {(mockStudentData.reduce((acc, s) => acc + s.averageQuizScore, 0) / (mockStudentData.length || 1)).toFixed(1)}%
+                            {(studentData.reduce((acc, s) => acc + s.averageQuizScore, 0) / (studentData.length || 1)).toFixed(1)}%
                         </p>
-                        {/* <p className="text-xs text-muted-foreground">Across all grades</p> */}
                     </CardContent>
                 </Card>
-                 <Card>
+                <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-1"><CheckCircle className="h-4 w-4 text-green-500"/>Total Quizzes Taken</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-2xl font-bold">
-                             {mockStudentData.reduce((acc, s) => acc + s.quizzesCompleted, 0)}
+                             {studentData.reduce((acc, s) => acc + s.quizzesCompleted, 0)}
                         </p>
-                        {/* <p className="text-xs text-muted-foreground">By all students</p> */}
                     </CardContent>
                 </Card>
                 <Card>
@@ -219,7 +246,6 @@ export default function TeacherAnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-2xl font-bold">~15h 20m</p>
-                        {/* <p className="text-xs text-muted-foreground">Per active student</p> */}
                     </CardContent>
                 </Card>
             </div>
@@ -300,8 +326,8 @@ export default function TeacherAnalyticsPage() {
                         <YAxis type="number" tickFormatter={(value) => `${Math.round(value * 100)}%`} domain={[0,1]}/>
                         <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${(Number(value) * 100).toFixed(0)}%`}/>} />
                         <ChartLegend content={<ChartLegendContent />} />
-                        <Bar dataKey="correct" stackId="a" fill="var(--color-success)" radius={[0, 4, 4, 0]} nameKey="config.correct.label" />
-                        <Bar dataKey="incorrect" stackId="a" fill="var(--color-destructive)" radius={[4, 0, 0, 4]} nameKey="config.incorrect.label"/>
+                        <Bar dataKey="correct" stackId="a" fill="var(--color-success)" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="incorrect" stackId="a" fill="var(--color-destructive)" radius={[4, 0, 0, 4]} />
                     </BarChart>
                     </ChartContainer>
                 ) : renderNoData()}
@@ -375,12 +401,12 @@ export default function TeacherAnalyticsPage() {
                             <BarChart data={quizEngagementData} margin={{ left: -20, right: 5 }}>
                                 <CartesianGrid vertical={false} />
                                 <XAxis dataKey="name" tickLine={false} axisLine={false} tickFormatter={(value) => value.length > 15 ? `${value.substring(0,13)}...` : value} interval={0} />
-                                <YAxis yAxisId="left" dataKey="attempts" stroke="var(--color-chart-1)" nameKey="config.attempts.label"/>
-                                <YAxis yAxisId="right" dataKey="avgScore" orientation="right" stroke="var(--color-chart-2)" domain={[0,100]} tickFormatter={(v) => `${v}%`} nameKey="config.avgScore.label" />
+                                <YAxis yAxisId="left" dataKey="attempts" stroke="var(--color-chart-1)" />
+                                <YAxis yAxisId="right" dataKey="avgScore" orientation="right" stroke="var(--color-chart-2)" domain={[0,100]} tickFormatter={(v) => `${v}%`} />
                                 <ChartTooltip content={<ChartTooltipContent />} />
                                 <ChartLegend content={<ChartLegendContent />} />
-                                <Bar yAxisId="left" dataKey="attempts" fill="var(--color-chart-1)" radius={4} nameKey="config.attempts.label" />
-                                <Bar yAxisId="right" dataKey="avgScore" fill="var(--color-chart-2)" radius={4} nameKey="config.avgScore.label" />
+                                <Bar yAxisId="left" dataKey="attempts" fill="var(--color-chart-1)" radius={4} />
+                                <Bar yAxisId="right" dataKey="avgScore" fill="var(--color-chart-2)" radius={4} />
                             </BarChart>
                         </ChartContainer>
                     ) : renderNoData()}
@@ -499,7 +525,7 @@ export default function TeacherAnalyticsPage() {
                     </Table>
                 ) : (
                     <div className="text-center py-6 text-muted-foreground">
-                         {isLoadingGrades ? "Loading student data..." : "No student data matches the current filter."}
+                         {isLoadingGrades ? "Loading student data..." : usingMockData ? "No real student data yet. Showing demo data." : "No student data matches the current filter."}
                     </div>
                 )}
             </CardContent>

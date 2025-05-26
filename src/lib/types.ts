@@ -1,6 +1,3 @@
-
-
-
 export interface TimelineEventDetail {
   type: 'scientist' | 'discovery' | 'era'; // Type of detail
   title: string;
@@ -97,9 +94,13 @@ export interface ChapterContent {
   nationalSyllabusPdfName?: string;
   ziauddinBoardPdfName?: string;
   keyPoints?: string;
+  summary?: string; // Short summary of the chapter
+  formulas?: { formula: string; description: string }[]; // Array of LaTeX formulas and descriptions
   mcqs?: MCQ[];
   shortAnswers?: QuestionAnswer[];
   longAnswers?: QuestionAnswer[];
+  realWorldExamples?: string[]; // Real-world examples/applications
+  diagramDescriptions?: { title: string; description: string }[]; // Array of diagram/figure descriptions
   philosophicalQuestions?: { question: string; hint?: string }[];
   dailyLifeExamples?: string[];
   suggestedSimulations?: string[]; 
@@ -107,6 +108,13 @@ export interface ChapterContent {
   realWorldApplications?: string[];
   workedExamples?: {problem: string, steps: string[]}[];
   lastUpdated?: string;
+  pdfResources?: PdfResource[]; // Added pdfResources field
+}
+
+export interface PdfResource {
+  label: string;
+  icon: string;
+  url: string;
 }
 
 export interface Chapter {

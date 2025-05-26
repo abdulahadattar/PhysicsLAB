@@ -1,9 +1,8 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw, BookOpen, Notebook, User, WifiOff, DownloadCloud, BookCopy, Landmark, Globe, Link2, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw, BookOpen, Notebook, User, WifiOff, DownloadCloud, BookCopy, Landmark, Globe, Link2, Loader2, Trash2, Calculator, Globe2, Image as ImageIcon, Info } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { APP_AUTHOR } from "@/lib/constants";
@@ -15,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Latex from 'react-latex-next';
 
 const TEACHER_CHAPTER_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherChapterOverrides';
 const PDF_DB_NAME = 'PhysicsLabPDFCache';
@@ -129,6 +129,9 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   const [activePdfEmbedUrl, setActivePdfEmbedUrl] = useState<string | null>(null); // URL for iframe (embed or blob)
   const [currentCachedPdfDetails, setCurrentCachedPdfDetails] = useState<CachedPdfData | null>(null);
   const [pdfCacheStatus, setPdfCacheStatus] = useState<'idle' | 'cached' | 'not_cached' | 'error_caching' | 'checking_cache' | 'caching_in_progress'>('checking_cache');
+
+  // Track cache status for each PDF source
+  const [pdfResourceStates, setPdfResourceStates] = useState<Record<string, 'idle' | 'cached' | 'not_cached' | 'error_caching' | 'checking_cache' | 'caching_in_progress'>>({});
 
   const [availableChapterPdfSources, setAvailableChapterPdfSources] = useState<ChapterPdfSourceInfo[]>([]);
 
@@ -363,6 +366,54 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   };
 
 
+  // Helper to check and update cache status for all sources
+  const checkAllPdfCacheStatus = useCallback(async (sources: ChapterPdfSourceInfo[]) => {
+    const newStates: Record<string, typeof pdfCacheStatus> = {};
+    for (const src of sources) {
+      if (src.link) {
+        newStates[src.key] = 'checking_cache';
+        try {
+          const cached = await getPdfFromDB(src.link);
+          newStates[src.key] = cached ? 'cached' : 'not_cached';
+        } catch {
+          newStates[src.key] = 'error_caching';
+        }
+      }
+    }
+    setPdfResourceStates(newStates);
+  }, []);
+
+  // Update cache status when sources change
+  useEffect(() => {
+    if (availableChapterPdfSources.length > 0) {
+      checkAllPdfCacheStatus(availableChapterPdfSources);
+    }
+  }, [availableChapterPdfSources, checkAllPdfCacheStatus]);
+
+  // Per-source download/cache/clear cache controls
+  const handleDownloadPdfForSource = async (src: ChapterPdfSourceInfo) => {
+    if (!src.link) return;
+    setPdfResourceStates(prev => ({ ...prev, [src.key]: 'caching_in_progress' }));
+    try {
+      await attemptToCachePdf(src.link, src.displayName);
+      setPdfResourceStates(prev => ({ ...prev, [src.key]: 'cached' }));
+    } catch {
+      setPdfResourceStates(prev => ({ ...prev, [src.key]: 'error_caching' }));
+    }
+  };
+
+  const handleClearCacheForSource = async (src: ChapterPdfSourceInfo) => {
+    if (!src.link) return;
+    try {
+      await deletePdfFromDB(src.link);
+      setPdfResourceStates(prev => ({ ...prev, [src.key]: 'not_cached' }));
+      toast({title: 'Cache Cleared', description: `Offline cache for ${src.displayName} has been removed.`});
+    } catch {
+      setPdfResourceStates(prev => ({ ...prev, [src.key]: 'error_caching' }));
+      toast({title: 'Error Clearing Cache', description: `Could not remove the PDF for ${src.displayName} from offline storage.`, variant: 'destructive'});
+    }
+  };
+
   if (isLoading || !gradeData || !chapterData) {
     return (
       <div className="space-y-6 p-4 md:p-6">
@@ -432,17 +483,43 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
                     <div className="flex flex-wrap gap-2 mt-2 border-b pb-2 mb-2">
                         <Label className="text-sm font-medium mr-2 self-center">View Source:</Label>
                         {availableChapterPdfSources.map(src => (
+                          <div key={src.key} className="flex items-center gap-1">
                             <Button
-                                key={src.key}
-                                variant={activePdfSourceKey === src.key ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => handleSourceButtonClick(src)}
-                                className="text-xs"
-                                disabled={isCachingPdf || isLoadingPdf}
+                              variant={activePdfSourceKey === src.key ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleSourceButtonClick(src)}
+                              className="text-xs"
+                              disabled={isCachingPdf || isLoadingPdf}
                             >
-                                <src.icon className="mr-1 h-3 w-3" />
-                                {src.displayName}
+                              <src.icon className="mr-1 h-3 w-3" />
+                              {src.displayName}
                             </Button>
+                            {/* Per-source download/cache/clear cache controls */}
+                            {src.link && pdfResourceStates[src.key] !== 'cached' && isOnline && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="Download for Offline"
+                                onClick={() => handleDownloadPdfForSource(src)}
+                                disabled={pdfResourceStates[src.key] === 'caching_in_progress'}
+                              >
+                                <DownloadCloud className="h-4 w-4 text-primary" />
+                              </Button>
+                            )}
+                            {src.link && pdfResourceStates[src.key] === 'cached' && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="Clear Offline Cache"
+                                onClick={() => handleClearCacheForSource(src)}
+                              >
+                                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            )}
+                            {src.link && pdfResourceStates[src.key] === 'caching_in_progress' && (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
                         ))}
                     </div>
                    )}
@@ -498,22 +575,102 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
-                     <div className="space-y-2">
-                        <Skeleton className="h-4 w-full"/>
-                        <Skeleton className="h-4 w-full"/>
-                        <Skeleton className="h-4 w-3/4"/>
-                     </div>
+                   <div className="space-y-2">
+                      <Skeleton className="h-4 w-full"/>
+                      <Skeleton className="h-4 w-full"/>
+                      <Skeleton className="h-4 w-3/4"/>
+                   </div>
                   ) : (
-                    <div className="p-4 border rounded-md bg-secondary/30 min-h-[150px] space-y-4 whitespace-pre-wrap">
-                      {content.keyPoints ? (
-                        <p className="text-sm">{content.keyPoints}</p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No key points available for this chapter yet.</p>
+                    <div className="space-y-4">
+                      {/* Summary */}
+                      {content.summary && (
+                        <div className="p-3 border rounded-md bg-secondary/30 flex gap-2 items-start">
+                          <Info className="h-5 w-5 text-blue-500 mt-1" />
+                          <div>
+                            <div className="font-semibold mb-1">Chapter Summary</div>
+                            <div className="prose prose-sm dark:prose-invert">{content.summary}</div>
+                          </div>
+                        </div>
                       )}
+                      {/* Formulas (LaTeX) - Collapsible */}
+                      {content.formulas && content.formulas.length > 0 && (
+                        <Accordion type="single" collapsible defaultValue="formulas">
+                          <AccordionItem value="formulas">
+                            <AccordionTrigger className="flex items-center gap-2">
+                              <Calculator className="h-5 w-5 text-purple-500" /> Important Formulas
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <ul className="space-y-4">
+                                {content.formulas.map((f, i) => (
+                                  <li key={i} className="flex flex-col gap-1 bg-muted/50 p-2 rounded-md">
+                                    <Latex>{`$$${f.formula}$$`}</Latex>
+                                    <span className="text-xs text-muted-foreground">{f.description}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      )}
+                      {/* Key Points */}
+                      <div className="p-4 border rounded-md bg-secondary/30 min-h-[150px] space-y-4 prose prose-sm dark:prose-invert">
+                        {content.keyPoints ? (
+                          <div>{content.keyPoints}</div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No key points available for this chapter yet.</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
+
+              {/* Real-World Examples - Collapsible */}
+              {content.realWorldExamples && content.realWorldExamples.length > 0 && (
+                <Accordion type="single" collapsible defaultValue="realworld">
+                  <AccordionItem value="realworld">
+                    <AccordionTrigger className="flex items-center gap-2">
+                      <Globe2 className="h-5 w-5 text-green-600" /> Real-World Examples
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Card className="bg-secondary/30">
+                        <CardHeader>
+                          <CardDescription>How these concepts apply in real life.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="list-disc pl-6 space-y-1">
+                            {content.realWorldExamples.map((ex, i) => (
+                              <li key={i} className="text-sm">{ex}</li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              )}
+              {/* Diagram Descriptions */}
+              {content.diagramDescriptions && content.diagramDescriptions.length > 0 && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-2">
+                    <ImageIcon className="h-5 w-5 text-orange-500" />
+                    <div>
+                      <CardTitle>Diagram Descriptions</CardTitle>
+                      <CardDescription>Key diagrams and their explanations.</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {content.diagramDescriptions.map((d, i) => (
+                        <li key={i} className="border-l-4 border-primary pl-3">
+                          <div className="font-semibold">{d.title}</div>
+                          <div className="text-sm text-muted-foreground whitespace-pre-line">{d.description}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="chapter-exercise" className="mt-4 space-y-6">
