@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, HelpCircle, Trash2, Zap, Lightbulb, Minus, Plus, ToggleLeft, ToggleRight, Network } from "lucide-react";
+import { ArrowLeft, Lightbulb, Minus, Plus, ToggleLeft, Network } from "lucide-react";
 import Link from "next/link";
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -52,8 +51,9 @@ export default function SimpleCircuitsG10Page() {
   const [components, setComponents] = useState<CircuitComponent[]>([]);
   const [connections, setConnections] = useState<ConnectionPoint[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<CircuitComponent | null>(null);
-  const [isSnapping, setIsSnapping] = useState(false);
   const [snapToGrid, setSnapToGrid] = useState(true);
+  const [isSnapping, setIsSnapping] = useState(false);
+  // Removed unused isSnapping state
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
 
@@ -82,29 +82,6 @@ export default function SimpleCircuitsG10Page() {
       setSelectedComponent(component);
     }
   };
-
-  // --- Component Removal ---
-  const handleRemove = (component: CircuitComponent) => {
-    setComponents(components.filter(comp => comp.id !== component.id));
-    setConnections(connections.filter(conn => conn.componentId !== component.id));
-    setSelectedComponent(null);
-  };
-
-  // --- Connection Handling ---
-  const handleConnect = (component: CircuitComponent, terminalId: 't1' | 't2') => {
-    if (!selectedComponent) return;
-
-    const newConnection: ConnectionPoint = {
-      componentId: selectedComponent.id,
-      terminalId,
-      x: component.terminals[terminalId].x + component.x,
-      y: component.terminals[terminalId].y + component.y,
-    };
-
-    setConnections([...connections, newConnection]);
-    setSelectedComponent(null);
-  };
-
   // --- Canvas Click (for Deselecting) ---
   const handleCanvasClick = () => {
     setSelectedComponent(null);
@@ -121,12 +98,13 @@ export default function SimpleCircuitsG10Page() {
 
   // --- Component Rendering ---
   const renderComponent = (component: CircuitComponent) => {
+  const renderComponent = (component: CircuitComponent) => {
     const commonProps = {
       key: component.id,
       onMouseDown: (e: React.MouseEvent) => handleSelect(component),
       onMouseUp: () => setSelectedComponent(null),
       onMouseMove: (e: React.MouseEvent) => handleDrag(e, component),
-      style: { position: 'absolute', left: component.x, top: component.y, width: component.width, height: component.height },
+      style: { position: "absolute" as React.CSSProperties["position"], left: component.x, top: component.y, width: component.width, height: component.height },
     };
 
     switch (component.type) {
@@ -139,18 +117,6 @@ export default function SimpleCircuitsG10Page() {
             </div>
             <div className="body">
               <div className="label">9V</div>
-            </div>
-          </div>
-        );
-      case "RESISTOR":
-        return (
-          <div {...commonProps} className="resistor" onDoubleClick={() => notify("Resistor value adjusted!")}>
-            <div className="terminals">
-              <div className="terminal t1" />
-              <div className="terminal t2" />
-            </div>
-            <div className="body">
-              <div className="label">10Ω</div>
             </div>
           </div>
         );
@@ -187,11 +153,22 @@ export default function SimpleCircuitsG10Page() {
             </div>
           </div>
         );
+      case "RESISTOR":
+        return (
+          <div {...commonProps} className="resistor" onDoubleClick={() => notify("Resistor value adjusted!")}>
+            <div className="terminals">
+              <div className="terminal t1" />
+              <div className="terminal t2" />
+            </div>
+            <div className="body">
+              <div className="label">{component.value}Ω</div>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
   };
-
   return (
     <div className="space-y-6">
       <Button variant="outline" asChild size="sm">
