@@ -191,7 +191,6 @@ This app allows teachers to manage study materials, including dynamic PDF resour
 
 ## Contributing
 - Code is modular and readable for easy collaboration.
-- All legacy/hardcoded PDF fields and AI-generated hints have been removed.
 - Please follow best practices for maintainability and extensibility.
 
 ## Getting Started
