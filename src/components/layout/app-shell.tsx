@@ -43,6 +43,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
+import { debounce } from '@/lib/debounce';
 
 /**
  * @fileOverview The main application shell component.
@@ -319,18 +320,16 @@ export function AppShell({ children }: AppShellProps) {
 
   // Debounced search effect
   useEffect(() => {
-    const handler = setTimeout(() => {
+    const handler = debounce(() => {
       if (searchTerm.trim()) {
         performSearch(searchTerm);
       } else {
         setSearchResults([]);
         setIsSearchOpen(false);
       }
-    }, 300); // 300ms debounce
-
-    return () => {
-      clearTimeout(handler);
-    };
+    }, 300);
+    handler();
+    // No cancel method, so no cleanup needed
   }, [searchTerm, performSearch]);
 
   /**
@@ -766,10 +765,14 @@ useEffect(() => {
       body: JSON.stringify({ error: errorMsg })
     });
   }
-  window.addEventListener('error', handleError);
-  window.addEventListener('unhandledrejection', handleRejection);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+  }
   return () => {
-    window.removeEventListener('error', handleError);
-    window.removeEventListener('unhandledrejection', handleRejection);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    }
   };
 }, []);

@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 // Input Schema
 const ExtractChapterContentInputSchema = z.object({
@@ -21,7 +21,7 @@ const ExtractChapterContentInputSchema = z.object({
     activityFocus: z.string().optional(),
     differentiationNeeds: z.string().optional(),
     assessmentMethods: z.string().optional(),
-  }).optional(),
+  }).optional().describe('Custom prompts for activity focus, differentiation needs and assessment methods.'),
 });
 export type ExtractChapterContentInput = z.infer<typeof ExtractChapterContentInputSchema>;
 
@@ -32,23 +32,23 @@ const MCQSchema = z.object({
   options: z.array(z.string()).length(4).describe('An array of exactly four option strings.'),
   correctAnswerIndex: z.number().min(0).max(3).describe('The 0-based index of the correct option in the options array.'),
   explanation: z.string().describe('A brief explanation for why the answer is correct.'),
-});
+}).describe('Schema for a multiple-choice question.');
 
 const QuestionAnswerSchema = z.object({
   question: z.string().describe('The question text (for short or long answers).'),
   answer: z.string().describe('The answer to the question.'),
-});
+}).describe('Schema for a question and its answer.');
 
 // --- FORMULAS: All formulas must be in LaTeX (with $ or $$ delimiters as appropriate) ---
 const FormulaSchema = z.object({
   latex: z.string().describe('The formula in LaTeX format (with $ or $$ delimiters as appropriate).'),
   description: z.string().describe('A brief description of what the formula represents and its context in the chapter.'),
-});
+}).describe('Schema for a formula in LaTeX format.');
 
 const DiagramDescriptionSchema = z.object({
   title: z.string().describe('A short title for the diagram or figure.'),
   description: z.string().describe('A detailed description of the diagram, its components, and what it illustrates.'),
-});
+}).describe('Schema for a diagram description.');
 
 const ExtractedChapterContentOutputSchema = z.object({
   summary: z.string().describe('A 2-4 sentence summary of the chapter, suitable for quick review. Use markdown for formatting if helpful.'),
@@ -59,12 +59,12 @@ const ExtractedChapterContentOutputSchema = z.object({
   longAnswers: z.array(QuestionAnswerSchema).describe('An array of 2 long answer questions (ERQs) with their model answers.'),
   realWorldExamples: z.array(z.string()).describe('An array of 2-4 real-world examples or applications of the chapter concepts.'),
   diagramDescriptions: z.array(DiagramDescriptionSchema).describe('An array of 1-3 diagram/figure descriptions relevant to the chapter.'),
-});
+}).describe('Schema for the extracted chapter content output.');
 export type ExtractedChapterContentOutput = z.infer<typeof ExtractedChapterContentOutputSchema>;
 
 
 // Main exported function (wrapper for the flow)
-export async function extractChapterContent(input: ExtractChapterContentInput): Promise<ExtractedChapterContentOutput> {
+export async function extractChapterContent(input: ExtractChapterContentInput) {
   // In a real implementation, you might have more pre-processing here if actual PDF text is passed.
   // For now, the simulation logic is within the prompt/flow.
   return extractChapterContentGenkitFlow(input);
@@ -75,7 +75,7 @@ const prompt = ai.definePrompt({
   input: { schema: ExtractChapterContentInputSchema },
   output: { schema: ExtractedChapterContentOutputSchema },
   // --- PROMPT CLARIFICATION: All formulas must be in LaTeX (with $ or $$ delimiters). Use Markdown for key points and summaries. ---
-  prompt: `You are an AI assistant specialized in processing physics educational material and structuring it for learning applications.\n\nGiven the following text content (or a description of the source if actual text is too long for this prompt) from a physics chapter titled "{{chapterName}}", perform the following tasks. Leverage your understanding to draft comprehensive and accurate content suitable for a teacher's review.\n\n1.  **Summary:** Write a 2-4 sentence summary of the chapter.\n2.  **Key Points & Summary:** Generate a concise yet comprehensive summary of the key concepts, important definitions, and core principles discussed in the chapter. Use markdown formatting (bullets, bold, etc.) for clarity.\n3.  **Important Formulas:** List all important formulas from the chapter. For each, provide the formula in LaTeX (with $ or $$ delimiters as appropriate) and a brief description.\n4.  **Multiple Choice Questions (MCQs):** Create exactly 5 unique MCQs based on the chapter content. Each MCQ must have:\n    *   A clear question.\n    *   Exactly four distinct answer options.\n    *   A single correct answer (indicate its 0-based index).\n    *   A brief explanation for why that answer is correct.\n5.  **Short Answer Questions (CRQs):** Create exactly 3 unique short answer questions that require a concise explanation or calculation. Provide the model answer for each.\n6.  **Long Answer Questions (ERQs):** Create exactly 2 unique long answer questions that require a more detailed explanation, derivation, or application of concepts. Provide the model answer for each.\n7.  **Real-World Examples:** List 2-4 real-world examples or applications of the chapter's concepts.\n8.  **Diagram Descriptions:** For 1-3 key diagrams or figures, provide a title and a detailed description of what the diagram shows and its relevance.\n\n**Formatting and LaTeX Instructions:**\n- All formulas must be in LaTeX with $ or $$ delimiters as appropriate.\n- Use markdown for lists, bold, and clarity in text fields.\n- Structure your entire response as a single JSON object adhering to the defined output schema.\n\n{{#if customPrompts.activityFocus}}For the 'Activity' section, particularly focus on: {{customPrompts.activityFocus}}.{{/if}}\n{{#if customPrompts.differentiationNeeds}}Address these differentiation needs: {{customPrompts.differentiationNeeds}}.{{/if}}\n{{#if customPrompts.assessmentMethods}}Incorporate assessment methods such as: {{customPrompts.assessmentMethods}}.{{/if}}\n\nChapter Content Source (or description if content is very long/simulated):\n\n```\n{{{pdfTextContent}}}\n```\n\nExample structure for a formula item:\n{ "latex": "$$F=ma$$", "description": "Newton's second law: force equals mass times acceleration." }\n\nExample structure for an MCQ item:\n{ "question": "...", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0, "explanation": "..." }\n\nExample structure for a QuestionAnswer item (for CRQs/ERQs):\n{ "question": "...", "answer": "..." }\n\nExample structure for a diagram description:\n{ "title": "Free Body Diagram", "description": "A diagram showing all the forces acting on a block on an inclined plane." }\n`,
+  promptTemplate: `You are an AI assistant specialized in processing physics educational material and structuring it for learning applications.\n\nGiven the following text content (or a description of the source if actual text is too long for this prompt) from a physics chapter titled "{{chapterName}}", perform the following tasks. Leverage your understanding to draft comprehensive and accurate content suitable for a teacher's review.\n\n1.  **Summary:** Write a 2-4 sentence summary of the chapter.\n2.  **Key Points & Summary:** Generate a concise yet comprehensive summary of the key concepts, important definitions, and core principles discussed in the chapter. Use markdown formatting (bullets, bold, etc.) for clarity.\n3.  **Important Formulas:** List all important formulas from the chapter. For each, provide the formula in LaTeX (with $ or $$ delimiters as appropriate) and a brief description.\n4.  **Multiple Choice Questions (MCQs):** Create exactly 5 unique MCQs based on the chapter content. Each MCQ must have:\n    *   A clear question.\n    *   Exactly four distinct answer options.\n    *   A single correct answer (indicate its 0-based index).\n    *   A brief explanation for why that answer is correct.\n5.  **Short Answer Questions (CRQs):** Create exactly 3 unique short answer questions that require a concise explanation or calculation. Provide the model answer for each.\n6.  **Long Answer Questions (ERQs):** Create exactly 2 unique long answer questions that require a more detailed explanation, derivation, or application of concepts. Provide the model answer for each.\n7.  **Real-World Examples:** List 2-4 real-world examples or applications of the chapter's concepts.\n8.  **Diagram Descriptions:** For 1-3 key diagrams or figures, provide a title and a detailed description of what the diagram shows and its relevance.\n\n**Formatting and LaTeX Instructions:**\n- All formulas must be in LaTeX with $ or $$ delimiters as appropriate.\n- Use markdown for lists, bold, and clarity in text fields.\n- Structure your entire response as a single JSON object adhering to the defined output schema.\n\n{{#if customPrompts.activityFocus}}For the 'Activity' section, particularly focus on: {{customPrompts.activityFocus}}.{{/if}}\n{{#if customPrompts.differentiationNeeds}}Address these differentiation needs: {{customPrompts.differentiationNeeds}}.{{/if}}\n{{#if customPrompts.assessmentMethods}}Incorporate assessment methods such as: {{customPrompts.assessmentMethods}}.{{/if}}\n\nChapter Content Source (or description if content is very long/simulated):\n\n```\n{{{pdfTextContent}}}\n```\n\nExample structure for a formula item:\n{ "latex": "$$F=ma$$", "description": "Newton's second law: force equals mass times acceleration." }\n\nExample structure for an MCQ item:\n{ "question": "...", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0, "explanation": "..." }\n\nExample structure for a QuestionAnswer item (for CRQs/ERQs):\n{ "question": "...", "answer": "..." }\n\nExample structure for a diagram description:\n{ "title": "Free Body Diagram", "description": "A diagram showing all the forces acting on a block on an inclined plane." }\n`,
 });
 
 const extractChapterContentGenkitFlow = ai.defineFlow(

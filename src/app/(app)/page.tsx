@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { BookOpen, FlaskConical, Lightbulb, ListChecks } from "lucide-react";
+import { BookOpen, FlaskConical, Lightbulb, ListChecks, Sigma, MoveVertical } from "lucide-react";
 import { APP_NAME, APP_AUTHOR } from "@/lib/constants";
 
 export default function DashboardPage() {
@@ -31,6 +30,22 @@ export default function DashboardPage() {
       icon: ListChecks,
       image: "https://placehold.co/600x400.png", 
       aiHint: "quiz test"
+    },
+    {
+      title: "Sig Figs & Sci Notation",
+      description: "Practice significant figures and scientific notation.",
+      href: "/simulations/sig-figs-scientific-notation-g9",
+      icon: Sigma,
+      image: "https://placehold.co/600x400.png",
+      aiHint: "significant figures scientific notation"
+    },
+    {
+      title: "Simple Pendulum SHM",
+      description: "Observe Simple Harmonic Motion of a simple pendulum.",
+      href: "/simulations/simple-pendulum-shm-g10",
+      icon: MoveVertical,
+      image: "https://placehold.co/600x400.png",
+      aiHint: "simple pendulum SHM"
     },
   ];
 
