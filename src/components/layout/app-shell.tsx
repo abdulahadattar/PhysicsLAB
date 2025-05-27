@@ -365,8 +365,8 @@ export function AppShell({ children }: AppShellProps) {
       }
 
       // Determine if the current item or any of its sub-items are active
-      const isDirectlyActive = item.matchExact ? pathname === item.href : (item.href && item.href !== '#' ? pathname.startsWith(item.href) : false);
-      const isChildActive = item.subItems ? item.subItems.some(sub => pathname.startsWith(sub.href)) : false;
+      const isDirectlyActive = item.matchExact ? pathname === item.href : (item.href && item.href !== '#' ? pathname && pathname.startsWith(item.href) : false);
+      const isChildActive = item.subItems ? item.subItems.some(sub => pathname && pathname.startsWith(sub.href)) : false;
       const isActive = isDirectlyActive || isChildActive; // This 'isActive' is used for visual indication for the parent item/accordion trigger
 
       if (item.subItems && item.subItems.length > 0) {
@@ -404,7 +404,7 @@ export function AppShell({ children }: AppShellProps) {
                       <Link href={subItem.href} passHref legacyBehavior={false}>
                         <SidebarMenuButton // This button IS the link target
                           asChild // Let Link render this button
-                          isActive={pathname.startsWith(subItem.href)}
+                          isActive={pathname && pathname.startsWith(subItem.href)}
                           className="text-sm" // Explicitly smaller for sub-items
                           tooltip={subItem.label}
                         >
@@ -532,11 +532,22 @@ export function AppShell({ children }: AppShellProps) {
           <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" onClick={toggleSidebar} aria-label="Open Sidebar">
             <MenuIcon className="h-5 w-5" />
           </Button>
-          <SidebarTrigger className="md:hidden" aria-label="Toggle Sidebar" />
 
           {/* Global Search Bar */}
           <div className="relative flex-grow max-w-md">
-             <Popover open={isSearchOpen} onOpenChange={(open) => { if(!open && !searchTerm) { setIsSearchOpen(false); } else if (open && searchTerm) { setIsSearchOpen(true); } else if (!open && searchTerm) { /* remain open if there is a search term */ } else {setIsSearchOpen(open); setSearchTerm(''); setSearchResults([]); } }}>
+             <Popover open={isSearchOpen} onOpenChange={(open) => {
+              if (open && searchTerm.trim()) {
+                setIsSearchOpen(true); // Open if there's a term
+              } else if (!open) {
+                setIsSearchOpen(false); // Always close if 'open' is false from the trigger
+                if (!searchTerm.trim()) { // Also clear search if closing and term is empty
+                  setSearchTerm('');
+                  setSearchResults([]);
+                }
+              } else if (open && !searchTerm.trim()){
+                setIsSearchOpen(true); // Open if explicitly opened even with no term (e.g. onFocus)
+              }
+            }}>
               <PopoverAnchor asChild>
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -739,7 +750,7 @@ export function AppShell({ children }: AppShellProps) {
 
 // --- Automated error logging ---
 useEffect(() => {
-  function handleError(event) {
+  function handleError(event: ErrorEvent) {
     const errorMsg = `[${new Date().toISOString()}] JS Error: ${event.message}\nSource: ${event.filename}\nLine: ${event.lineno}, Col: ${event.colno}\nStack: ${event.error?.stack || 'N/A'}\n---\n`;
     fetch('/api/log-error', {
       method: 'POST',
@@ -747,7 +758,7 @@ useEffect(() => {
       body: JSON.stringify({ error: errorMsg })
     });
   }
-  function handleRejection(event) {
+  function handleRejection(event: PromiseRejectionEvent) {
     const errorMsg = `[${new Date().toISOString()}] Unhandled Promise Rejection: ${event.reason?.message || event.reason}\nStack: ${event.reason?.stack || 'N/A'}\n---\n`;
     fetch('/api/log-error', {
       method: 'POST',

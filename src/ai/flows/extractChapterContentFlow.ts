@@ -15,10 +15,18 @@ import { z } from 'genkit';
 const ExtractChapterContentInputSchema = z.object({
   pdfTextContent: z.string().describe('The textual content extracted from the chapter PDF. For simulation, this might be a filename or short description of the content source.'),
   chapterName: z.string().describe('The name of the chapter to provide context to the AI.'),
+  // Add support for custom prompts and SLOs for future extensibility
+  sloText: z.string().optional().describe('Specific SLO if generating for an SLO.'),
+  customPrompts: z.object({
+    activityFocus: z.string().optional(),
+    differentiationNeeds: z.string().optional(),
+    assessmentMethods: z.string().optional(),
+  }).optional(),
 });
 export type ExtractChapterContentInput = z.infer<typeof ExtractChapterContentInputSchema>;
 
 // Output Schema for Structured Content
+// NOTE: All formulas must be in LaTeX (with $ or $$ delimiters). Key points and summaries should use Markdown for structure and clarity.
 const MCQSchema = z.object({
   question: z.string().describe('The multiple-choice question text.'),
   options: z.array(z.string()).length(4).describe('An array of exactly four option strings.'),
@@ -31,8 +39,9 @@ const QuestionAnswerSchema = z.object({
   answer: z.string().describe('The answer to the question.'),
 });
 
+// --- FORMULAS: All formulas must be in LaTeX (with $ or $$ delimiters as appropriate) ---
 const FormulaSchema = z.object({
-  formula: z.string().describe('The formula in LaTeX format (do not use $ or $$ delimiters, just the raw LaTeX).'),
+  latex: z.string().describe('The formula in LaTeX format (with $ or $$ delimiters as appropriate).'),
   description: z.string().describe('A brief description of what the formula represents and its context in the chapter.'),
 });
 
@@ -44,7 +53,7 @@ const DiagramDescriptionSchema = z.object({
 const ExtractedChapterContentOutputSchema = z.object({
   summary: z.string().describe('A 2-4 sentence summary of the chapter, suitable for quick review. Use markdown for formatting if helpful.'),
   keyPoints: z.string().describe('A summary of key points, definitions, and important concepts from the chapter, formatted for readability (e.g., using markdown). This should be comprehensive and accurate.'),
-  formulas: z.array(FormulaSchema).describe('An array of important formulas from the chapter, each in LaTeX format with a description. Use only raw LaTeX, no $ or $$.'),
+  formulas: z.array(FormulaSchema).describe('An array of important formulas from the chapter, each in LaTeX format (with $ or $$ delimiters) and a description.'),
   mcqs: z.array(MCQSchema).describe('An array of 5 multiple-choice questions relevant to the chapter. Ensure questions are clear, options distinct, and explanations concise.'),
   shortAnswers: z.array(QuestionAnswerSchema).describe('An array of 3 short answer questions (CRQs) with their model answers.'),
   longAnswers: z.array(QuestionAnswerSchema).describe('An array of 2 long answer questions (ERQs) with their model answers.'),
@@ -65,7 +74,8 @@ const prompt = ai.definePrompt({
   name: 'extractChapterContentPrompt',
   input: { schema: ExtractChapterContentInputSchema },
   output: { schema: ExtractedChapterContentOutputSchema },
-  prompt: `You are an AI assistant specialized in processing physics educational material and structuring it for learning applications.\n\nGiven the following text content (or a description of the source if actual text is too long for this prompt) from a physics chapter titled "{{chapterName}}", perform the following tasks. Leverage your understanding to draft comprehensive and accurate content suitable for a teacher's review.\n\n1.  **Summary:** Write a 2-4 sentence summary of the chapter.\n2.  **Key Points & Summary:** Generate a concise yet comprehensive summary of the key concepts, important definitions, and core principles discussed in the chapter. Use markdown formatting (bullets, bold, etc.) for clarity.\n3.  **Important Formulas:** List all important formulas from the chapter. For each, provide the formula in raw LaTeX (no $ or $$) and a brief description.\n4.  **Multiple Choice Questions (MCQs):** Create exactly 5 unique MCQs based on the chapter content. Each MCQ must have:\n    *   A clear question.\n    *   Exactly four distinct answer options.\n    *   A single correct answer (indicate its 0-based index).\n    *   A brief explanation for why that answer is correct.\n5.  **Short Answer Questions (CRQs):** Create exactly 3 unique short answer questions that require a concise explanation or calculation. Provide the model answer for each.\n6.  **Long Answer Questions (ERQs):** Create exactly 2 unique long answer questions that require a more detailed explanation, derivation, or application of concepts. Provide the model answer for each.\n7.  **Real-World Examples:** List 2-4 real-world examples or applications of the chapter's concepts.\n8.  **Diagram Descriptions:** For 1-3 key diagrams or figures, provide a title and a detailed description of what the diagram shows and its relevance.\n\n**Formatting and LaTeX Instructions:**\n- All formulas must be in raw LaTeX (no $ or $$).\n- Use markdown for lists, bold, and clarity in text fields.\n- Structure your entire response as a single JSON object adhering to the defined output schema.\n\nChapter Content Source (or description if content is very long/simulated):\n\n\`\`\`\n{{{pdfTextContent}}}\n\`\`\`\n\nExample structure for a formula item:\n{ "formula": "F=ma", "description": "Newton's second law: force equals mass times acceleration." }\n\nExample structure for an MCQ item:\n{ "question": "...", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0, "explanation": "..." }\n\nExample structure for a QuestionAnswer item (for CRQs/ERQs):\n{ "question": "...", "answer": "..." }\n\nExample structure for a diagram description:\n{ "title": "Free Body Diagram", "description": "A diagram showing all the forces acting on a block on an inclined plane." }\n`,
+  // --- PROMPT CLARIFICATION: All formulas must be in LaTeX (with $ or $$ delimiters). Use Markdown for key points and summaries. ---
+  prompt: `You are an AI assistant specialized in processing physics educational material and structuring it for learning applications.\n\nGiven the following text content (or a description of the source if actual text is too long for this prompt) from a physics chapter titled "{{chapterName}}", perform the following tasks. Leverage your understanding to draft comprehensive and accurate content suitable for a teacher's review.\n\n1.  **Summary:** Write a 2-4 sentence summary of the chapter.\n2.  **Key Points & Summary:** Generate a concise yet comprehensive summary of the key concepts, important definitions, and core principles discussed in the chapter. Use markdown formatting (bullets, bold, etc.) for clarity.\n3.  **Important Formulas:** List all important formulas from the chapter. For each, provide the formula in LaTeX (with $ or $$ delimiters as appropriate) and a brief description.\n4.  **Multiple Choice Questions (MCQs):** Create exactly 5 unique MCQs based on the chapter content. Each MCQ must have:\n    *   A clear question.\n    *   Exactly four distinct answer options.\n    *   A single correct answer (indicate its 0-based index).\n    *   A brief explanation for why that answer is correct.\n5.  **Short Answer Questions (CRQs):** Create exactly 3 unique short answer questions that require a concise explanation or calculation. Provide the model answer for each.\n6.  **Long Answer Questions (ERQs):** Create exactly 2 unique long answer questions that require a more detailed explanation, derivation, or application of concepts. Provide the model answer for each.\n7.  **Real-World Examples:** List 2-4 real-world examples or applications of the chapter's concepts.\n8.  **Diagram Descriptions:** For 1-3 key diagrams or figures, provide a title and a detailed description of what the diagram shows and its relevance.\n\n**Formatting and LaTeX Instructions:**\n- All formulas must be in LaTeX with $ or $$ delimiters as appropriate.\n- Use markdown for lists, bold, and clarity in text fields.\n- Structure your entire response as a single JSON object adhering to the defined output schema.\n\n{{#if customPrompts.activityFocus}}For the 'Activity' section, particularly focus on: {{customPrompts.activityFocus}}.{{/if}}\n{{#if customPrompts.differentiationNeeds}}Address these differentiation needs: {{customPrompts.differentiationNeeds}}.{{/if}}\n{{#if customPrompts.assessmentMethods}}Incorporate assessment methods such as: {{customPrompts.assessmentMethods}}.{{/if}}\n\nChapter Content Source (or description if content is very long/simulated):\n\n```\n{{{pdfTextContent}}}\n```\n\nExample structure for a formula item:\n{ "latex": "$$F=ma$$", "description": "Newton's second law: force equals mass times acceleration." }\n\nExample structure for an MCQ item:\n{ "question": "...", "options": ["A", "B", "C", "D"], "correctAnswerIndex": 0, "explanation": "..." }\n\nExample structure for a QuestionAnswer item (for CRQs/ERQs):\n{ "question": "...", "answer": "..." }\n\nExample structure for a diagram description:\n{ "title": "Free Body Diagram", "description": "A diagram showing all the forces acting on a block on an inclined plane." }\n`,
 });
 
 const extractChapterContentGenkitFlow = ai.defineFlow(
@@ -96,9 +106,10 @@ const extractChapterContentGenkitFlow = ai.defineFlow(
         { id: "la_sim1", question: `Simulated: Explain the main principle of '${input.chapterName}' with an example.`, answer: "Work is done when a force causes an object to move in the direction of the force. Example: Lifting a book from a table. This example is simulated for the chapter." },
         { id: "la_sim2", question: `Simulated: Derive a relevant formula from ${input.chapterName}.`, answer: "This is a simulated derivation for a formula related to the chapter. Step 1: ..., Step 2: ..., Final formula." },
       ];
+      // Map old mockFormulas to new latex field for compatibility
       const mockFormulas = [
-        { id: "f_sim1", formula: "F=ma", description: "Simulated: Newton's second law: force equals mass times acceleration." },
-        { id: "f_sim2", formula: "E=mc^2", description: "Simulated: Mass-energy equivalence." },
+        { id: "f_sim1", latex: "$$F=ma$$", description: "Simulated: Newton's second law: force equals mass times acceleration." },
+        { id: "f_sim2", latex: "$$E=mc^2$$", description: "Simulated: Mass-energy equivalence." },
       ];
       const mockDiagramDescriptions = [
         { id: "d_sim1", title: "Free Body Diagram", description: "A diagram showing all the forces acting on a block on an inclined plane." },
