@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, ListChecks, Star, AlertTriangle, CheckCircle, RefreshCw, BookOpen, Notebook, User, WifiOff, DownloadCloud, BookCopy, Landmark, Globe, Link2, Loader2, Trash2, Calculator, Globe2, Image as ImageIcon, Info } from "lucide-react";
 import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { APP_AUTHOR } from "@/lib/constants";
 import type { StudyGrade, Chapter, ChapterContent, MCQ as MCQType, QuestionAnswer, TeacherChapterOverrides } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { db } from '@/lib/firebase'; // Import Firestore DB instance
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Latex from 'react-latex-next';
 
@@ -21,14 +23,7 @@ const PDF_DB_NAME = 'PhysicsLabPDFCache';
 const PDF_STORE_NAME = 'pdfStore';
 
 type ChapterPdfSourceKey = keyof Pick<ChapterContent,
-  'stbbChapterPdfLink' |
-  'teacherNotesPdfName' |
-  'alternativeChapterPdfLink' |
-  'punjabBoardPdfName' |
-  'nationalSyllabusPdfName' |
-  'ziauddinBoardPdfName'
->;
-
+  'stbbChapterPdfLink' | 'teacherNotesPdfName' | 'alternativeChapterPdfLink' | 'punjabBoardPdfName' | 'nationalSyllabusPdfName' | 'ziauddinBoardPdfName'>;
 interface ChapterPdfSourceInfo {
   key: ChapterPdfSourceKey;
   displayName: string;
@@ -37,8 +32,8 @@ interface ChapterPdfSourceInfo {
 }
 
 interface ChapterDetailClientProps {
-  initialGradeData: StudyGrade;
-  initialChapterData: Chapter;
+  initialGradeData: StudyGrade; // Still useful for grade name/context
+  initialChapterData: Chapter; // Still useful for chapter name/initial structure
   params: {
     grade: string;
     chapterId: string;
@@ -115,7 +110,7 @@ const deletePdfFromDB = async (url: string): Promise<void> => {
 export default function ChapterDetailClient({ initialGradeData, initialChapterData, params }: ChapterDetailClientProps) {
   const { toast } = useToast();
   const [gradeData, setGradeData] = useState<StudyGrade | null>(initialGradeData);
-  const [chapterData, setChapterData] = useState<Chapter | null>(initialChapterData);
+  const [chapterContent, setChapterContent] = useState<ChapterContent | null>(null); // Full fetched content
   const [isLoading, setIsLoading] = useState(false); // For initial chapter data merge
   const [isLoadingPdf, setIsLoadingPdf] = useState(false); // Specifically for PDF loading/caching operations
 
@@ -248,23 +243,72 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
   }, [isOnline, toast, getGoogleDriveEmbedUrl, attemptToCachePdf]);
 
   const loadChapterWithOverrides = useCallback(async () => {
+    if (!db) {
+        console.error("Firestore DB is not initialized.");
+        // Handle this case gracefully, maybe show a warning or error message to the user.
+        // You might want to load initial data from props as a fallback here if possible,
+        // but the prompt asks to fetch from Firestore.
+         toast({
+            title: "Database Error",
+            description: "Physics content database is not available.",
+            variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+    }
+
     setIsLoading(true);
-    let finalChapterData = { ...initialChapterData };
+    let fetchedContent: ChapterContent | null = null;
+    let fetchedGrade: StudyGrade | null = null;
+
     try {
+      // Fetch chapter content from Firestore
+      const chapterDocRef = doc(db, `studyMaterials/${params.grade}/chapters/${params.chapterId}`);
+      const chapterDocSnap = await getDoc(chapterDocRef);
+
+      if (chapterDocSnap.exists()) {
+        fetchedContent = chapterDocSnap.data() as ChapterContent;
+      } else {
+         toast({ title: "Content Not Found", description: "Chapter details could not be loaded.", variant: "destructive" });
+      }
+
+      // Fetch grade data (for name context)
+      const gradeDocRef = doc(db, `studyMaterials/${params.grade}`);
+      const gradeDocSnap = await getDoc(gradeDocRef);
+      if (gradeDocSnap.exists()) {
+        fetchedGrade = gradeDocSnap.data() as StudyGrade;
+      }
+
+      // Apply teacher overrides from localStorage
       if (typeof window !== 'undefined') {
           const overridesRaw = localStorage.getItem(TEACHER_CHAPTER_OVERRIDES_STORAGE_KEY);
           if (overridesRaw) {
             const allOverrides: TeacherChapterOverrides = JSON.parse(overridesRaw);
-            const chapterOverride = allOverrides[finalChapterData.id];
+            const chapterOverride = allOverrides[params.chapterId]; // Use params.chapterId
             if (chapterOverride) {
-                const mergedContent: ChapterContent = {
-                  ...(finalChapterData.content || {}),
-                  ...chapterOverride
-                };
-                finalChapterData.content = mergedContent;
+                fetchedContent = { ...(fetchedContent || {}), ...chapterOverride };
             }
           }
       }
+
+      setChapterContent(fetchedContent);
+      setGradeData(fetchedGrade || initialGradeData); // Fallback to initial grade data if fetch fails
+
+      // Determine available PDF sources
+      const content = fetchedContent || {}; // Use fetched content
+      const validSources: ChapterPdfSourceInfo[] = pdfSourceConfig
+          .map(cfg => ({ ...cfg, link: content[cfg.key] }))
+          .filter(s => s.link && s.link.trim() !== "");
+      setAvailableChapterPdfSources(validSources);
+
+      if (validSources.length > 0) {
+          setActivePdfSourceKey(validSources[0].key);
+          await updateDisplayedPdf(validSources[0].link!, validSources[0].displayName);
+      } else {
+          setActivePdfSourceKey(null);
+          await updateDisplayedPdf(null, "No Source");
+      }
+
     } catch (e) {
       console.error("Failed to load or parse teacher chapter overrides:", e);
       toast({
@@ -273,26 +317,9 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
         variant: "destructive"
       })
     }
-    setChapterData(finalChapterData);
-    setGradeData(initialGradeData);
+     setIsLoading(false);
 
-    const content = finalChapterData.content || {};
-    const validSources: ChapterPdfSourceInfo[] = pdfSourceConfig
-        .map(cfg => ({ ...cfg, link: content[cfg.key] }))
-        .filter(s => s.link && s.link.trim() !== "");
-    
-    setAvailableChapterPdfSources(validSources);
-
-    if (validSources.length > 0) {
-        setActivePdfSourceKey(validSources[0].key);
-        await updateDisplayedPdf(validSources[0].link!, validSources[0].displayName);
-    } else {
-        setActivePdfSourceKey(null);
-        await updateDisplayedPdf(null, "No Source");
-    }
-
-    setIsLoading(false);
-  }, [initialChapterData, initialGradeData, toast, updateDisplayedPdf, pdfSourceConfig]);
+  }, [params.grade, params.chapterId, toast, updateDisplayedPdf, pdfSourceConfig, initialGradeData]);
 
   useEffect(() => {
     loadChapterWithOverrides();
@@ -414,7 +441,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     }
   };
 
-  if (isLoading || !gradeData || !chapterData) {
+  if (isLoading || !gradeData || !chapterContent) {
     return (
       <div className="space-y-6 p-4 md:p-6">
         <Skeleton className="h-8 w-1/3" />
@@ -433,7 +460,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
     );
   }
 
-  const content: ChapterContent = chapterData.content || {};
+  const content: ChapterContent = chapterContent;
   const lastUpdatedByTeacher = content.lastUpdated ? new Date(content.lastUpdated).toLocaleDateString() : null;
 
   const currentActiveDisplayName = availableChapterPdfSources.find(s => s.key === activePdfSourceKey)?.displayName || "Chapter Notes";
@@ -456,7 +483,7 @@ export default function ChapterDetailClient({ initialGradeData, initialChapterDa
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl">{chapterData.name}</CardTitle>
-          <CardDescription>
+          <CardDescription> {/* Using initialChapterData for name and gradeData for grade name as fallback */}
             {gradeData.name} - Sindh Textbook Board Syllabus. App by {APP_AUTHOR}.
             {lastUpdatedByTeacher && <span className="text-xs text-muted-foreground italic"> (Teacher Edits: {lastUpdatedByTeacher})</span>}
           </CardDescription>

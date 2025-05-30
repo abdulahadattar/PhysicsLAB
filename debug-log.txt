@@ -14,3 +14,209 @@ This file will be used to collect and save bug and error information encountered
 - Whenever you see an error or bug in the app, copy the error message or describe the bug and paste it below this line.
 - Include the page, action, and any relevant details.
 - This log can be reviewed and used for future debugging and fixes.
+[2025-05-27T22:19:37.764Z] JS Error: Uncaught Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at getRootForUpdatedFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4701:171)
+    at enqueueConcurrentHookUpdate (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4685:16)
+    at dispatchSetStateInternal (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:6448:22)
+    at dispatchSetState (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:6421:9)
+    at SliderThumb.useComposedRefs[composedRefs] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1414:62)
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at runWithFiberInDEV (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:3501:74)
+    at safelyDetachRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8009:37)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8555:82)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8553:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8553:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8676:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at span (<anonymous>)
+    at Primitive.span (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2833:210)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1469:221
+    at Slot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2599:206)
+    at SliderCollectionItemSlot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2748:210)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1467:207
+    at SliderThumb (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1424:206)
+    at _c (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:77:215)
+    at BlackHoleSpacetimeVisualizerPage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:680:271)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
+[2025-05-27T23:27:55.255Z] JS Error: Uncaught Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at getRootForUpdatedFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4701:171)
+    at enqueueConcurrentHookUpdate (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4685:16)
+    at dispatchSetStateInternal (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:6448:22)
+    at dispatchSetState (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:6421:9)
+    at SliderThumb.useComposedRefs[composedRefs] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_9e34bc4a._.js:3553:62)
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at runWithFiberInDEV (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:3501:74)
+    at safelyDetachRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8009:37)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8555:82)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8553:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8553:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8676:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at span (<anonymous>)
+    at Primitive.span (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2833:210)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_9e34bc4a._.js:3608:221
+    at Slot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2599:206)
+    at SliderCollectionItemSlot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2748:210)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_9e34bc4a._.js:3606:207
+    at SliderThumb (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_9e34bc4a._.js:3563:206)
+    at _c (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_components_ui_slider_tsx_92a8e2c7._.js:39:215)
+    at BlackHoleSpacetimeVisualizerPage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:680:271)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
+[2025-05-28T00:52:14.624Z] JS Error: Uncaught Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at getRootForUpdatedFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4701:171)
+    at enqueueConcurrentHookUpdate (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4685:16)
+    at dispatchSetStateInternal (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:6448:22)
+    at dispatchSetState (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:6421:9)
+    at SliderThumb.useComposedRefs[composedRefs] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1414:62)
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at setRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2399:16)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2408:29
+    at Array.map (<anonymous>)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2407:31
+    at runWithFiberInDEV (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:3501:74)
+    at safelyDetachRef (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8009:37)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8555:82)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8553:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8553:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8676:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at recursivelyTraverseMutationEffects (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8473:106)
+    at commitMutationEffectsOnFiber (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8482:17)
+    at span (<anonymous>)
+    at Primitive.span (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2833:210)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1469:221
+    at Slot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2599:206)
+    at SliderCollectionItemSlot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_bcbb13be._.js:2748:210)
+    at https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1467:207
+    at SliderThumb (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:1424:206)
+    at _c (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:77:215)
+    at BlackHoleSpacetimeVisualizerPage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/_7ee02a35._.js:680:271)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
+[2025-05-30T03:55:40.315Z] JS Error: Uncaught Error: selectedGrade is not defined
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: ReferenceError: selectedGrade is not defined
+    at SimulationsPage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_ad68e8bc._.js:317:9)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+

@@ -1,81 +1,100 @@
 
+"use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CalendarCheck, LayoutDashboard, Shapes } from "lucide-react";
-import Image from "next/image";
+import { collection, getDocs, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { Quiz } from "@/lib/types";
+import { useUserSession } from "@/contexts/user-session-context";
+import { getQuizAttemptsForUser } from "@/lib/firebase"; // Assuming this utility exists
 
 export default function QuizzesPage() {
-  const quizSections = [
-    {
-      title: "Daily Quiz Challenge",
-      description: "Test yourself with 10 auto-generated MCQs every day. Track your streak!",
-      href: "/quizzes/daily",
-      icon: CalendarCheck,
-      image: "https://placehold.co/600x400.png",
-      aiHint: "calendar quiz"
-    },
-    {
-      title: "Topic-wise Quizzes",
-      description: "Focus on specific topics with short quizzes. Review answers and explanations.",
-      href: "/quizzes/topic/kinematics", // Default to first topic or a selection page
-      icon: Shapes,
-      image: "https://placehold.co/600x400.png",
-      aiHint: "books bulb"
-    },
-    {
-      title: "Performance Dashboard",
-      description: "View your progress, scores, weak areas, and performance trends.",
-      href: "/quizzes/dashboard",
-      icon: LayoutDashboard,
-      image: "https://placehold.co/600x400.png",
-      aiHint: "charts analytics"
-    },
-  ];
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userAttempts, setUserAttempts] = useState<{ [quizId: string]: number | null }>({});
+  const { user } = useUserSession();
+
+  useEffect(() => {
+    const fetchQuizzesAndAttempts = async () => {
+      setLoading(true);
+      try {
+        // Fetch quizzes
+        const q = query(collection(db, "quizzes"));
+        const querySnapshot = await getDocs(q);
+        const quizzesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+        setQuizzes(quizzesList);
+
+        // Fetch user attempts if authenticated
+        if (user) {
+          const attempts = await getQuizAttemptsForUser(user.uid); // Assuming this utility exists and fetches all attempts
+          const latestScores: { [quizId: string]: number | null } = {};
+          attempts.forEach(attempt => {
+            if (!latestScores[attempt.quizId] || attempt.score > latestScores[attempt.quizId]!) {
+              latestScores[attempt.quizId] = attempt.score;
+            }
+          });
+          setUserAttempts(latestScores);
+        }
+      } catch (error) {
+        console.error("Error fetching quizzes or attempts:", error);
+        // Optionally set an error state
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuizzesAndAttempts();
+  }, [user]);
+
+  // Placeholder for filtering UI
+  const renderFiltering = () => {
+    return (
+      <div className="mb-6">
+        {/* Add grade and chapter filter components here later */}
+        <p className="text-muted-foreground">Filter by Grade/Chapter (Coming Soon)</p>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-8">
-      <Card className="animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
-        <CardHeader>
-          <CardTitle className="text-3xl">Quizzes and Self-Assessment</CardTitle>
+       <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">Available Quizzes</CardTitle>
           <CardDescription>Sharpen your knowledge with daily challenges, topic-specific quizzes, and track your performance.</CardDescription>
         </CardHeader>
       </Card>
 
+      {renderFiltering()}
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {quizSections.map((section, index) => (
+        {loading ? (
+          <p>Loading quizzes...</p> // Add a proper skeleton loader later
+        ) : quizzes.length === 0 ? (
+          <p>No quizzes available yet.</p>
+        ) : (
+          quizzes.map((quiz) => (
           <Card 
-            key={section.title} 
-            className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
-            style={{ animationDelay: `${index * 100}ms` }}
+            key={quiz.id}
+            className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow"
           >
-             <div className="relative h-48 w-full bg-secondary/30 flex items-center justify-center" data-ai-hint={section.aiHint}>
-                {section.image.startsWith("https://placehold.co") ? (
-                  <section.icon className="h-20 w-20 text-primary/70" strokeWidth={1.5}/>
-                ) : (
-                  <Image
-                      src={section.image}
-                      alt={section.title}
-                      layout="fill"
-                      objectFit="cover"
-                  />
-                )}
-            </div>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <section.icon className="h-6 w-6 text-primary" />
-                {section.title}
-              </CardTitle>
+              <CardTitle>{quiz.title}</CardTitle>
+              {quiz.description && <CardDescription>{quiz.description}</CardDescription>}
             </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-muted-foreground">{section.description}</p>
-            </CardContent>
             <CardContent>
-              <Link href={section.href} passHref>
-                <Button className="w-full">Go to {section.title.replace(" Challenge","").replace("Quizzes","Quiz")}</Button>
+              {user && userAttempts[quiz.id] !== undefined && (
+                <p className="text-sm text-muted-foreground mb-2">
+                  Your Best Score: {userAttempts[quiz.id] === null ? 'Not Attempted' : `${userAttempts[quiz.id]}%`}
+                </p>
+              )}
+              <Link href={`/quizzes/${quiz.id}`} passHref>
+                <Button className="w-full">Start Quiz</Button>
               </Link>
             </CardContent>
-          </Card>
+          ))
         ))}
       </div>
     </div>

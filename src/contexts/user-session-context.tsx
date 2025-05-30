@@ -80,42 +80,19 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
           setCurrentUser(appUser);
           setIsLoggedIn(true);
 
-          let roleFromDb: UserRole = null;
+          let userRoleFromClaims: UserRole = 'student'; // Default role
 
-          // Only attempt to fetch role from Firestore if db is defined
-          if (db) {
-            try {
-              const userDocRef = doc(db, "users", firebaseUser.uid);
-              const userDocSnap = await getDoc(userDocRef);
-              if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                if (userData.role && (userData.role === 'teacher' || userData.role === 'student')) {
-                  roleFromDb = userData.role as UserRole;
-                  console.log(`UserSessionProvider: Role '${roleFromDb}' fetched from Firestore for ${appUser.email}.`);
-                } else {
-                  console.warn(`UserSessionProvider: User document for ${appUser.email} exists in Firestore but missing/invalid 'role' field.`);
-                }
-              } else {
-                console.log(`UserSessionProvider: No custom role document found in Firestore for ${appUser.email}. Will use fallback logic.`);
-              }
-            } catch (error) {
-              const firestoreError = error as FirestoreError;
-              console.error("UserSessionProvider: Error fetching user role from Firestore:", firestoreError.message);
+          try {
+            const idTokenResult = await firebaseUser.getIdTokenResult();
+            const role = idTokenResult.claims.role;
+            if (role === 'teacher' || role === 'student') {
+              userRoleFromClaims = role as UserRole;
             }
+            console.log(`UserSessionProvider: Role '${userRoleFromClaims}' fetched from custom claims for ${appUser.email}.`);
+          } catch (error) {
+            console.error("UserSessionProvider: Error fetching ID token result or claims:", error);
           }
-
-          if (roleFromDb) {
-            setUserRole(roleFromDb);
-          } else {
-            const teacherEmail = process.env.NEXT_PUBLIC_TEACHER_EMAIL;
-            if (appUser.email && teacherEmail && appUser.email.toLowerCase() === teacherEmail.toLowerCase()) {
-              setUserRole('teacher');
-              console.log("UserSessionProvider: Role set to teacher (email fallback) for", appUser.email);
-            } else {
-              setUserRole('student');
-              console.log("UserSessionProvider: Role set to student (default fallback) for", appUser.email);
-            }
-          }
+          setUserRole(userRoleFromClaims);
           setViewAsStudent(false);
         } else {
           setCurrentUser(null);

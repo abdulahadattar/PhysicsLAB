@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link"; // Keep Link for chapter navigation
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookText, ChevronRight, AlertTriangle, Loader2, FileText, Landmark, Globe, BookCopy } from "lucide-react";
-import { APP_AUTHOR } from "@/lib/constants";
+import { APP_AUTHOR } from "@/lib/constants"; // ADD THIS IMPORT for constants
+import { useToast } from "@/hooks/use-toast"; // ADD THIS IMPORT for toast
 import type { StudyGrade, TeacherGradeOverride } from '@/lib/types';
 import { useEffect, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from 'next/navigation'; // ADD THIS IMPORT for router.push
 
 interface FullTextbookLinkConfig {
+  // Ensure these keys match the StudyGrade type precisely
   key: keyof Pick<StudyGrade, 'completeTextbookPdfLink' | 'ziauddinBoardFullPdfLink' | 'punjabBoardFullPdfLink' | 'nationalSyllabusFullPdfLink'>;
   label: string;
   icon: React.ElementType;
@@ -28,6 +30,7 @@ const fullTextbookConfigs: FullTextbookLinkConfig[] = [
 
 const STUDY_GRADES_CACHE_KEY = 'studyGradesCache';
 const TEACHER_GRADE_OVERRIDES_STORAGE_KEY = 'physicsLabTeacherGradeOverrides';
+
 
 
 async function fetchStudyGradesAPI(): Promise<{ data: StudyGrade[] | null, error?: string }> {
@@ -57,6 +60,7 @@ function applyGradeOverrides(grades: StudyGrade[], overrides: Record<string, Par
 }
 
 export default function StudyMaterialPage() {
+  const { toast } = useToast(); // INITIALIZE TOAST HOOK
   const router = useRouter(); // INITIALIZE THE ROUTER
   const [studyGrades, setStudyGrades] = useState<StudyGrade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -236,6 +240,43 @@ export default function StudyMaterialPage() {
                     <div className="flex items-center gap-3">
                         <BookText className="h-6 w-6 text-primary" />
                         {grade.name}
+                        {/* Add the Download All PDFs button here */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-4 px-2 py-1 h-auto text-xs"
+                            onClick={(e) => {
+                                e.stopPropagation(); // Prevent accordion toggle
+                                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                                    const pdfUrls: string[] = [];
+                                    grade.chapters.forEach(chapter => {
+                                        // Collect potential PDF links from each chapter
+                                        // Assuming these keys exist on the chapter object from the API response
+                                        const potentialLinks = [
+                                            (chapter as any).stbbChapterPdfLink,
+                                            (chapter as any).teacherNotesPdfName, // Note: teacherNotesPdfName might be a name, not a URL - adjust if needed
+                                            (chapter as any).alternativeChapterPdfLink,
+                                            (chapter as any).punjabBoardPdfName, // Note: punjabBoardPdfName might be a name, not a URL - adjust if needed
+                                            (chapter as any).nationalSyllabusPdfName, // Note: nationalSyllabusPdfName might be a name, not a URL - adjust if needed
+                                            (chapter as any).ziauddinBoardPdfName // Note: ziauddinBoardPdfName might be a name, not a URL - adjust if needed
+                                        ];
+                                        potentialLinks.forEach(link => {
+                                            if (link && typeof link === 'string' && link.trim() !== '') {
+                                                pdfUrls.push(link.trim());
+                                            }
+                                        });
+                                    });
+                                    const uniquePdfUrls = Array.from(new Set(pdfUrls));
+                                    console.log(`Attempting to cache ${uniquePdfUrls.length} PDFs for ${grade.name}:`, uniquePdfUrls);
+                                    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_PDFS', urls: uniquePdfUrls });
+                                    toast({ title: "Download Starting", description: `Attempting to download ${uniquePdfUrls.length} document(s) for ${grade.name} for offline viewing.`, duration: 5000 });
+                                } else {
+                                    toast({ title: "Download Failed", description: "Offline caching is not supported in your browser or the service worker is not active.", variant: "destructive" });
+                                }
+                            }}
+                        >
+                            <BookCopy className="mr-1 h-3.5 w-3.5" /> Download All Grade PDFs
+                        </Button>
                     </div>
                     {/* Wrap buttons in a non-interactive div to avoid nested button error */}
                     <div className="flex items-center gap-1 flex-wrap justify-end max-w-[60%]">

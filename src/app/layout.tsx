@@ -1,7 +1,10 @@
 
+"use client";
+
 import type {Metadata} from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { useEffect } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
 import { UserSessionProvider } from '@/contexts/user-session-context';
@@ -17,17 +20,20 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-export const metadata: Metadata = {
-  title: 'PhysicsLab by Sir Abdul Ahad',
-  description: 'Interactive Physics Demonstrations and Study Material for Grades 9-12, Sindh Textbook Board.',
-  manifest: '/manifest.json',
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => console.log('Service Worker registered:', registration))
+        .catch((error) => console.error('Service Worker registration failed:', error));
+    }
+  }, []);
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -41,24 +47,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <Toaster />
           </ThemeProvider>
         </UserSessionProvider>
-        <Script id="service-worker-registration" strategy="lazyOnload">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                  .then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                  })
-                  .catch(error => {
-                    console.error('Service Worker registration failed:', error);
-                  });
-              });
-            }
-          `}
-        </Script>
+        <Toaster />
       </body>
     </html>
   );

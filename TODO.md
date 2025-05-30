@@ -1,11 +1,49 @@
-## Content Delivery Plan
+## PhysicsLab TODO List
 
-- [x] Solidify PDF-to-Text: Create a reliable way to get text from PDFs. Start with a Node.js script using pdf-parse for your development process.
+**Note:** This TODO list was generated based on the 'Physics Education Platform - Final Project Review' document and an AI-assisted analysis of the project's current state and future potential. It prioritizes tasks based on their impact and dependencies.
+
+## 🚀 High-Priority Tasks
+
+- [ ] **Implement User Roles and Authentication (Firebase Authentication & Custom Claims):**
+  - Essential for differentiating Teacher and Student access.
+  - Requires setting up rules in Firebase Auth and potentially using Cloud Functions to set custom claims upon user creation/login.
+  - Link to: `app/layout.tsx`, Firebase Authentication docs, Cloud Functions for Firebase docs.
+- [ ] **Secure Backend/API Routes:**
+  - Implement robust authentication and authorization checks in all API routes (`app/api/*`).
+  - Ensure only authenticated and authorized users (based on roles) can access sensitive data or trigger actions (e.g., adding/editing content).
+  - Link to: `app/api/*`, Firebase Security Rules.
+
+This document outlines the key development tasks for the PhysicsLab project, incorporating plans for content delivery, AI features, teacher tools, and student-facing functionalities.
+- [ ] **Architectural & System Improvements:**
+- [ ] Refine Data Fetching Strategy:
+- [ ] Analyze existing client-side fetching (e.g., in `ChapterDetailClient.tsx`) for static/infrequently changing data.
+- [ ] Migrate appropriate data fetching to server components or API routes to leverage Next.js App Router capabilities and improve performance.
+- [ ] Centralize Business Logic:
+- [ ] Identify business logic currently scattered across client components, API routes, etc.
+- [ ] Consolidate complex business logic into dedicated server-side functions or API routes for better maintainability/security.
+- [ ] Evaluate Global State Management:
+- [ ] Assess if the current `UserSessionContext` and local state are sufficient for future growth.
+- [ ] Research and potentially integrate a more robust global state solution (e.g., Zustand, Jotai, or React Query for server state) for managing shared application state like user progress, notifications, or complex UI states.
+- [ ] Enhance Offline Strategy:
+- [ ] Review and strengthen the Service Worker (`sw.js`) caching strategy.
+- [ ] Implement more robust caching rules for static assets and a suitable strategy (e.g., stale-while-revalidate) for API data to improve offline reliability.
+- [ ] Explore Workbox for more advanced/reliable PWA features.
+- [ ] Review Firebase Data Models:
+- [ ] Evaluate existing or planned Firestore data models (e.g., `studyMaterials`, `simulationsMeta`, user roles, assignments, quizzes) for query efficiency and scalability. Optimize.
+- [ ] Leverage Cloud Functions:
+- [ ] Identify complex backend logic (e.g., study material processing, assignment grading) better handled by Cloud Functions. Migrate logic.
+- [ ] Implement robust input validation using Zod for API routes and Genkit flow inputs (ensuring data integrity/security).
+- [ ] Improve Error Handling: Consistent and informative error handling across frontend, API routes, Genkit flows, including logging (`/api/log-error`).
+
+## ✨ AI Features & Content Generation
+
+- [x] **Enhance extractChapterContentFlow:**
 - [x] Enhance extractChapterContentFlow:
     - [x] Update its output Zod schema to include the formulas array (with latex field) and other desired fields.
     - [x] Refine its prompt to explicitly ask for LaTeX-formatted formulas and structured Markdown for key points.
 - [ ] Build Teacher UI for AI-Drafting & Editing (Chapter Content):
     - [ ] Page for teacher-content-management.
+    - [ ] Implement UI to select Grade and Chapter for content generation.
     - [ ] Button: "Generate AI Draft for this Chapter".
     - [ ] Internally, this uses your PDF-to-Text method, then calls extractChapterContentFlow.
     - [ ] Populate UI fields with AI output.
@@ -14,15 +52,41 @@
 - [ ] LaTeX Rendering in Student View (ChapterDetailClient.tsx):
     - [ ] Install react-latex-next and KaTeX.
     - [ ] Import KaTeX CSS.
-    - [ ] When displaying formulas, key points, explanations, wrap the relevant strings with <Latex>. Ensure your AI uses $ or $$ delimiters if LaTeX is embedded in Markdown.
+    - [ ] When displaying formulas, key points, explanations, wrap the relevant strings with `<Latex>`. Ensure your AI uses `$` or `$$` delimiters if LaTeX is embedded in Markdown.
 - [ ] Backend for Chapter Content:
     - [ ] Set up Firestore.
     - [ ] Create API routes for saving and fetching chapterContent.
-- [ ] Lesson Plan - Individual Generation (Next):
+
+- [ ] **Implement Lesson Plan Generation Feature:**
+    - [ ] Design Firestore collections for `lessonPlans` and `lessonPlanTemplates`.
+    - [ ] Create API routes for managing lesson plans and templates (CRUD).
     - [ ] Create generateLessonPlanFlow (similar structure to extractChapterContentFlow).
-    - [ ] Teacher UI to select chapter, input objectives, trigger AI, edit Markdown output (with LaTeX preview), save to Firestore (lessonPlans collection).
+    - [ ] Implement Teacher UI for Lesson Plan Generation:
+        - Select Grade, Chapter, (Optional) SLO.
+        - Select/Manage Lesson Plan Templates.
+        - Input custom prompts/objectives.
+        - Trigger AI generation (call `generateLessonPlanFlow`).
+        - Display generated plan in a Markdown editor with LaTeX preview.
+        - Save edited plan to Firestore.
+    - [ ] Implement Batch Lesson Plan Generation workflow (sequential calls to the flow).
     - [ ] Implement basic PDF download (e.g., client-side HTML to PDF first).
-- [ ] Further Enhancements (Iterative):
+    - [ ] Implement .docx download.
+
+- [ ] **Implement Scheme of Study Generation Feature:**
+    - [ ] Design Firestore collection for `schemeOfStudies`.
+    - [ ] Create API routes for managing schemes of study.
+    - [ ] Create generateSchemeOfStudyFlow.
+    - [ ] Implement Teacher UI for Scheme of Study generation (input weeks, chapters, etc., display/edit output).
+    - [ ] Implement download options.
+
+- [ ] **Implement Daily Diary AI Assistance:**
+    - [ ] Design Firestore collection for `dailyDiaryEntries`.
+    - [ ] Create API routes for managing daily diary entries.
+    - [ ] Create smaller, focused AI flows (e.g., summarize topics, suggest misconceptions, suggest reflections).
+    - [ ] Integrate AI assist buttons into the Daily Diary UI.
+
+- [ ] **PDF Text Extraction:**
+    - [ ] Develop and integrate a robust mechanism for extracting text from uploaded PDF files. This is a prerequisite for AI content generation.
     - [ ] Lesson Plan Templates.
     - [ ] Batch Lesson Plan Generation.
     - [ ] Scheme of Study AI.
@@ -38,6 +102,14 @@ AI-Assisted Lesson Plan Generation:
 
 Batch Mode: Generate plans for all chapters of a selected grade.
 
+## 📚 Documentation & Onboarding
+
+- [ ] **Refine `README.md`:** Ensure all sections are complete and up-to-date.
+- [ ] **Complete `STRUCTURE.md`:** Verify it accurately reflects the current project structure.
+- [ ] **Flesh out `docs/getting-started.md`:** Add more detail to setup steps, codebase navigation, and contribution guidelines.
+- [ ] **Add Contributing Guidelines:** Create a `CONTRIBUTING.md` file.
+- [ ] **Write Deployment Guide:** Add a section or separate file (`docs/deployment.md`).
+
 Individual/SLO Mode: Generate a plan for a specific chapter or even a specific Student Learning Outcome (SLO) within a chapter.
 
 Template-Driven: Allow teachers to upload/define a lesson plan template (structure, key headings beyond the 4A's, standard school requirements) that the AI uses as a base.
@@ -50,7 +122,7 @@ Editable: Teachers can refine AI-generated plans.
 
 Storable: Save plans server-side.
 
-Downloadable: Export as Word (.docx) or PDF, formatted for A4.
+Downloadable: Export as Word (.docx) or PDF, formatted for A4 print.
 
 LaTeX Support: AI generates LaTeX for formulas; frontend/export renders it.
 
@@ -151,7 +223,7 @@ Let's start with the **Lesson Plan Generation** feature first, then move to Sche
       chapterId: z.string(),
       chapterName: z.string(),
       chapterTextContent: z.string().describe("Full text content of the chapter."),
-      sloText: z.string().optional().describe("Specific SLO if generating for an SLO."),
+      sloText: z.string().optional().describe("Specific SLO if generating for ok continuean SLO."),
       lessonPlanTemplateContent: z.string().optional().describe("Text/Markdown content of the teacher's selected template."),
       customPrompts: z.object({ // Teacher can add specific instructions
           activityFocus: z.string().optional(),

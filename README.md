@@ -1,44 +1,28 @@
-# PhysicsLab - Interactive Physics Learning Platform
+# PhysicsLab: Your Interactive Universe for Mastering Physics
 
-PhysicsLab is a modern web application for interactive physics learning, primarily targeting Grades 9-12. The platform is designed to align with the Sindh Textbook Board curriculum but is adaptable for other curricula. It features interactive simulations, comprehensive study materials, quizzes, an AI-powered learning assistant, and a teacher dashboard for content management and student progress tracking.
+# ![Build Status](placeholder_url) ![License](placeholder_url)
 
-**Current Status:**
-- The application is under active development. Many features use placeholder or mock data, especially for backend-dependent and advanced simulation features.
-- Student data, assignments, and analytics currently use mock data for demonstration and testing. In the future, these will be populated automatically through real student activity, login, and progress tracking.
+*   🔬 **Interactive Simulations:** Hands-on virtual labs and visualizations covering core physics concepts to enhance understanding through experimentation.
+*   📚 **Comprehensive Study Materials:** Organized, chapter-wise notes, examples, MCQs, and exercises tailored for specific grades.
+*   🧠 **AI Learning Assistant:** A context-aware AI powered by Google Gemini Flash that provides personalized help, explains concepts, analyzes diagrams, and assists with problem-solving.
+*   📝 **Quizzes & Self-Assessment:** Practice quizzes to test knowledge, track performance, and identify areas needing more focus.
+*   📊 **Teacher Dashboard:** A dedicated portal for educators to manage study content, create assignments, view analytics (with future backend integration), and potentially manage student accounts.
+*   📱 **Offline-First PWA:** Access cached study materials and core features even without an internet connection.
+*   🌐 **Physics Timeline & Resources:** Explore the history of physics and discover key research centers, universities, and philosophical connections.
+*   🔗 **Mind Maps:** Visualize and explore connections between physics concepts.
 
-## What We're Building
-- **Interactive Simulations:** Hands-on physics labs and visualizations for core topics.
-- **Study Materials:** Chapter-wise notes, MCQs, and exercises for each grade.
-- **Quizzes & Self-Assessment:** Daily quizzes, performance tracking, and identification of weak areas.
-- **AI Learning Assistant:** Context-aware help for students, including image analysis and tailored explanations.
-- **Teacher Dashboard:** Tools for content management, assignment creation, analytics, and student account approval.
-- **Offline-First PWA:** Local caching of study materials and user data for robust offline use.
+## 🛠️ Technologies Used
+*   **Framework:** Next.js 15+ (App Router)
+*   **Language:** TypeScript
+*   **UI:** React 18+, Shadcn UI, Tailwind CSS
+*   **AI Integration:** Genkit with Google Gemini 2.0 Flash
+*   **Backend:** Firebase (Authentication, Firestore, Storage - currently in development/integration)
+*   **Offline Capabilities:** PWA (manifest.json, sw.js), localStorage, IndexedDB
+*   **Utilities:** Zod (for schema validation), ReactFlow (for mind maps)
 
-## How It Works
-- **Student Experience:** Students can explore simulations, access study materials, take quizzes, and interact with the AI assistant. Progress and activity are tracked locally for now.
-- **Teacher Experience:** Teachers can manage content, create assignments, review analytics, and approve student accounts. All data is currently stored in the browser (localStorage/IndexedDB) and will be migrated to a backend in future releases.
-- **Mock Data:** All student names, submissions, and analytics are generated for demonstration. These will be replaced by real user data once authentication and backend integration are complete.
+## 🚀 Getting Started
 
-## What Needs Work / Roadmap
-- Replace all mock data with real-time student tracking, login, and progress data.
-- Implement backend integration for persistent storage and multi-user support.
-- Complete interactivity for all placeholder simulations.
-- Expand and refine study materials and quizzes for all grades.
-- Enhance offline capabilities and service worker caching.
-- Improve accessibility and performance across devices.
-
-## Core Technologies
-- **Framework:** Next.js 15+ (App Router)
-- **Language:** TypeScript
-- **UI:** React 18+, ShadCN UI, Tailwind CSS
-- **AI Integration:** Genkit with Google Gemini 2.0 Flash
-- **Offline Storage:** localStorage, IndexedDB
-- **Authentication:** Firebase (Google Sign-In, Firestore roles)
-- **PWA:** manifest.json, sw.js
-
-## Getting Started
-
-Follow these steps to set up and run the PhysicsLab project locally for development.
+Follow these steps to set up and run the PhysicsLab project locally for development and contribution.
 
 ### Prerequisites
 
@@ -46,6 +30,41 @@ Ensure you have the following software installed on your system:
 *   Node.js (latest LTS version recommended)
 *   npm, yarn, or pnpm
 *   Git
+*   A Google Cloud Project with the Gemini API enabled (for AI features)
+*   A Firebase Project (for Authentication and future backend features)
+
+### Installation
+
+1.  **Clone the Repository:**
+
+
+*   **Framework:** Next.js 15+ (App Router)
+*   **Language:** TypeScript
+*   **UI:** React 18+, ShadCN UI, Tailwind CSS
+*   **AI Integration:** Genkit with Google Gemini 2.0 Flash
+*   **Backend:** Firebase (Authentication, Firestore, Storage - currently in development)
+*   **Offline Capabilities:** PWA (manifest.json, sw.js), localStorage, IndexedDB
+*   **Utilities:** Zod (for schema validation), ReactFlow (for mind maps)
+
+## 🚀 Getting Started
+
+Follow these steps to set up and run the PhysicsLab project locally for development and contribution.
+
+### Prerequisites
+
+Ensure you have the following software installed on your system:
+*   Node.js (latest LTS version recommended)
+*   npm, yarn, or pnpm
+*   Git
+*   A Google Cloud Project with the Gemini API enabled (for AI features)
+*   A Firebase Project (for Authentication and future backend features)
+
+### 📝 Environment Variables
+
+Create a `.env.local` file in the root of your project by copying the `.env` file. Populate the following variables:
+
+*   **Firebase Setup (Crucial for Login & some AI features):** Obtain these from your Firebase project settings > Web App configuration.
+
 
 ### Installation & Setup
 

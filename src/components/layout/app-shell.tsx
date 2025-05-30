@@ -155,6 +155,38 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, []);
 
+  // --- Automated error logging ---
+  // MOVED INSIDE AppShell
+ useEffect(() => {
+    function handleError(event: ErrorEvent) {
+      const errorMsg = `[${new Date().toISOString()}] JS Error: ${event.message}\nSource: ${event.filename}\nLine: ${event.lineno}, Col: ${event.colno}\nStack: ${event.error?.stack || 'N/A'}\n---\n`;
+      fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: errorMsg })
+      }).catch(console.error); // Optional: catch errors from logging itself
+    }
+    function handleRejection(event: PromiseRejectionEvent) {
+      const errorMsg = `[${new Date().toISOString()}] Unhandled Promise Rejection: ${event.reason?.message || event.reason}\nStack: ${event.reason?.stack || 'N/A'}\n---\n`;
+      fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: errorMsg })
+      }).catch(console.error); // Optional: catch errors from logging itself
+    }
+
+    if (typeof window !== 'undefined') { // Good practice to check for window
+        window.addEventListener('error', handleError);
+        window.addEventListener('unhandledrejection', handleRejection);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('error', handleError);
+        window.removeEventListener('unhandledrejection', handleRejection);
+      }
+    };
+  }, []); // Empty dependency array means this runs once when AppShell mounts and cleans up when it unmounts.
   /**
    * Fetches study grades data for the global search.
    * Tries to load from localStorage first, then falls back to API if online.
@@ -747,29 +779,3 @@ export function AppShell({ children }: AppShellProps) {
     </SidebarProvider>
   );
 }
-
-// --- Automated error logging ---
-useEffect(() => {
-  function handleError(event: ErrorEvent) {
-    const errorMsg = `[${new Date().toISOString()}] JS Error: ${event.message}\nSource: ${event.filename}\nLine: ${event.lineno}, Col: ${event.colno}\nStack: ${event.error?.stack || 'N/A'}\n---\n`;
-    fetch('/api/log-error', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: errorMsg })
-    });
-  }
-  function handleRejection(event: PromiseRejectionEvent) {
-    const errorMsg = `[${new Date().toISOString()}] Unhandled Promise Rejection: ${event.reason?.message || event.reason}\nStack: ${event.reason?.stack || 'N/A'}\n---\n`;
-    fetch('/api/log-error', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: errorMsg })
-    });
-  }
-  window.addEventListener('error', handleError);
-  window.addEventListener('unhandledrejection', handleRejection);
-  return () => {
-    window.removeEventListener('error', handleError);
-    window.removeEventListener('unhandledrejection', handleRejection);
-  };
-}, []);

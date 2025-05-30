@@ -1,22 +1,22 @@
 /**
  * @fileOverview Firebase SDK Initialization.
- * This file configures and initializes the Firebase app using environment variables.
  * It provides the `auth`, `googleProvider`, and `db` (Firestore) instances.
  * Includes checks for missing environment variables and handles initialization errors gracefully
- * to prevent app crashes if Firebase is not configured, allowing other app features to function.
+ * to prevent app crashes if Firebase is not configured, allowing other app features to function.\n * Enables Firestore offline persistence.
  */
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// Firebase configuration object, populated from environment variables.
+// Firebase configuration object.
+// IMPORTANT: Firebase configuration MUST be loaded from environment variables
+// for security reasons and to avoid exposing credentials in the codebase.
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // List of essential Firebase configuration keys.
@@ -26,7 +26,7 @@ const missingKeys: string[] = [];
 
 // Check if all required Firebase configuration keys are present in the environment variables.
 for (const key of requiredConfigKeys) {
-  if (!firebaseConfig[key]) {
+  if (!firebaseConfig[key as keyof typeof firebaseConfig]) { // Type assertion here
     const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
     missingKeys.push(envVarName);
     allKeysPresent = false;
@@ -64,7 +64,12 @@ Firebase features like Google Sign-In and Firestore integration will be disabled
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
       db = getFirestore(app); // Initialize Firestore
-      googleProvider = new GoogleAuthProvider();
+      if (db) {
+ enableIndexedDbPersistence(db);
+ console.log("Firestore offline persistence enabled.");
+      } else {
+ console.warn("Firestore not initialized, cannot enable offline persistence.");
+      }
       console.log("Firebase app, auth, and Firestore initialized successfully.");
     } catch (error) {
       console.error("Error initializing Firebase app (even after config check):", error);
@@ -79,7 +84,13 @@ Firebase features like Google Sign-In and Firestore integration will be disabled
     if (app) {
       try {
         auth = getAuth(app); // Get auth instance from existing app
-        db = getFirestore(app); // Get Firestore instance from existing app
+        db = getFirestore(app);
+        if (db) {
+ enableIndexedDbPersistence(db);
+ console.log("Firestore offline persistence enabled on existing app.");
+        } else {
+ console.warn("Firestore not obtained from existing app, cannot enable offline persistence.");
+        }
         googleProvider = new GoogleAuthProvider();
       } catch (error){
         console.error("Error getting Auth or Firestore instance from existing Firebase app:", error);
