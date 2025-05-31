@@ -35,7 +35,7 @@ This document outlines the key development tasks for the PhysicsLab project, inc
 - [ ] Implement robust input validation using Zod for API routes and Genkit flow inputs (ensuring data integrity/security).
 - [ ] Improve Error Handling: Consistent and informative error handling across frontend, API routes, Genkit flows, including logging (`/api/log-error`).
 
-## ✨ AI Features & Content Generation
+## ✨ Features & Content Generation
 
 - [x] **Enhance extractChapterContentFlow:**
 - [x] Enhance extractChapterContentFlow:
@@ -89,6 +89,11 @@ This document outlines the key development tasks for the PhysicsLab project, inc
     - [ ] Develop and integrate a robust mechanism for extracting text from uploaded PDF files. This is a prerequisite for AI content generation.
     - [ ] Lesson Plan Templates.
     - [ ] Batch Lesson Plan Generation.
+
+## 🌐 Student Features
+
+- [x] **Physics Timeline & Resources:** Explore the history of physics and discover key research centers, universities, and philosophical connections.
+
     - [ ] Scheme of Study AI.
     - [ ] Daily Diary AI Assists.
     - [ ] More robust Word/PDF export (possibly server-side).

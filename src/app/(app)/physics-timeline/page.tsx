@@ -1,16 +1,12 @@
 "use client"; // Keep if PhysicsTimeline uses client-side hooks, which it does
 
-import { PhysicsTimeline } from '@/components/timeline/PhysicsTimeline';
-import timelineDataJson from '@/data/physics-timeline.json'; // Import the JSON data
-import type { PhysicsTimelineData } from '@/lib/types';
+import DynamicFocusTimeline from '@/components/timeline/DynamicFocusTimeline'; // Import the dynamic timeline component
+import { physicsTimelineEventsData } from '@/components/timeline/physics-timeline-events'; // Import the merged timeline data
 import { Card, CardContent } from '@/components/ui/card'; // For error/loading
 
-// Cast the imported JSON to the defined type
-const timelineData: PhysicsTimelineData = timelineDataJson as PhysicsTimelineData;
 
 export default function PhysicsTimelinePage() {
-  if (!timelineData || !timelineData.events || timelineData.events.length === 0) {
-    // This check can also be inside the PhysicsTimeline component
+  if (!physicsTimelineEventsData || !physicsTimelineEventsData.events || physicsTimelineEventsData.events.length === 0) {
     return (
       <div className="container mx-auto py-10">
         <Card>
@@ -23,8 +19,8 @@ export default function PhysicsTimelinePage() {
   }
 
   return (
-    <div className="container mx-auto"> {/* Adjust container as needed */}
-      <PhysicsTimeline data={timelineData} />
+    <div className="container mx-auto h-full"> {/* Adjust container as needed */}
+      <DynamicFocusTimeline events={physicsTimelineEventsData.events} />
     </div>
   );
 }

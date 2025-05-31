@@ -9,6 +9,7 @@
 *   📊 **Teacher Dashboard:** A dedicated portal for educators to manage study content, create assignments, view analytics (with future backend integration), and potentially manage student accounts.
 *   📱 **Offline-First PWA:** Access cached study materials and core features even without an internet connection.
 *   🌐 **Physics Timeline & Resources:** Explore the history of physics and discover key research centers, universities, and philosophical connections.
+*   🌐 **Physics Timeline & Resources:** Explore the history of physics through a dynamic and interactive timeline with a unique focus effect, zoom and pan capabilities, tooltip details on hover (web), and integrated details about key events, research centers, universities, and philosophical connections on click.
 *   🔗 **Mind Maps:** Visualize and explore connections between physics concepts.
 
 ## 🛠️ Technologies Used

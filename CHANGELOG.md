@@ -5,6 +5,16 @@ All notable changes to this project are documented here. This project follows [K
 ## [Unreleased] - Expected YYYY-MM-DD
 
 ### Added
+- Implemented a dynamic, zoomable physics timeline component (`DynamicFocusTimeline.tsx`) with a focus/warp effect around the central view.
+- Added event stacking logic within timeline lanes to prevent visual overlap of closely spaced events.
+- Implemented functional zoom in, zoom out, and reset buttons to control the dynamic timeline's zoom level.
+- Added tooltip functionality on hover for timeline events (both points and durations) in the web experience.
+- Integrated the `EventDetailModal` with the `DynamicFocusTimeline`, allowing users to click events to view detailed information.
+- Refined the focus scale calculation for a more controllable warp effect.
+- Improved tooltip positioning to include an offset and prevent it from going off-screen within the container.
+- Enhanced tooltip styling for better visual appearance.
+
+### Added
 - Initial project structure and core features: Next.js, React, TypeScript, Tailwind CSS, ShadCN UI.
 - Genkit with Google Gemini 2.0 Flash for AI features.
 - Basic PWA setup (manifest.json, sw.js).
@@ -16,6 +26,12 @@ All notable changes to this project are documented here. This project follows [K
 - This changelog file.
 - Modular PDF resource management system: Teachers can now add, label, and manage any type of PDF (uploaded or linked) for any grade/chapter.
 - UI for dynamic PDF resource management in the teacher dashboard.
+
+### Changed
+- Moved `MasterPhysicsTimeline.tsx` component to `src/components/timeline/`.
+
+### Added
+- Created a placeholder `getIcon` utility function at `src/lib/getIcon.ts` for dynamic icon rendering.
 
 ### Changed
 - Sidebar navigation is now hierarchical and categorized.
@@ -33,6 +49,7 @@ All notable changes to this project are documented here. This project follows [K
 - Performance bottlenecks in study material loading and search.
 - Issues with role switcher and icon definitions.
 - CSS parsing and JavaScript errors in simulation components.
+- Fixed syntax errors and corrected import paths related to the physics timeline component and its data.
 - Improved data fetching and error handling.
 
 ### Removed
@@ -40,6 +57,7 @@ All notable changes to this project are documented here. This project follows [K
 - Redundant mentions of "STBB Aligned".
 - All legacy PDF fields and related UI/configuration.
 - All hints and comments indicating the app was made by AI.
+- Deleted the `Timeline -V2.0-files-to-integrate` folder.
 
 ### Known Issues / Pending Major Work
 - All analytics, assignments, and student data are currently mock/demo only.

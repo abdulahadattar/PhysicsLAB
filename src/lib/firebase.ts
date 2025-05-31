@@ -6,6 +6,8 @@
  */
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
+import { indexedDBLocalPersistence } from 'firebase/auth';
+
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Firebase configuration object.
@@ -17,6 +19,7 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 // List of essential Firebase configuration keys.
@@ -64,11 +67,11 @@ Firebase features like Google Sign-In and Firestore integration will be disabled
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
       db = getFirestore(app); // Initialize Firestore
-      if (db) {
- enableIndexedDbPersistence(db);
- console.log("Firestore offline persistence enabled.");
+      if (auth) {
+        auth.setPersistence(indexedDBLocalPersistence);
+        console.log("Firebase Auth IndexedDB persistence enabled.");
       } else {
- console.warn("Firestore not initialized, cannot enable offline persistence.");
+ console.warn("Firebase Auth not initialized, cannot enable IndexedDB persistence.");
       }
       console.log("Firebase app, auth, and Firestore initialized successfully.");
     } catch (error) {
@@ -84,12 +87,12 @@ Firebase features like Google Sign-In and Firestore integration will be disabled
     if (app) {
       try {
         auth = getAuth(app); // Get auth instance from existing app
-        db = getFirestore(app);
-        if (db) {
- enableIndexedDbPersistence(db);
- console.log("Firestore offline persistence enabled on existing app.");
+        db = getFirestore(app); // Get Firestore instance from existing app
+        if (auth) {
+        auth.setPersistence(indexedDBLocalPersistence);
+        console.log("Firebase Auth IndexedDB persistence enabled on existing app.");
         } else {
- console.warn("Firestore not obtained from existing app, cannot enable offline persistence.");
+ console.warn("Firebase Auth not obtained from existing app, cannot enable IndexedDB persistence.");
         }
         googleProvider = new GoogleAuthProvider();
       } catch (error){

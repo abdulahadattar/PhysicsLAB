@@ -88,6 +88,33 @@ The data flow is generally unidirectional, with components receiving data from p
 
 ## 4. Student View - Study Materials
 
+## Dynamic Physics Timeline
+
+The `DynamicFocusTimeline.tsx` component, located in `src/components/timeline/DynamicFocusTimeline.tsx`, is responsible for rendering an interactive and zoomable timeline of physics events. Unlike a static representation, this component utilizes D3.js to provide dynamic features that enhance user exploration of the timeline data.
+
+-   **Purpose:** To visually represent physics events over time with interactive features like zooming, focusing, and event details on interaction.
+-   **Technology:** Primarily uses D3.js for data-driven document manipulation and rendering within a React component structure.
+-   **Data Flow:** The component receives an array of timeline event objects as a prop (typically sourced from `src/data/physics-timeline-events.ts`). D3.js then binds this data to visual elements (circles for point events, rectangles for duration events) and handles their positioning and rendering based on the time scale and current zoom/focus level.
+-   **Key Features:**
+    -   **Focus/Warp Effect:** Implements a non-linear time scale that allows users to focus on a specific period, expanding it while compressing other periods, revealing more detail for the focused area.
+    -   **Event Stacking:** Includes logic to vertically stack overlapping event nodes or bars to prevent clutter and ensure all events are visible.
+    -   **Zoom and Pan:** Enables users to interactively zoom into and pan across the timeline using mouse or touch gestures. Zoom controls (buttons) are integrated for easier navigation.
+    -   **Tooltips (Web):** On web browsers, displays interactive tooltips on mouse hover over event nodes and bars, providing a brief summary of the event. Tooltip positioning is adjusted to stay within the timeline container.
+    -   **Modal Integration:** Clicking on an event (both point and duration events) triggers the display of the `EventDetailModal`, showing comprehensive information about the selected event. The component manages the state of the currently selected event and controls the modal's visibility.
+-   **Relationship with `MasterPhysicsTimeline.tsx`:** `DynamicFocusTimeline.tsx` represents a more advanced and interactive implementation compared to a potentially simpler, static `MasterPhysicsTimeline.tsx` (if it exists or was a previous version). `DynamicFocusTimeline` is intended for the primary interactive timeline view on platforms where D3.js interactions are supported.
+
+
+## 5. Ongoing Maintenance and Updating Placeholder Content
+
+Maintaining the application involves several key areas:
+
+*   **Code Updates:** Regularly update dependencies (`package.json`) to incorporate security patches, bug fixes, and new features from libraries. Refactor code as needed to improve readability, performance, and maintainability.
+*   **Content Updates:** This is a crucial aspect, especially for placeholder content.
+*   **Bug Fixing:** Monitor error logs (e.g., `debug-log.txt` or a dedicated logging service) and user feedback to identify and fix bugs.
+*   **Performance Optimization:** Profile the application to identify performance bottlenecks and optimize rendering, data fetching, and computation.
+*   **Security Patches:** Stay informed about security vulnerabilities in dependencies and the Next.js framework and apply patches promptly.
+*   **Monitoring:** Implement application monitoring to track uptime, performance, and errors in a production environment.
+
 This section details the implementation of the student view for accessing study materials, including navigation, content display, and offline capabilities.
 
 ### Study Material Page (`/study-material`)

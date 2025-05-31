@@ -220,3 +220,11 @@ Stack: ReferenceError: selectedGrade is not defined
     at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
 ---
 
+[2025-05-30T08:56:46.712Z] JS Error: Uncaught Error: selectedGrade is not defined
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: ReferenceError: selectedGrade is not defined
+    at SimulationsPage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_ad68e8bc._.js:317:9)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
