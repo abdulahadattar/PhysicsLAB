@@ -30,6 +30,14 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
   const zoomBehaviorRef = useRef<D3ZoomBehavior | null>(null);
 
+  // State for filtering and sorting
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [filterLane, setFilterLane] = useState<string | null>(null);
+  const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [filterSignificance, setFilterSignificance] = useState<number | null>(null);
+  const [filterStartDate, setFilterStartDate] = useState<Date | null>(null);
+  const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
+
   const [focusStrength, setFocusStrength] = useState(0.7); // State for Focus Strength
   const MARGIN = useMemo(() => ({ top: 30, right: 30, bottom: 60, left: 50 }), []);
   const FOCUS_WIDTH_PX = 250;
@@ -38,6 +46,8 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
   const VERTICAL_STACK_SPACING = 25;
   const DURATION_EVENT_HEIGHT = 12;
 
+  const [sortBy, setSortBy] = useState<'date' | 'significance'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const processedEvents = useMemo((): FormattedEvent[] => {
     return events
       .map(event => {
@@ -236,7 +246,7 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
         setTooltip({ visible: true, content: `${d.title}: ${d.shortDescription}`, x: svgX + 10, y: svgY - 10 });
       })
       .on('mouseout', function(this: SVGCircleElement, event: MouseEvent, d: FormattedEvent) {
-        d3.select(this).transition().duration(100).attr("r", d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS).attr("fill", d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'steelblue');
+        d3.select(this).transition().duration(100).attr("r", d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS).attr("fill", d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey]?.defaultColor || 'steelblue');
         setTooltip(prev => ({ ...prev, visible: false }));
       })
       .merge(eventNodes)
@@ -244,7 +254,7 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
       .transition().duration(300)
       .attr("cx", d => d.calculatedX)
       .attr("cy", d => baseEventY - d.yOffset * VERTICAL_STACK_SPACING - EVENT_NODE_RADIUS)
-      .attr("r", d => d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS)
+      .attr("r", d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS)
       .attr("fill", d => d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'steelblue')
       .attr("stroke", d => d.id === selectedEvent?.id ? "black" : "none")
       .attr("stroke-width", d => d.id === selectedEvent?.id ? 2 : 0);
@@ -279,8 +289,8 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
       .attr("height", DURATION_EVENT_HEIGHT)
       .attr("rx", 3)
       .attr("ry", 3)
-      .attr("fill", d => d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'skyblue')
-      .attr("stroke", d => d.id === selectedEvent?.id ? "black" : (d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'skyblue'))
+      .attr("fill", d => d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey]?.defaultColor || 'skyblue')
+      .attr("stroke", d => d.id === selectedEvent?.id ? "black" : (d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey]?.defaultColor || 'skyblue'))
       .attr("stroke-width", d => d.id === selectedEvent?.id ? 2 : 1)
       .attr("opacity", d => d.id === selectedEvent?.id ? 1 : 0.85);
     eventBars.exit().remove();
