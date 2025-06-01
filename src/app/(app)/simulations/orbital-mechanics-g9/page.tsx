@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Orbit } from "lucide-react";
 import Link from "next/link";
-import OrbitalMechanicsSim from "@/components/simulations/OrbitalMechanicsSim"; // Adjust path if needed
+import OrbitalMechanicsSim from "/home/user/PhysicsLAB/src/app/(app)/simulations/orbital-mechanics-g9/OrbitalMechanicsSim"; // Adjust path if needed
 
 export default function OrbitalMechanicsPage() {
   return (

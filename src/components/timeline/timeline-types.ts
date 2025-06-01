@@ -1,15 +1,6 @@
-export interface TimelineEventDetail {
-  title: string;
-  type: 'context' | 'biography' | 'explanation' | 'formula' | 'impact' | 'experiment_setup';
-  description: string;
-  date?: string;
-  image?: string;
-  relatedFormula?: string;
-  links?: Array<{ label: string; url: string }>;
-}
-
 export type EventCategory =
-  | 'pre-science-milestone' | 'pre-science-period'
+  | 'pre-science-milestone'
+  | 'pre-science-period'
   | 'ancient-discovery' | 'ancient-model' | 'medieval-tech'
   | 'renaissance-discovery' | 'enlightenment-tech'
   | 'classical-theory' | 'classical-discovery'
@@ -19,6 +10,7 @@ export type EventCategory =
   | 'machine-experiment'
   | 'space-mission' | 'earth-cosmic-event'
   | 'technology-application'
+  | 'technological-advancement'
   | 'theory-development' // General category for broad theories
   | 'quantum-discovery' // Specific quantum breakthroughs
   | 'relativity-discovery' // Specific relativity milestones
@@ -32,10 +24,17 @@ export interface TimelineEvent {
   startYear?: number;
   endYear?: number;
   description?: string; // Add optional description property
+  detailedDescription?: string; // Rich text/markdown for detailed view
   shortDescription: string;
   icon?: string; // Lucide icon name
   image?: string; // URL or data URL
-  details: TimelineEventDetail[];
+  imageUrls?: string[]; // Multiple image URLs
+  externalLinks?: Array<{ label: string; url: string }>; // Links to external resources
+  relatedConcepts?: string[]; // Linking to glossary/study material concepts
+  significanceRating?: number; // 1-5, for emphasis/filtering
+  mediaUrls?: Array<{ type: 'video' | 'audio'; url: string }>; // Embedded media
+  tags?: string[]; // Custom tags for filtering/categorization
+
   laneKey: keyof typeof LANE_CONFIG_MAP;
   color?: string;
   scientist?: {
@@ -93,6 +92,7 @@ export const CATEGORY_COLOR_MAP: Record<EventCategory, string> = {
   'space-mission': '#1E90FF', // DodgerBlue (already used in LANE_CONFIG_MAP)
   'earth-cosmic-event': '#FF8C00', // DarkOrange (already used in LANE_CONFIG_MAP)
   'technology-application': '#9932CC', // DarkOrchid (already used in LANE_CONFIG_MAP)
+  'technological-advancement': '#CD5C5C', // IndianRed
   'theory-development': '#BA55D3', // MediumOrchid
   'quantum-discovery': '#48D1CC', // MediumTurquoise
   'relativity-discovery': '#C71585', // MediumVioletRed

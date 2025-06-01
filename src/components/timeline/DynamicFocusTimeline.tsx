@@ -1,408 +1,364 @@
+// /home/user/PhysicsLAB/src/components/timeline/DynamicFocusTimeline.tsx
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
 import { Button } from '@/components/ui/button';
 import { EventDetailModal } from './EventDetailModal';
-import { TimelineEvent, LANE_CONFIG_MAP, CATEGORY_COLOR_MAP, EventCategory } from './timeline-types';
+import { TimelineEvent, LANE_CONFIG_MAP, CATEGORY_COLOR_MAP, EventCategory, LaneKey } from './timeline-types';
+import { Slider } from '@/components/ui/slider'; // Import the Slider component
+import { ZoomInIcon, ZoomOutIcon, RotateCcwIcon } from 'lucide-react';
 
-interface DynamicFocusTimelineProps {
-  events: TimelineEvent[];
+// D3 types can be verbose. This helps.
+type D3ZoomEvent = d3.D3ZoomEvent<SVGSVGElement, unknown>;
+type D3ZoomBehavior = d3.ZoomBehavior<SVGSVGElement, unknown>;
+type D3ScaleTime = d3.ScaleTime<number, number, never>;
+
+interface FormattedEvent extends TimelineEvent {
+  date: Date;
+  yOffset: number;
+  calculatedX: number;
+  isDurationEvent: boolean;
+  durationStartX?: number;
+  durationEndX?: number;
 }
 
 const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 300 }); // Initial dimensions
+  const [dimensions, setDimensions] = useState({ width: 800, height: 300 });
   const [currentTransform, setCurrentTransform] = useState<d3.ZoomTransform>(d3.zoomIdentity);
-  const [tooltip, setTooltip] = useState({
-    visible: false,
-    content: '',
-    x: 0,
-    y: 0,
-  });
+  const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
+  const zoomBehaviorRef = useRef<D3ZoomBehavior | null>(null);
 
-  // Define constants outside useEffect
-  const MARGIN = { top: 20, right: 30, bottom: 50, left: 40 }; // Adjust as needed
-  // Parameters for the focus effect (adjust as needed)
-  const focusStrength = 0.8; // How strong the warping effect is
-  const focusWidth = 200; // Pixel width around the focus point where the effect is applied (in pixels on the base scale)
-  // Define a constant for minimum horizontal separation for stacking
-  const minHorizontalSeparation = 15; // Minimum estimated horizontal space needed per event (in pixels on the base scale)
+  const [focusStrength, setFocusStrength] = useState(0.7); // State for Focus Strength
+  const MARGIN = useMemo(() => ({ top: 30, right: 30, bottom: 60, left: 50 }), []);
+  const FOCUS_WIDTH_PX = 250;
+  const MIN_HORIZONTAL_SEPARATION = 20;
+  const EVENT_NODE_RADIUS = 6;
+  const VERTICAL_STACK_SPACING = 25;
+  const DURATION_EVENT_HEIGHT = 12;
 
-  const eventsWithDates: (TimelineEvent & { date: Date })[] = useMemo(() => {
+  const processedEvents = useMemo((): FormattedEvent[] => {
     return events
       .map(event => {
         let date: Date | null = null;
-        if (event.year) {
+        if (event.year != null) {
           date = new Date(event.year, 0, 1);
-        } else if (event.startYear !== undefined) {
+        } else if (event.startYear != null) {
           date = new Date(event.startYear, 0, 1);
         }
-        return { ...event, date: date };
+        return {
+            ...event,
+            date: date,
+            yOffset: 0,
+            calculatedX: 0,
+            isDurationEvent: event.startYear != null && event.endYear != null,
+        };
       })
-      .filter(event => event.date !== null) as (TimelineEvent & { date: Date })[];
+      .filter(event => event.date !== null) as FormattedEvent[];
   }, [events]);
 
-  const [minDate, maxDate] = useMemo(() => {
-    if (eventsWithDates.length === 0) {
+  const [minDate, maxDate] = useMemo((): [Date, Date] => {
+    if (processedEvents.length === 0) {
       return [new Date(1800, 0, 1), new Date(2025, 0, 1)];
     }
-    // Type parameter d in d3.extent
-    return d3.extent(eventsWithDates, (d: TimelineEvent & { date: Date }) => d.date) as [Date, Date];
-  }, [eventsWithDates]);
+    const extent = d3.extent(processedEvents, (d: FormattedEvent) => d.date) as [Date, Date] | [undefined, undefined];
+    return extent[0] && extent[1] ? extent : [new Date(1800, 0, 1), new Date(2025, 0, 1)];
+  }, [processedEvents]);
+
+  const createFocusScale = useCallback((
+    baseScale: D3ScaleTime,
+    focusDate: Date,
+    strength: number,
+    focusWidthInPixels: number
+    // visualWidth: number // Parameter was removed from definition
+  ): ((date: Date) => number) => {
+    return (date: Date): number => {
+      const basePos = baseScale(date);
+      const focusPos = baseScale(focusDate);
+      const dist = basePos - focusPos;
+
+      if (Math.abs(dist) < focusWidthInPixels) {
+        const relativeDist = dist / focusWidthInPixels;
+        const warpedDist = Math.sign(relativeDist) * Math.pow(Math.abs(relativeDist), 1 - strength) * focusWidthInPixels;
+        return focusPos + warpedDist;
+      }
+      return basePos;
+    };
+  }, []);
 
   useEffect(() => {
-    if (!svgRef.current || !eventsWithDates || eventsWithDates.length === 0 || minDate === undefined || maxDate === undefined) {
-      console.warn("No valid dates found in events or missing date bounds.");
+    const observer = new ResizeObserver(entries => {
+      if (!entries || !entries.length) return;
+      const { width: newWidth, height: newHeight } = entries[0].contentRect; // Renamed to avoid conflict
+      if (containerRef.current && (Math.abs(dimensions.width - newWidth) > 1 || Math.abs(dimensions.height - newHeight) > 1)) {
+        setDimensions({ width: newWidth, height: newHeight });
+      }
+    });
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [dimensions.width, dimensions.height]);
+
+  useEffect(() => {
+    if (!svgRef.current || processedEvents.length === 0 || !minDate || !maxDate || dimensions.width <= 0 || dimensions.height <= 0) {
       return;
     }
 
-    const containerRect = containerRef.current?.getBoundingClientRect();
-
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
     const width = dimensions.width - MARGIN.left - MARGIN.right;
     const height = dimensions.height - MARGIN.top - MARGIN.bottom;
 
-    const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`) as d3.Selection<SVGGElement, unknown, null, undefined>;
+    if (width <=0 || height <=0) return;
 
-    const baseEventY = height - 30;
-    const eventNodeRadius = 5;
-    const verticalStackSpacing = 20;
-
-    const createFocusScale = (baseScale: d3.ScaleTime<number, number, never>, focusDate: Date, strength: number, widthPx: number, width: number) => {
-      return (date: Date): number => {
-        const basePos = baseScale(date);
-        const focusPos = baseScale(focusDate);
-        const dist = Math.abs(basePos - focusPos);
-
-        if (dist < widthPx) {
-          const factor = (1 - dist / widthPx);
-          const displacement = Math.sign(basePos - focusPos) * dist * factor * strength;
-          return basePos + displacement * (width / widthPx);
-        }
-        return basePos;
-      };
-    };
-
-    const xScale: d3.ScaleTime<number, number, never> = d3.scaleTime()
-      .domain([minDate, maxDate] as [Date, Date])
+    const baseXScale: D3ScaleTime = d3.scaleTime()
+      .domain([minDate, maxDate])
       .range([0, width]);
 
-    const currentBaseScale: d3.ScaleTime<number, number, never> = currentTransform.rescaleX(xScale);
+    const currentZoomedBaseScale: D3ScaleTime = currentTransform.rescaleX(baseXScale);
 
-    const focusPointX = width / 2;
-    const currentFocusDate: Date = currentBaseScale.invert(focusPointX);
+    const visualFocusX = width / 2;
+    const currentFocusDate: Date = currentZoomedBaseScale.invert(visualFocusX);
 
-    const focusEnhancedScale = (date: Date): number => createFocusScale(currentBaseScale, currentFocusDate, focusStrength, focusWidth, width)(date);
+    // ***** THE FIX IS HERE *****
+ const renderXScale = createFocusScale(currentZoomedBaseScale, currentFocusDate, focusStrength, FOCUS_WIDTH_PX);
+    // ***** END OF FIX *****
 
-    // --- Stacking Logic ---
-    const stackedEvents = eventsWithDates.map(d => ({ ...d, yOffset: 0 }));
+    const eventsWithStacking = [...processedEvents];
+    const eventsByLane = d3.group(eventsWithStacking, d => d.laneKey as LaneKey);
 
-    // Type parameter d in d3.group
-    const eventsByLane = d3.group(stackedEvents, (d: TimelineEvent & { date: Date; yOffset: number }) => d.laneKey);
+    eventsByLane.forEach((eventsInLane) => {
+      eventsInLane.sort((a, b) => a.date.getTime() - b.date.getTime());
+      const occupiedHorizontalSpace = new Map<number, Array<{ startX: number, endX: number }>>();
+      const maxStackLevel = 10;
 
-    // Type parameter eventsInLane in eventsByLane.forEach
-    eventsByLane.forEach((eventsInLane: (TimelineEvent & { date: Date; yOffset: number })[]) => {
-        // Type parameters a and b in eventsInLane.sort
-        eventsInLane.sort((a: TimelineEvent & { date: Date }, b: TimelineEvent & { date: Date }) => a.date.getTime() - b.date.getTime());
+      eventsInLane.forEach(event => {
+        let currentYOffset = 0;
+        let placed = false;
 
-        const occupiedHorizontalSpace = new Map<number, Array<{ startX: number, endX: number }>>();
-        const maxStackLevel = 10;
-        // Type parameter event in eventsInLane.forEach (inner loop)
-        eventsInLane.forEach((event: TimelineEvent & { date: Date; yOffset: number }) => {
-            let currentYOffset = 0;
-            let placed = false;
+        let eventVisualStartPx, eventVisualEndPx;
+        if (event.isDurationEvent && event.startYear && event.endYear) {
+          eventVisualStartPx = currentZoomedBaseScale(new Date(event.startYear, 0, 1));
+          eventVisualEndPx = currentZoomedBaseScale(new Date(event.endYear, 11, 31));
+        } else {
+          const eventPosPx = currentZoomedBaseScale(event.date);
+          eventVisualStartPx = eventPosPx - MIN_HORIZONTAL_SEPARATION / 2;
+          eventVisualEndPx = eventPosPx + MIN_HORIZONTAL_SEPARATION / 2;
+        }
 
-            let eventStartX, eventEndX;
-            if (event.startYear && event.endYear) {
-                eventStartX = currentBaseScale(new Date(event.startYear, 0, 1));
-                eventEndX = currentBaseScale(new Date(event.endYear, 0, 1));
-            } else {
-                const eventPos = currentBaseScale(event.date);
-                eventStartX = eventPos - minHorizontalSeparation / 2;
-                eventEndX = eventPos + minHorizontalSeparation / 2;
-            }
+        while (!placed && currentYOffset < maxStackLevel) {
+          const occupied = occupiedHorizontalSpace.get(currentYOffset) || [];
+          const overlap = occupied.some(space => (eventVisualStartPx < space.endX && eventVisualEndPx > space.startX));
+          if (!overlap) {
+            event.yOffset = currentYOffset;
+            occupiedHorizontalSpace.set(currentYOffset, [...occupied, { startX: eventVisualStartPx, endX: eventVisualEndPx }]);
+            placed = true;
+          } else {
+            currentYOffset++;
+          }
+        }
+        if (!placed) event.yOffset = maxStackLevel -1;
 
-            while (!placed && currentYOffset < maxStackLevel) {
-                 const occupied = occupiedHorizontalSpace.get(currentYOffset) || [];
-                 const overlap = occupied.some(space => (eventStartX < space.endX && eventEndX > space.startX));
-
-                if (!overlap) {
-                    event.yOffset = currentYOffset;
-                    occupiedHorizontalSpace.set(currentYOffset, [...occupied, { startX: eventStartX, endX: eventEndX }]);
-                    placed = true;
-                } else {
-                    currentYOffset++;
-                }
-            }
-             if (!placed) {
-                 // Fallback: if cannot stack within maxStackLevel, place at a default high level
-                 event.yOffset = maxStackLevel - 1; // Place it at the highest allowed level
-             }
-        });
+        event.calculatedX = renderXScale(event.date);
+        if (event.isDurationEvent && event.startYear && event.endYear) {
+            event.durationStartX = renderXScale(new Date(event.startYear, 0, 1));
+            event.durationEndX = renderXScale(new Date(event.endYear, 11, 31));
+        }
+      });
     });
 
-    const xAxis = d3.axisBottom(xScale)
-      .ticks(d3.timeYear.every(5))
-      .tickFormat(d3.timeFormat("%Y"));
-      
-    const xAxisGroup = g.append("g")
-      .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${height})`) as d3.Selection<SVGGElement, unknown, null, undefined>;
+    const baseEventY = height - 30;
 
-    const eventsGroup = g.append("g").attr("class", "events-group") as d3.Selection<SVGGElement, unknown, null, undefined>;
+    const g = svg.selectAll<SVGGElement, unknown>(".chart-group").data([null]);
+    const gEnter = g.enter().append("g").attr("class", "chart-group");
+    gEnter.merge(g).attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
 
-    const eventNodes: d3.Selection<SVGCircleElement, TimelineEvent & { date: Date, yOffset: number }, SVGGElement, unknown> = eventsGroup.selectAll(".event-node")
-      .data(stackedEvents, (d: TimelineEvent & { date: Date, yOffset: number }) => d.id)
-      .enter()
-      .append("circle")
-      .attr("class", d => `event-node ${d.id === selectedEvent?.id ? 'selected' : ''}`)
-      .attr("cx", d => focusEnhancedScale(d.date))
-      .attr("cy", d => baseEventY - d.yOffset * verticalStackSpacing)
-      .attr("r", d => d.id === selectedEvent?.id ? eventNodeRadius * 1.5 : eventNodeRadius)
-      // Fix CATEGORY_COLOR_MAP access and type parameters d in eventNodes fill attribute
-      .attr("fill", (d: TimelineEvent & { date: Date; yOffset: number }) =>
-        d.color ||
-        (d.category ? CATEGORY_COLOR_MAP[d.category as EventCategory] : undefined) ||
-        (d.laneKey ? LANE_CONFIG_MAP[d.laneKey]?.defaultColor : undefined) || 'steelblue'
-      )
-      // Type this in eventNodes.on('mouseover', ...)
-      .on('mouseover', function(this: SVGCircleElement, event: MouseEvent, d: TimelineEvent & { date: Date; yOffset: number }) {
-        // Fix 'containerRef.current' is possibly 'null'
-        if (!containerRef.current) return;
+    const xAxis = d3.axisBottom(currentZoomedBaseScale);
 
-        const offsetX = 15;
-        const offsetY = 15;
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const estimatedTooltipWidth = 250;
-        const estimatedTooltipHeight = 70;
+    const updateTicks = () => {
+        const domain = currentZoomedBaseScale.domain();
+        const timeSpanDays = (domain[1].getTime() - domain[0].getTime()) / (1000 * 60 * 60 * 24);
+        let tickInterval: d3.TimeInterval | null = null;
+        let tickFormatFunc: (date: Date | number | { valueOf(): number }) => string;
 
-        let relativeX = event.pageX - containerRect.left + offsetX;
-        let relativeY = event.pageY - containerRect.top + offsetY;
+        const formatDate = (formatter: (date: Date) => string) => (d: Date | number | { valueOf(): number }) => formatter(new Date(d.valueOf()));
 
-        if (relativeX + estimatedTooltipWidth > containerRect.width) {
-          relativeX = containerRect.width - estimatedTooltipWidth;
-        }
-        if (relativeY + estimatedTooltipHeight > containerRect.height) {
-          relativeY = containerRect.height - estimatedTooltipHeight;
-        }
+        if (timeSpanDays < 30) { tickInterval = d3.timeDay.every(3); tickFormatFunc = formatDate(d3.timeFormat("%b %d")); }
+        else if (timeSpanDays < 180) { tickInterval = d3.timeMonth.every(1); tickFormatFunc = formatDate(d3.timeFormat("%b '%y")); }
+        else if (timeSpanDays < 730) { tickInterval = d3.timeMonth.every(2); tickFormatFunc = formatDate(d3.timeFormat("%b '%y")); }
+        else if (timeSpanDays < 3650 * 2) { tickInterval = d3.timeYear.every(1); tickFormatFunc = formatDate(d3.timeFormat("%Y")); }
+        else { tickInterval = d3.timeYear.every(5); tickFormatFunc = formatDate(d3.timeFormat("%Y")); }
 
-        setTooltip({
-          visible: true,
-          content: `${d.title || 'Event'}: ${d.shortDescription || ''}`,
-          x: relativeX,
-          y: relativeY,
-        });
-      })
-      // Type this in eventNodes.on('mouseout', ...)
-      .on("mouseout", function(this: SVGCircleElement, event: MouseEvent, d: TimelineEvent & { date: Date; yOffset: number }) {
-         d3.select(this).attr("r", d.id === selectedEvent?.id ? eventNodeRadius * 1.5 : eventNodeRadius);
-         setTooltip({ ...tooltip, visible: false });
-      })
+        xAxis.ticks(tickInterval).tickFormat(tickFormatFunc);
+    };
+    updateTicks();
 
-    // Render Duration Events (Rectangles) - Filter for events with start and end years
-    const durationEvents = stackedEvents.filter(d => d.startYear !== undefined && d.endYear !== undefined);
+    const xAxisGroup = g.merge(gEnter).selectAll<SVGGElement, unknown>(".x-axis").data([null]);
+    xAxisGroup.enter().append("g").attr("class", "x-axis")
+      .merge(xAxisGroup)
+      .attr("transform", `translate(0, ${height})`)
+      .transition().duration(selectedEvent ? 0 : 300)
+      .call(xAxis);
 
-    const eventBars = eventsGroup.selectAll(".event-bar")
-      .data(durationEvents, (d: TimelineEvent & { date: Date, yOffset: number }) => d.id)
-      .enter()
-      .append("rect")
-      .attr("class", d => `event-bar ${d.id === selectedEvent?.id ? 'selected' : ''}`)
-      .attr("x", (d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) => focusEnhancedScale(new Date(d.startYear!, 0, 1)))
-      .attr("width", (d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) => {
-          const startX = focusEnhancedScale(new Date(d.startYear!, 0, 1));
-          const endX = focusEnhancedScale(new Date(d.endYear!, 0, 1));
-          return Math.max(0, endX - startX);
-      })
-      // Adjusted y position to center the bar on the stem
-      .attr("y", d => baseEventY - d.yOffset * verticalStackSpacing - 5) // Subtract half of bar height
-      .attr("height", 10)
-      // Type parameters d in eventBars fill attribute
-      .attr("fill", (d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) =>
-        d.color ||
-        (d.laneKey ? LANE_CONFIG_MAP[d.laneKey]?.defaultColor : undefined) ||
-        'steelblue'
-      )
-      // Type this in eventBars.on('click', ...)
-      .on('click', function(this: SVGRectElement, event: MouseEvent, d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) {
-         setSelectedEvent(d);
-      })
-      // Type this in eventBars.on('mouseover', ...)
-      .on('mouseover', function(this: SVGRectElement, event: MouseEvent, d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) {
-        // Fix 'containerRef.current' is possibly 'null'
-        if (!containerRef.current) return;
+    const eventsGroup = g.merge(gEnter).selectAll<SVGGElement, unknown>(".events-group").data([null]);
+    eventsGroup.enter().append("g").attr("class", "events-group").merge(eventsGroup);
 
-        const offsetX = 15;
-        const offsetY = 15;
-        const estimatedTooltipWidth = 200;
-        const estimatedTooltipHeight = 50;
-        const containerRect = containerRef.current.getBoundingClientRect();
+    const stems = eventsGroup.merge(gEnter.select(".events-group"))
+      .selectAll<SVGLineElement, FormattedEvent>(".event-stem")
+      .data(eventsWithStacking, d => d.id);
 
-        let relativeX = event.pageX - containerRect.left + offsetX;
-        let relativeY = event.pageY - containerRect.top + offsetY;
-
-        if (relativeX + estimatedTooltipWidth > containerRect.width) {
-            relativeX = containerRect.width - estimatedTooltipWidth;
-        }
-        if (relativeY + estimatedTooltipHeight > containerRect.height) {
-          relativeY = containerRect.height - estimatedTooltipHeight;
-        }
-
-        setTooltip({
-            visible: true,
-            content: `${d.title || 'Event'}: ${d.shortDescription || ''}`,
-            x: relativeX,
-            y: relativeY,
-        });
-      })
-      // Type this in eventBars.on("mouseout", ...)
-      .on("mouseout", function(this: SVGRectElement, event: MouseEvent, d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) {
-         setTooltip({ ...tooltip, visible: false });
-      });
-
-    // Render Stems (Lines from node/bar to axis)
-    // Change data source and type parameters d in eventStems attributes
-    const eventStems: d3.Selection<SVGLineElement, TimelineEvent & { date: Date, yOffset: number }, SVGGElement, unknown> = eventsGroup.selectAll(".event-stem")
-      .data(stackedEvents, (d: TimelineEvent & { date: Date, yOffset: number }) => d.id) // Use stackedEvents
-      .enter()
-      .append("line")
-      .attr("class", "event-stem")
-      .attr("x1", (d: TimelineEvent & { date: Date; yOffset: number }) => focusEnhancedScale(d.date))
-      .attr("x2", (d: TimelineEvent & { date: Date; yOffset: number }) => focusEnhancedScale(d.date))
-      .attr("y1", (d: TimelineEvent & { date: Date; yOffset: number }) => baseEventY - d.yOffset * verticalStackSpacing)
+    stems.enter().append("line").attr("class", "event-stem")
+      .merge(stems)
+      .transition().duration(300)
+      .attr("x1", d => d.calculatedX)
+      .attr("x2", d => d.calculatedX)
+      .attr("y1", d => baseEventY - d.yOffset * VERTICAL_STACK_SPACING - (d.isDurationEvent ? DURATION_EVENT_HEIGHT / 2 : EVENT_NODE_RADIUS))
       .attr("y2", baseEventY)
       .attr("stroke", "#ccc")
       .attr("stroke-width", 1);
+    stems.exit().remove();
 
-    // Function to update ticks based on zoom
-    const updateTicks = () => {
-      // Declare ticks and tickFormat
-      let ticks: any; // Using 'any' as per user note
-      let tickFormat: (date: Date | number | { valueOf(): number }) => string; // Type as per d3.timeFormat
+    const pointEvents = eventsWithStacking.filter(d => !d.isDurationEvent);
+    const eventNodes = eventsGroup.merge(gEnter.select(".events-group"))
+      .selectAll<SVGCircleElement, FormattedEvent>(".event-node")
+      .data(pointEvents, d => d.id);
 
-      const domain = currentBaseScale.domain();
-      const timeSpanDays = (domain[1].getTime() - domain[0].getTime()) / (1000 * 60 * 60 * 24);
+    eventNodes.enter().append("circle").attr("class", "event-node cursor-pointer")
+      .on('click', (event: MouseEvent, d: FormattedEvent) => {
+        setSelectedEvent(d);
+        event.stopPropagation();
+      })
+      .on('mouseover', function(event: MouseEvent, d: FormattedEvent) {
+        if (!containerRef.current) return;
+        d3.select(this).transition().duration(100).attr("r", EVENT_NODE_RADIUS * 1.8);
+        const [svgX, svgY] = d3.pointer(event, svgRef.current);
+        setTooltip({ visible: true, content: `${d.title}: ${d.shortDescription}`, x: svgX + 10, y: svgY - 10 });
+      })
+      .on('mouseout', function(this: SVGCircleElement, event: MouseEvent, d: FormattedEvent) {
+        d3.select(this).transition().duration(100).attr("r", d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS).attr("fill", d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'steelblue');
+        setTooltip(prev => ({ ...prev, visible: false }));
+      })
+      .merge(eventNodes)
+      .attr("class", d => `event-node cursor-pointer ${d.id === selectedEvent?.id ? 'selected-event-node' : ''}`)
+      .transition().duration(300)
+      .attr("cx", d => d.calculatedX)
+      .attr("cy", d => baseEventY - d.yOffset * VERTICAL_STACK_SPACING - EVENT_NODE_RADIUS)
+      .attr("r", d => d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS)
+      .attr("fill", d => d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'steelblue')
+      .attr("stroke", d => d.id === selectedEvent?.id ? "black" : "none")
+      .attr("stroke-width", d => d.id === selectedEvent?.id ? 2 : 0);
+    eventNodes.exit().remove();
 
-      // More granular tick control based on time span
-      if (timeSpanDays < 30) { // Less than ~1 month visible, show ticks every 3 days
-         ticks = d3.timeDay.every(3);
-         tickFormat = d3.timeFormat("%b %d"); // e.g., "Jan 01"
-      } else if (timeSpanDays < 180) { // Less than ~6 months visible, show monthly ticks
-         ticks = d3.timeMonth.every(1);
-         tickFormat = d3.timeFormat("%b %Y"); // e.g., "Jan 2023"
-      } else if (timeSpanDays < 730) { // Less than ~2 years visible, show bi-monthly ticks
-         ticks = d3.timeMonth.every(2);
-         tickFormat = d3.timeFormat("%b %Y"); // e.g., "Jan 2023"
-      } else if (timeSpanDays < 3650 * 2) { // Less than ~20 years visible, show yearly ticks
-         ticks = d3.timeYear.every(1);
-         tickFormat = d3.timeFormat("%Y"); // e.g., "2023"
-      } else { // Greater than ~20 years visible, show ticks every 5 years
-         ticks = d3.timeYear.every(5);
-         tickFormat = d3.timeFormat("%Y"); // e.g., "2020"
-      }
+    const durationEventsData = eventsWithStacking.filter(d => d.isDurationEvent);
+    const eventBars = eventsGroup.merge(gEnter.select(".events-group"))
+      .selectAll<SVGRectElement, FormattedEvent>(".event-bar")
+      .data(durationEventsData, d => d.id);
 
-      xAxis.ticks(ticks).tickFormat(tickFormat);
-      // Use the transition for smooth axis update, using the focusEnhancedScale for positioning
-      xAxisGroup.transition().duration(300).call(xAxis.scale(focusEnhancedScale));
-    };
+    eventBars.enter().append("rect").attr("class", "event-bar cursor-pointer")
+      .on('click', (event: MouseEvent, d: FormattedEvent) => {
+        setSelectedEvent(d);
+        event.stopPropagation();
+      })
+      .on('mouseover', function(event: MouseEvent, d: FormattedEvent) {
+        if (!containerRef.current) return;
+        d3.select(this).attr("filter", "url(#glow)");
+        const [svgX, svgY] = d3.pointer(event, svgRef.current);
+        setTooltip({ visible: true, content: `${d.title}: ${d.shortDescription}`, x: svgX + 10, y: svgY - 10 });
+      })
+      .on('mouseout', function(this: SVGRectElement, event: MouseEvent, d: FormattedEvent) {
+        d3.select(this).attr("filter", null);
+        setTooltip(prev => ({ ...prev, visible: false }));
+      })
+      .merge(eventBars)
+      .attr("class", d => `event-bar cursor-pointer ${d.id === selectedEvent?.id ? 'selected-event-bar' : ''}`)
+      .transition().duration(300)
+      .attr("x", d => d.durationStartX!)
+      .attr("y", d => baseEventY - d.yOffset * VERTICAL_STACK_SPACING - DURATION_EVENT_HEIGHT)
+      .attr("width", d => Math.max(0, d.durationEndX! - d.durationStartX!))
+      .attr("height", DURATION_EVENT_HEIGHT)
+      .attr("rx", 3)
+      .attr("ry", 3)
+      .attr("fill", d => d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'skyblue')
+      .attr("stroke", d => d.id === selectedEvent?.id ? "black" : (d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey as LaneKey]?.defaultColor || 'skyblue'))
+      .attr("stroke-width", d => d.id === selectedEvent?.id ? 2 : 1)
+      .attr("opacity", d => d.id === selectedEvent?.id ? 1 : 0.85);
+    eventBars.exit().remove();
 
-    updateTicks(); // Initial tick update
-
-    // D3 Zoom behavior
-    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 20])
-      .extent([[0, 0], [dimensions.width, dimensions.height]])
-      // Type parameter event in zoomBehavior.on("zoom", ...)
-      .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
-        setCurrentTransform(event.transform);
-        const newBaseScale: d3.ScaleTime<number, number, never> = event.transform.rescaleX(xScale);
-        const newFocusEnhancedScale = (date: Date): number => createFocusScale(newBaseScale, currentFocusDate, focusStrength, focusWidth, width)(date);
-
-        // Update the positions of event nodes and bars
-        // Type parameter d in eventNodes.transition()...attr("cx", ...)
-        eventNodes.transition().duration(300).attr("cx", (d: TimelineEvent & { date: Date; yOffset: number }) => newFocusEnhancedScale(d.date));
-        // Type parameters d in eventBars.transition()...
-        eventBars.transition().duration(300)
-           .attr("x", (d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) => newFocusEnhancedScale(new Date(d.startYear!, 0, 1)))
-           .attr("width", (d: TimelineEvent & { date: Date; yOffset: number; startYear?: number; endYear?: number }) => Math.max(0, newFocusEnhancedScale(new Date(d.endYear!, 0, 1)) - newFocusEnhancedScale(new Date(d.startYear!, 0, 1))));
-        // Type parameter d in eventStems.transition()...
-        eventStems
-          .transition().duration(300)
-          .attr("x1", (d: TimelineEvent & { date: Date; yOffset: number }) => newFocusEnhancedScale(d.date)) // Use new scale for stems too
-          .attr("x2", (d: TimelineEvent & { date: Date; yOffset: number }) => newFocusEnhancedScale(d.date)) // Use new scale for stems too
-          .attr("y1", (d: TimelineEvent & { date: Date; yOffset: number }) => baseEventY - d.yOffset * verticalStackSpacing);
-
-        updateTicks(); // Update ticks on zoom
-      });
-
-    svg.call(zoomBehavior);
-
-    if (svgRef.current) {
-        // Correct way to store and access zoom behavior instance
-        const svgElement = d3.select(svgRef.current);
-        (svgElement.node() as any).__zoom = zoomBehavior; // Store on node for programmatic access
-        zoomBehavior.transform(svg.transition().duration(0), currentTransform);
+    if (!zoomBehaviorRef.current) {
+      const newZoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([0.05, 50])
+        .extent([[0, 0], [dimensions.width - MARGIN.left - MARGIN.right, dimensions.height - MARGIN.top - MARGIN.bottom]]) // Use calculated width/height
+        .on("zoom", (event: D3ZoomEvent) => {
+          setCurrentTransform(event.transform);
+        });
+      svg.call(newZoomBehavior);
+      zoomBehaviorRef.current = newZoomBehavior;
+    } else {
+      zoomBehaviorRef.current.extent([[0, 0], [dimensions.width - MARGIN.left - MARGIN.right, dimensions.height - MARGIN.top - MARGIN.bottom]]); // Use calculated width/height
     }
-  }, [dimensions, eventsWithDates, minDate, maxDate, currentTransform, selectedEvent]);
 
-  // Resize observer for responsiveness (optional but good)
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(entries => {
-      if (!entries || !entries.length) return;
-      const { width, height } = entries[0].contentRect;
-       if (Math.abs(dimensions.width - width) > 5 || Math.abs(dimensions.height - height) > 5) {
-            setDimensions({ width, height });
-       }
-    });
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-    return () => resizeObserver.disconnect();
-  }, [dimensions]);
+  }, [
+ processedEvents, minDate, maxDate, dimensions, currentTransform, selectedEvent, focusStrength, // Add focusStrength to dependencies
+    MARGIN, createFocusScale
+  ]);
 
-  // Handlers for explicit zoom buttons
-  const handleZoomIn = useCallback(() => {
-    if (svgRef.current) {
-      const svgElement = d3.select(svgRef.current);
-      // Access the stored zoom behavior instance
-      const currentZoomBehavior = (svgElement.node() as any)?.__zoom;
-      if (currentZoomBehavior) {
-        svgElement.transition().duration(300).call(currentZoomBehavior.scaleBy, 1.5);
-      }
-    }
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    if (svgRef.current) {
-      const svgElement = d3.select(svgRef.current);
-      const currentZoomBehavior = (svgElement.node() as any)?.__zoom;
-       if (currentZoomBehavior) {
-        svgElement.transition().duration(300).call(currentZoomBehavior.scaleBy, 0.75);
-      }
+  const handleZoom = useCallback((scaleFactor: number) => {
+    if (svgRef.current && zoomBehaviorRef.current) {
+      d3.select(svgRef.current)
+        .transition().duration(300)
+        .call(zoomBehaviorRef.current.scaleBy, scaleFactor);
     }
   }, []);
 
   const handleResetZoom = useCallback(() => {
-    if (svgRef.current) {
-      const svgElement = d3.select(svgRef.current);
-      const currentZoomBehavior = (svgElement.node() as any)?.__zoom;
-       if (currentZoomBehavior) {
-        svgElement.transition().duration(300).call(currentZoomBehavior.transform, d3.zoomIdentity);
-      }
+    if (svgRef.current && zoomBehaviorRef.current) {
+      d3.select(svgRef.current)
+        .transition().duration(500)
+        .call(zoomBehaviorRef.current.transform, d3.zoomIdentity);
     }
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full h-[400px] border relative" style={{minHeight: '300px'}}>
-        <div className="absolute top-2 left-2 z-10 space-x-2">
-            <Button onClick={handleZoomIn} size="sm">Zoom In</Button>
-            <Button onClick={handleZoomOut} size="sm">Zoom Out</Button>
-            <Button onClick={handleResetZoom} size="sm" variant="outline">Reset</Button>
+    <div ref={containerRef} className="w-full h-[450px] border rounded-md shadow-sm relative bg-gray-50" style={{ minHeight: '350px' }}>
+      <div className="absolute top-3 left-3 z-10 space-x-2 flex flex-col items-start p-2 bg-white rounded-md shadow-md">
+        <div className="flex items-center space-x-1 mb-2">
+        <Button onClick={() => handleZoom(1.5)} size="sm" variant="outline" className="bg-white">
+          <ZoomInIcon size={16} className="mr-1" /> Zoom In
+        </Button>
+        <Button onClick={() => handleZoom(0.75)} size="sm" variant="outline" className="bg-white">
+          <ZoomOutIcon size={16} className="mr-1" /> Zoom Out
+        </Button>
         </div>
+        <div className="flex items-center space-x-2 w-48">
+          <label className="text-xs font-medium w-20">Focus Strength:</label>
+          <Slider
+            value={[focusStrength]}
+            min={0}
+            max={1}
+            step={0.05}
+            onValueChange={(value) => setFocusStrength(value[0])}
+            className="flex-grow"
+          />
+          <span className="text-xs w-6 text-right">{focusStrength.toFixed(2)}</span>
+        </div>
+        {/* Add Focus Width Slider Here (Future) */}
+        {/* <div className="flex items-center space-x-2 w-48 mt-1">...</div> */}
+        <Button onClick={handleResetZoom} size="sm" variant="outline" className="bg-white">
+          <RotateCcwIcon size={16} className="mr-1" /> Reset
+        </Button>
+      </div>
       <svg ref={svgRef} width="100%" height="100%">
-        {/* D3 will render here */}
+        <defs>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <g className="chart-group"></g>
       </svg>
       {selectedEvent && (
         <EventDetailModal
@@ -413,25 +369,28 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
       )}
       {tooltip.visible && (
         <div
-          className="absolute"
+          className="absolute p-2 rounded-md shadow-lg text-xs pointer-events-none"
           style={{
             top: tooltip.y,
             left: tooltip.x,
-            zIndex: 1000,
-            padding: '8px',
-            borderRadius: '4px',
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backgroundColor: 'rgba(20, 20, 20, 0.85)',
             color: 'white',
-            fontSize: '12px',
-            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
-            pointerEvents: 'none',
+            transform: 'translate(10px, -10px)',
+            zIndex: 2000,
           }}
         >
           {tooltip.content}
         </div>
       )}
+       <div className="absolute bottom-2 right-3 text-xs text-gray-500 z-10">
+        Scroll to zoom, Click & Drag to pan. Click events for details.
+      </div>
     </div>
   );
 };
 
 export default DynamicFocusTimeline;
+
+interface DynamicFocusTimelineProps {
+  events: TimelineEvent[];
+}

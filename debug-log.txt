@@ -228,3 +228,51 @@ Stack: ReferenceError: selectedGrade is not defined
     at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
 ---
 
+[2025-05-31T08:28:36.732Z] JS Error: Uncaught Error: scale.domain is not a function
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: TypeError: scale.domain is not a function
+    at axis (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_0f7dd9d6._.js:7207:105)
+    at Transition.__TURBOPACK__default__export__ [as call] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_0f7dd9d6._.js:594:14)
+    at DynamicFocusTimeline.useEffect.updateTicks (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:590:59)
+    at DynamicFocusTimeline.useEffect (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:593:13)
+    at PhysicsTimelinePage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:1126:215)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
+[2025-05-31T09:28:20.810Z] JS Error: Uncaught Error: scale.domain is not a function
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: TypeError: scale.domain is not a function
+    at axis (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_0f7dd9d6._.js:7207:105)
+    at Transition.__TURBOPACK__default__export__ [as call] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_0f7dd9d6._.js:594:14)
+    at DynamicFocusTimeline.useEffect.updateTicks (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:590:59)
+    at DynamicFocusTimeline.useEffect (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:593:13)
+    at PhysicsTimelinePage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:1125:215)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
+[2025-05-31T10:29:07.617Z] JS Error: Uncaught Error: scale.domain is not a function
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: TypeError: scale.domain is not a function
+    at axis (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_0f7dd9d6._.js:7207:105)
+    at Transition.__TURBOPACK__default__export__ [as call] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_0f7dd9d6._.js:594:14)
+    at DynamicFocusTimeline.useEffect.updateTicks (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:590:59)
+    at DynamicFocusTimeline.useEffect (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:593:13)
+    at PhysicsTimelinePage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:1125:215)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+
+[2025-05-31T11:02:53.760Z] JS Error: Uncaught Error: scale.domain is not a function
+Source: https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js
+Line: 1850, Col: 50
+Stack: TypeError: scale.domain is not a function
+    at axis (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_a416002a._.js:7207:105)
+    at Transition.__TURBOPACK__default__export__ [as call] (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_a416002a._.js:594:14)
+    at DynamicFocusTimeline.useEffect.updateTicks (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:590:59)
+    at DynamicFocusTimeline.useEffect (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:593:13)
+    at PhysicsTimelinePage (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/src_2b59b2c3._.js:1125:215)
+    at ClientPageRoot (https://9000-firebase-physicslabgit-1748331430134.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2053:50)
+---
+

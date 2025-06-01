@@ -1,56 +1,127 @@
+// /home/user/PhysicsLAB/src/components/timeline/EventDetailModal.tsx
 import React from 'react';
-import { TimelineEvent } from './timeline-types'; // Import TimelineEvent
+import { TimelineEvent } from './timeline-types';
+import { Button } from '@/components/ui/button'; // Assuming you have a Button component
+import { Badge } from '@/components/ui/badge'; // Assuming you have a Badge component
+import { X } from 'lucide-react'; // For a nicer close icon
 
 interface EventDetailModalProps {
   event: TimelineEvent | null;
   onClose: () => void;
-  isOpen: boolean; // Assuming isOpen is also needed to control visibility
+  isOpen: boolean;
 }
 
 const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, isOpen }) => {
   if (!isOpen || !event) {
-    return null; // Don't render if not open or no event
+    return null;
   }
 
+  // Prevent background scroll when modal is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto'; // Cleanup on unmount
+    };
+  }, [isOpen]);
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        maxWidth: '500px',
-        maxHeight: '80vh',
-        overflowY: 'auto',
-        position: 'relative'
-      }}>
-        <h2 style={{ marginTop: 0 }}>{event.title || 'Event Details'}</h2>
-        <p>{event.description || event.shortDescription || 'No description available.'}</p>
-        {/* Add more event details here as needed */}
-        <button
+    <div
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] p-4"
+      onClick={onClose} // Close modal if backdrop is clicked
+    >
+      <div
+        className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto relative"
+        onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to backdrop
+      >
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'none',
-            border: 'none',
-            fontSize: '1.2em',
-            cursor: 'pointer'
-          }}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+          aria-label="Close event details"
         >
-          &times;
-        </button>
+          <X size={20} />
+        </Button>
+
+        <h2 className="text-2xl font-semibold mb-3 pr-10">{event.title || 'Event Details'}</h2>
+        
+        <p className="text-gray-700 mb-2 text-sm">
+          <strong>Date:</strong> {event.year || (event.startYear && event.endYear ? `${event.startYear} - ${event.endYear}` : event.startYear || 'N/A')}
+        </p>
+        
+        {event.significanceRating !== undefined && event.significanceRating !== null && (
+           <p className="text-gray-700 mb-2 text-sm">
+            <strong>Significance:</strong> {event.significanceRating}/5
+          </p>
+        )}
+
+        {event.tags && event.tags.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1">
+            {event.tags.map((tag, index) => (
+              <Badge key={index} variant="secondary">{tag}</Badge>
+            ))}
+          </div>
+        )}
+
+        {event.relatedConcepts && event.relatedConcepts.length > 0 && (
+           <p className="text-gray-700 mb-4 text-sm">
+             <strong>Related Concepts:</strong> {event.relatedConcepts.join(', ')}
+           </p>
+        )}
+
+        <p className="text-gray-700 mb-4 whitespace-pre-wrap">
+          {event.detailedDescription || event.shortDescription || 'No detailed description available.'}
+        </p>
+
+        {/* Placeholder Section for Key Takeaways / Impact */}
+        <div className="mb-4 p-3 bg-yellow-50 rounded-md border-l-4 border-yellow-500 text-yellow-800">
+            <h3 className="font-medium text-yellow-800">Key Takeaways / Impact (Placeholder)</h3>
+            <p className="text-sm italic">This section will contain a summary of the event's importance or consequences.</p>
+        </div>
+
+        {/* Removed old 'details' section as information is moved to main event */}
+        {event.scientist && (
+          <div className="mb-3 p-3 bg-blue-50 rounded-md">
+            <h3 className="font-medium text-blue-700">Key Figure: {event.scientist.name}</h3>
+            <p className="text-sm text-blue-600">
+              ({event.scientist.birthYear} - {event.scientist.deathYear || 'Present'})
+            </p>
+          </div>
+        )}
+
+        {/* Display Images */}
+        {event.imageUrls && event.imageUrls.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-lg font-medium border-b pb-1 mb-2">Images:</h3>
+            {event.imageUrls.map((url, index) => (
+              <img key={index} src={url} alt={`Event image ${index + 1}`} className="mt-2 rounded max-h-60 object-contain mx-auto"/>
+            ))}
+          </div>
+        )}
+
+        {/* Display Media (Video/Audio) */}
+        {event.mediaUrls && event.mediaUrls.length > 0 && (
+          <div className="space-y-3 mt-4">
+            <h3 className="text-lg font-medium border-b pb-1 mb-2">Media:</h3>
+            {event.mediaUrls.map((media, index) => (
+              <div key={index} className="w-full">
+                {media.type === 'video' && (
+                  <video src={media.url} controls className="w-full rounded"></video>
+                )}
+                {media.type === 'audio' && (
+                  <audio src={media.url} controls className="w-full"></audio>
+                )}
+              </div>
+            ))}
+             {event.mediaUrls.map((media, index) => (
+               <div key={index}>{media.type} at: {media.url}</div> // Simple display for now
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

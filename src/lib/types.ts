@@ -1,18 +1,105 @@
+// /home/user/PhysicsLAB/src/lib/types.ts
+import { z } from 'zod';
+
+// --- MCQ Definition ---
+export interface MCQ {
+ id: string; // e.g., "g9u1mcq1"
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation?: string;
+}
+export const McqSchema = z.object({
+  id: z.string().min(1, "MCQ ID cannot be empty"),
+  question: z.string().min(1, "MCQ question text cannot be empty"),
+  options: z.array(z.string().min(1)).min(2, "MCQ must have at least 2 options"),
+  correctAnswerIndex: z.number().int().nonnegative(),
+  explanation: z.string().optional(),
+});
+export type McqType = z.infer<typeof McqSchema>; // For type inference from Zod schema
+
+// --- QuestionAnswer Definition (for CRQs, ERQs, Numericals) ---
+export interface QuestionAnswer {
+  id: string; // e.g., "g9u1crq1"
+  question: string;
+  answer_guideline?: string; // Using this as "solution" or "answer"
+}
+export const QuestionAnswerSchema = z.object({
+  id: z.string().min(1, "Question ID cannot be empty"),
+  question: z.string().min(1, "Question text cannot be empty"),
+  answer_guideline: z.string().optional(),
+});
+export type QuestionAnswerType = z.infer<typeof QuestionAnswerSchema>;
+
+// --- PdfResource Definition ---
+export interface PdfResource {
+  id: string; // e.g., "g9u1pdf1_stbb"
+  label: string;
+  url: string; // Local path (e.g., /textbooks/grade9/unit1.pdf) or external URL
+  icon?: string; // Lucide icon name
+  downloadable?: boolean;
+}
+export const PdfResourceSchema = z.object({
+  id: z.string().min(1, "PDF Resource ID cannot be empty"),
+  label: z.string().min(1, "PDF Resource label cannot be empty"),
+  url: z.string().min(1, "PDF URL/path cannot be empty"), // Can add .url() if always external
+  icon: z.string().optional(),
+  downloadable: z.boolean().optional().default(true),
+});
+export type PdfResourceType = z.infer<typeof PdfResourceSchema>;
+
+// --- UnitData Definition (Master structure for each unit's .ts data file) ---
+export interface UnitData {
+  unitId: string; // e.g., "g9-u1"
+  unitName: string; // e.g., "Unit 1: Physical Quantities and Measurement"
+  gradeId: string; // e.g., "grade9"
+  gradeName: string; // e.g., "Grade IX"
+  sectionName: string; // e.g., "Section 1: General Physics"
+
+  summary?: string;
+  keyPoints?: string[];
+
+  mcqs?: MCQ[];
+  conceptualQuestions?: QuestionAnswer[]; // CRQs
+  extendedResponseQuestions?: QuestionAnswer[]; // ERQs
+  numericalProblems?: QuestionAnswer[]; // Numericals from textbook exercises
+
+  pdfResources?: PdfResource[];
+  lastUpdated?: string; // ISO date string
+}
+export const UnitDataSchema = z.object({
+  unitId: z.string().min(1),
+  unitName: z.string().min(1),
+  gradeId: z.string().min(1),
+  gradeName: z.string().min(1),
+  sectionName: z.string().min(1),
+  summary: z.string().optional(),
+  keyPoints: z.array(z.string()).optional(),
+  mcqs: z.array(McqSchema).optional(),
+  conceptualQuestions: z.array(QuestionAnswerSchema).optional(),
+  extendedResponseQuestions: z.array(QuestionAnswerSchema).optional(),
+  numericalProblems: z.array(QuestionAnswerSchema).optional(),
+  pdfResources: z.array(PdfResourceSchema).optional(),
+  lastUpdated: z.string().datetime({ offset: true }).optional(), // ISO date string
+});
+export type UnitDataType = z.infer<typeof UnitDataSchema>;
+
+
 export interface ChapterContent {
   stbbChapterPdfLink?: string;
-  teacherNotesPdfName?: string; // Note: Storing filename implies a convention for base URL or local storage access
+  teacherNotesPdfName?: string;
   alternativeChapterPdfLink?: string;
   punjabBoardPdfName?: string;
   nationalSyllabusPdfName?: string;
   ziauddinBoardPdfName?: string;
   keyPoints?: string;
-  summary?: string; // Short summary of the chapter
-  formulas?: { formula: string; description: string }[]; // Array of LaTeX formulas and descriptions
-  mcqs?: MCQ[];
-  shortAnswers?: QuestionAnswer[];
-  longAnswers?: QuestionAnswer[];
-  realWorldExamples?: string[]; // Real-world examples/applications
-  diagramDescriptions?: { title: string; description: string }[]; // Array of diagram/figure descriptions
+  summary?: string;
+  formulas?: { formula: string; description: string }[];
+  mcqs?: MCQ[]; // Uses updated MCQ type
+  shortAnswers?: QuestionAnswer[]; // Uses updated QuestionAnswer type
+  longAnswers?: QuestionAnswer[]; // Uses updated QuestionAnswer type
+  realWorldExamples?: string[];
+  diagramDescriptions?: { title: string; description: string }[];
   philosophicalQuestions?: { question: string; hint?: string }[];
   dailyLifeExamples?: string[];
   suggestedSimulations?: string[];
@@ -20,19 +107,22 @@ export interface ChapterContent {
   realWorldApplications?: string[];
   workedExamples?: {problem: string, steps: string[]}[];
   lastUpdated?: string;
-  pdfResources?: PdfResource[]; // Added pdfResources field
+  pdfResources?: PdfResource[]; // Uses the PdfResource type defined below
 }
 
-export interface PdfResource {
-  label: string;
-  icon: string;
-  url: string;
-}
+  mcqs?: MCQ[]; // Uses the updated MCQ type
+  conceptualQuestions?: QuestionAnswer[]; // CRQs - Uses the updated QuestionAnswer type
+  extendedResponseQuestions?: QuestionAnswer[]; // ERQs - Uses the updated QuestionAnswer type
+  numericalProblems?: QuestionAnswer[]; // Numericals from textbook exercises - Uses the updated QuestionAnswer type
 
-export interface Chapter {
-  id: string;
-  name: string;
+  pdfResources?: PdfResource[]; // Uses the updated PdfResource type
+  lastUpdated?: string; // ISO date string
+}
+export interface Chapter { // This interface describes items in the `chapters` array of StudyGrade in the manifest
+  id: string; // e.g., "g9-u1". This will be used as the unitId in the dynamic route.
+  name: string; // e.g., "Unit 1: Physical Quantities and Measurement"
   tags?: string[];
+  dataPath: string; // Path to the detailed unit data file (e.g., "grade9/g9-u1-data.ts") - Added this
   content?: ChapterContent;
 }
 
@@ -73,126 +163,116 @@ export interface ModelPaper {
   year: number;
 }
 
-// Updated Assignment related types
-export type SubmissionStatus = 'Not Submitted' | 'Submitted' | 'Late' | 'Graded' | 'Rejected'; // Added 'Rejected'
+export type SubmissionStatus = 'Not Submitted' | 'Submitted' | 'Late' | 'Graded' | 'Rejected';
 
 export interface StudentSubmission {
   studentId: string;
-  studentName?: string; // Optional, but good for teacher view
-  submittedAt: string; // ISO date string
+  studentName?: string;
+  submittedAt: string;
   textSubmission?: string;
-  fileLink?: string; // URL to the cloud-stored file
-  fileName?: string; // Original name of the file student "uploaded" (via link)
-  grade?: string; // e.g., "A", "85/100"
-  feedback?: string; // Teacher's feedback
+  fileLink?: string;
+  fileName?: string;
+  grade?: string;
+  feedback?: string;
   status: SubmissionStatus;
-  rejectionReason?: string; // For 'Rejected' status
+  rejectionReason?: string;
 }
 
 export interface Assignment {
   id: string;
   title: string;
   description: string;
-  dueDate: string; // ISO date string
-  submissionType: 'text' | 'file' | 'text_and_file' | 'none'; // 'file' now implies link submission
+  dueDate: string;
+  submissionType: 'text' | 'file' | 'text_and_file' | 'none';
   pointsPossible?: number;
   associatedSimulations?: string[];
   associatedQuizzes?: string[];
-  targetGradeIds: string[]; // Added from teacher assignment management
-  onlineSubmissionEnabled: boolean; // Added from teacher assignment management
-  createdAt: string; // Added from teacher assignment management
-
-  // For student view (populated dynamically or from a larger list)
+  targetGradeIds: string[];
+  onlineSubmissionEnabled: boolean;
+  createdAt: string;
   studentSpecificSubmission?: StudentSubmission;
-
-  // For teacher view (list of all submissions for this assignment)
   allStudentSubmissions?: StudentSubmission[];
 }
-
 
 export type QuestionType = 'single-choice' | 'multiple-choice' | 'short-answer' | 'long-answer' | 'true-false';
 
 export interface Question {
-  questionId: string; // Unique ID for the question
-  quizId: string; // Link to the parent quiz
+  questionId: string;
+  quizId: string;
   questionText: string;
   questionType: QuestionType;
-  options?: string[]; // For 'single-choice', 'multiple-choice', 'true-false'
-  correctAnswer?: string | string[]; // String for single/short/true-false, string[] for multiple
+  options?: string[];
+  correctAnswer?: string | string[];
   points: number;
-  explanation?: string; // Optional explanation for the correct answer
+  explanation?: string;
 }
 
 export interface Quiz {
-  quizId: string; // Unique ID for the quiz
+  quizId: string;
   title: string;
   description?: string;
-  chapterId?: string; // Optional link to a specific chapter
-  gradeId?: string; // Optional link to a specific grade
-  timeLimit?: number; // Time limit in minutes (optional)
-  questionIds: string[]; // Array of question IDs belonging to this quiz
-  createdAt: string; // ISO date string
-  updatedAt?: string; // ISO date string
+  chapterId?: string;
+  gradeId?: string;
+  timeLimit?: number;
+  questionIds: string[];
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AnswerGiven {
   questionId: string;
-  answer: string | string[]; // Student's answer(s)
-  isCorrect: boolean; // Whether the student's answer was correct
-  pointsEarned: number; // Points earned for this question
-  maxPoints: number; // Maximum possible points for this question
+  answer: string | string[];
+  isCorrect: boolean;
+  pointsEarned: number;
+  maxPoints: number;
 }
-
 
 export interface SimulationTopic {
   id: string;
   name: string;
   grade: string;
   description: string;
-  icon: React.ElementType;
+  icon: React.ElementType; // Lucide icon component
   categories?: string[];
   image?: string;
   aiHint?: string;
 }
 
 export interface QuizAttempt {
-  attemptId: string; // Unique ID for the attempt
-  userId: string; // ID of the user who took the quiz
-  quizId: string; // ID of the quiz attempted
-  quizTitle: string; // Title of the quiz at the time of attempt
-  score: number; // Score achieved in the attempt
-  maxScore: number; // Maximum possible score for the quiz
-  answersGiven: AnswerGiven[]; // Array of answers and results for each question
-  startedAt: string; // ISO date string when the attempt started
-  completedAt: string; // ISO date string when the attempt was completed
+  attemptId: string;
+  userId: string;
+  quizId: string;
+  quizTitle: string;
+  score: number;
+  maxScore: number;
+  answersGiven: AnswerGiven[];
+  startedAt: string;
+  completedAt: string;
 }
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: React.ElementType;
+  icon: React.ElementType; // Lucide icon component
   matchExact?: boolean;
   subItems?: NavItem[];
 }
 
-export interface MCQ {
-  question: string;
-  options: string[];
-  correctAnswer: string | string[]; // For multiple choice, can be string[]
-  explanation?: string; // Optional explanation
-}
-
-export interface QuestionAnswer {
-  question: string;
-  answer: string;
+export const PdfResourceSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  url: z.string().url(),
+  icon: z.string().optional(),
+  downloadable: z.boolean().optional(),
 }
 
 export interface PhilosophicalQuestionItem {
   question: string;
-  hint?: string; // Optional hint
+  hint?: string;
 }
 
-export interface PhilosophicalBranch {} // Placeholder
-export interface ResearchCenter {} // Placeholder
-export interface UniversityProgram {} // Placeholder
-export interface LabEquipmentItem {} // Placeholder
+// Keep placeholders or expand them if needed for other features
+export interface PhilosophicalBranch {}
+export interface ResearchCenter {}
+export interface UniversityProgram {}
+export interface LabEquipmentItem {}

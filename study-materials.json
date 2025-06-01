@@ -1,0 +1,19 @@
+[
+  {
+    "id": "grade9",
+    "name": "Grade IX",
+    "sections": [
+      {
+        "name": "Section 1: General Physics",
+        "units": [
+          {
+            "id": "g9-u1",
+            "name": "Unit 1: Physical Quantities and Measurement",
+            "dataPath": "grade9/g9-u1-data.ts"
+          }
+        ]
+      }
+    ],
+    "completeTextbookPdfLink": "/textbooks/grade9/PhyicsG9Ch1.pdf"
+  }
+]

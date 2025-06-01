@@ -7,7 +7,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Principia Mathematica Published',
     shortDescription: 'Newton publishes his laws of motion and universal gravitation.',
     year: 1687,
-    laneKey: 'classical-physics', // Corrected laneKey
+    laneKey: 'classical-physics', // OK
     icon: 'Atom',
     details: [],
   },
@@ -17,7 +17,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Huygens Principle',
     shortDescription: 'Huygens describes wave propagation as secondary wavelets.',
     year: 1678,
-    laneKey: 'classical-physics', // Corrected laneKey
+    laneKey: 'classical-physics', // OK
     details: [],
   },
   {
@@ -26,7 +26,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Theory of Electromagnetic Waves',
     shortDescription: 'Maxwell unifies electricity, magnetism, and light.',
     year: 1864,
-    laneKey: 'classical-physics', // Corrected laneKey
+    laneKey: 'classical-physics', // OK (Category 'theory-development' fits 'classical-physics' contextually)
     color: '#FFD700',
     details: [],
   },
@@ -37,7 +37,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     shortDescription: 'Crookes and others experiment with electrical discharges in vacuum tubes.',
     startYear: 1870,
     endYear: 1880,
-    laneKey: 'particle-discoveries', // Corrected laneKey
+    laneKey: 'particle-discoveries', // OK
     details: [],
   },
   {
@@ -46,7 +46,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Discovery of Photoelectric Effect',
     shortDescription: 'Hertz observes that light can eject electrons from a metal surface.',
     year: 1887,
-    laneKey: 'modern-physics', // Corrected laneKey
+    laneKey: 'modern-physics', // OK
     icon: 'Sparkles',
     details: [],
   },
@@ -56,7 +56,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Discovery of X-rays',
     shortDescription: 'Roentgen discovers X-rays, a new type of radiation.',
     year: 1895,
-    laneKey: 'modern-physics', // Corrected laneKey
+    laneKey: 'modern-physics', // OK
     icon: 'Radical',
     details: [],
   },
@@ -66,7 +66,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Discovery of Radioactivity',
     shortDescription: 'Becquerel discovers radioactivity in uranium salts. Marie Curie later does extensive work.',
     year: 1896,
-    laneKey: 'modern-physics', // Corrected laneKey
+    laneKey: 'modern-physics', // OK
     icon: 'Radical',
     details: [],
   },
@@ -74,9 +74,9 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     id: 'electron-discovery',
     category: 'experimental-discovery',
     title: 'Discovery of the Electron',
- shortDescription: 'J.J. Thomson identifies the electron as a fundamental particle.',
-    year: 1897, // Corrected year
-    laneKey: 'particle-discoveries', // Changed laneKey for consistency with timeline-types
+    shortDescription: 'J.J. Thomson identifies the electron as a fundamental particle.',
+    year: 1897,
+    laneKey: 'particle-discoveries', // OK
     icon: 'Beaker',
     details: [],
   },
@@ -86,7 +86,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Blackbody Radiation Explained',
     shortDescription: 'Planck proposes energy quantization to explain blackbody radiation.',
     year: 1900,
-    laneKey: 'quantum-mechanics', // Corrected laneKey
+    laneKey: 'modern-physics', // Corrected from 'quantum-mechanics'
     icon: 'Sparkles',
     details: [],
   },
@@ -94,9 +94,9 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     id: 'atomic-nucleus-discovery',
     category: 'experimental-discovery',
     title: 'Discovery of the Atomic Nucleus',
- shortDescription: 'Rutherford\'s gold foil experiment reveals the nucleus.',
+    shortDescription: 'Rutherford\'s gold foil experiment reveals the nucleus.',
     year: 1911,
-    laneKey: 'particle-discoveries', // Corrected laneKey
+    laneKey: 'particle-discoveries', // OK
     icon: 'Atom',
     details: [],
   },
@@ -106,7 +106,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Bohr Model of the Atom',
     shortDescription: 'Bohr applies quantum ideas to the atomic structure.',
     year: 1913,
-    laneKey: 'quantum-mechanics', // Corrected laneKey
+    laneKey: 'modern-physics', // Corrected from 'quantum-mechanics' (Category 'theory-development' in modern era)
     icon: 'Atom',
     details: [],
   },
@@ -116,7 +116,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'General Relativity',
     shortDescription: 'Einstein publishes his theory of general relativity.',
     year: 1915,
-    laneKey: 'relativity-cosmology', // Corrected laneKey
+    laneKey: 'modern-physics', // Corrected from 'relativity-cosmology'
     icon: 'Rocket',
     details: [],
   },
@@ -126,7 +126,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Wave-Particle Duality Proposed',
     shortDescription: 'de Broglie proposes that particles have wave-like properties.',
     year: 1924,
-    laneKey: 'quantum-mechanics', // Corrected laneKey
+    laneKey: 'modern-physics', // Corrected from 'quantum-mechanics'
     icon: 'Sparkles',
     details: [],
   },
@@ -136,7 +136,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Schrödinger Equation',
     shortDescription: 'Schrödinger develops the wave equation for quantum systems.',
     year: 1926,
-    laneKey: 'quantum-mechanics', // Corrected laneKey
+    laneKey: 'modern-physics', // Corrected from 'quantum-mechanics' (Category 'theory-development' in modern era)
     icon: 'Sparkles',
     details: [],
   },
@@ -146,7 +146,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Uncertainty Principle',
     shortDescription: 'Heisenberg formulates the uncertainty principle.',
     year: 1927,
-    laneKey: 'quantum-mechanics', // Corrected laneKey
+    laneKey: 'modern-physics', // Corrected from 'quantum-mechanics'
     icon: 'Sparkles',
     details: [],
   },
@@ -156,7 +156,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Discovery of the Neutron',
     shortDescription: 'Chadwick discovers the neutron, a neutral particle in the nucleus.',
     year: 1932,
-    laneKey: 'particle-discoveries', // Corrected laneKey
+    laneKey: 'particle-discoveries', // OK
     icon: 'Beaker',
     details: [],
   },
@@ -166,7 +166,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Discovery of Nuclear Fission',
     shortDescription: 'Hahn and Strassmann discover nuclear fission.',
     year: 1938,
-    laneKey: 'modern-physics', // Corrected laneKey
+    laneKey: 'modern-physics', // OK
     icon: 'Radical',
     details: [],
   },
@@ -176,7 +176,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'First Nuclear Reactor',
     shortDescription: 'Fermi leads the construction of the first self-sustaining nuclear chain reaction.',
     year: 1942,
-    laneKey: 'big-machines', // Corrected laneKey
+    laneKey: 'big-machines', // OK
     icon: 'Construction',
     details: [],
   },
@@ -185,8 +185,8 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     category: 'cosmology-discovery',
     title: 'Big Bang Theory Proposed',
     shortDescription: 'Lemaître proposes the theory of the expanding universe.',
-    year: 1927, // Although Hubble's observations were later, Lemaître's theory was earlier.
-    laneKey: 'space-missions', // Corrected laneKey
+    year: 1927,
+    laneKey: 'space-missions', // OK
     icon: 'Galaxy',
     details: [],
   },
@@ -196,7 +196,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Hubble\'s Law (Expansion of the Universe)',
     shortDescription: 'Hubble observes the redshift of distant galaxies, indicating expansion.',
     year: 1929,
-    laneKey: 'space-missions', // Corrected laneKey
+    laneKey: 'space-missions', // OK
     icon: 'Galaxy',
     details: [],
   },
@@ -206,19 +206,18 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Measurement of Speed of Light',
     shortDescription: 'Fizeau and Foucault make early accurate measurements.',
     startYear: 1849,
-    endYear: 1862, // Keeping the original end year
-    laneKey: 'classical-physics', // Corrected laneKey
+    endYear: 1862,
+    laneKey: 'classical-physics', // OK
     color: '#FFD700',
     details: [],
   },
-  // Add more events here, ensuring they have unique IDs and relevant details
   {
     id: 'photoelectric-effect',
     category: 'quantum-discovery',
     title: 'Photoelectric Effect Explained',
     shortDescription: 'Einstein explains the effect using light quanta (photons).',
     year: 1905,
-    laneKey: 'modern-physics', // Corrected laneKey
+    laneKey: 'modern-physics', // OK
     icon: 'Sparkles',
     details: [],
   },
@@ -228,7 +227,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Special Relativity',
     shortDescription: 'Einstein introduces his theory of special relativity.',
     year: 1905,
-    laneKey: 'modern-physics', // Corrected laneKey
+    laneKey: 'modern-physics', // OK
     icon: 'Rocket',
     details: [],
   },
@@ -238,7 +237,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Discovery of Cosmic Microwave Background',
     shortDescription: 'Penzias and Wilson accidentally discover the CMB radiation, evidence for the Big Bang.',
     year: 1964,
-    laneKey: 'space-missions', // Corrected laneKey
+    laneKey: 'space-missions', // OK
     icon: 'Galaxy',
     details: [],
   },
@@ -248,8 +247,8 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Development of the Standard Model',
     shortDescription: 'Period of significant progress towards the Standard Model.',
     startYear: 1960,
-    endYear: 1973, // Keeping the original end year
-    laneKey: 'particle-discoveries', // Corrected laneKey
+    endYear: 1973,
+    laneKey: 'particle-discoveries', // OK (Category 'theory-development' fits 'particle-discoveries' contextually)
     color: '#8A2BE2',
     details: [],
   },
@@ -259,7 +258,7 @@ export const rawPhysicsTimelineEvents: TimelineEvent[] = [
     title: 'Higgs Boson Discovery',
     shortDescription: 'CERN announces the discovery of the Higgs boson.',
     year: 2012,
-    laneKey: 'particle-discoveries', // Corrected laneKey
+    laneKey: 'particle-discoveries', // OK
     icon: 'Sparkles',
     details: [],
   },

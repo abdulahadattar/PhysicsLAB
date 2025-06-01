@@ -2,14 +2,27 @@
 
 ## 1. Project Structure
 
-The project follows a Next.js application structure with a focus on modularity and clear separation of concerns.
+The project follows a Next.js application structure with a focus on modularity, clear separation of concerns, and the use of the App Router for routing and data fetching.
+
+The `.idx/` directory contains files related to the development environment setup.
+
 ```
 /
 ├── .idx/                 # Development environment configuration
 ├── .vscode/              # VSCode settings
 ├── docs/                 # Project documentation
-├── public/               # Static assets (images, fonts, etc.)
-│   ├── textbooks/        # Textbooks in PDF format
+│   ├── QUIZZES_DEVELOPER_GUIDE.md # Guide for developers working on the quiz system
+│   ├── blueprint.md      # Likely contains project blueprint or design specifications
+│   ├── dashboard-ui-todo.md # Likely lists UI tasks or to-dos for the dashboard
+│   └── getting-started.md # Likely a guide for setting up and getting started with the project
+│
+
+├── public/               # Static assets (images, fonts, etc.), directly accessible by the browser
+│   ├── manifest.json     # Web app manifest file for PWA
+│   ├── sw.js             # Service worker script for PWA features (caching, offline support)
+│   ├── images/           # Images used in the application, including simulation thumbnails
+│   │   └── sim-thumbnails/ # Placeholder images for simulation previews
+│   ├── textbooks/        # Textbooks in PDF format, organized by grade and type
 │   └── ...
 ├── scripts/              # Utility scripts
 ├── src/

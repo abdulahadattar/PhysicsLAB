@@ -1,4 +1,15 @@
 {
     "IDX.aI.enableInlineCompletion": true,
-    "IDX.aI.enableCodebaseIndexing": true
+    "IDX.aI.enableCodebaseIndexing": true,
+    "chat.commandCenter.enabled": true,
+    "chat.experimental.detectParticipant.enabled": true,
+    "chat.experimental.implicitContext": true,
+    "chat.experimental.variables.terminal": true,
+    "inlineChat.finishOnType": true,
+    "workbench.editor.autoLockGroups": {
+        "workbench.editor.chatSession": true
+    },
+    "workbench.editor.enablePreviewFromCodeNavigation": true,
+    "workbench.editor.enablePreviewFromQuickOpen": true,
+    "editor.formatOnPaste": false
 }
