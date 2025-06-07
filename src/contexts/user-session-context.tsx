@@ -1,5 +1,21 @@
 /**
  * @fileOverview User Session Management Context.
+ */
+/* 
+👋 Gemini Code Generator Context:
+
+This file defines the UserSessionContext, which is intended to manage the user's authentication state and potentially user data (including roles based on Firebase Custom Claims).
+
+According to the TODO list, this context is crucial for implementing User Roles and Authentication. It should:
+- Listen for Firebase Authentication state changes.
+- Store the authenticated user object.
+- Fetch and store user's custom claims (roles) after login or auth state change.
+- Provide functions to access the user object, their roles, and potentially login/logout functionality (though login/logout might be handled elsewhere and trigger context updates).
+- Be used by components throughout the app to determine user permissions and personalize the experience.
+
+Ensure the context is implemented using React's Context API and useState/useReducer as appropriate. It should handle loading states and potential errors during authentication.
+*/
+/**
  * This context handles user authentication state (Firebase-based and simulated offline debug),
  * user roles (teacher/student, potentially fetched from Firestore), and a "View as Student" mode for teachers.
  * It provides functions for login, logout, and toggling views.

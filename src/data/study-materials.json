@@ -1,3 +1,14 @@
+/* 👋 Gemini Code Generator Context:
+
+This file contains structured data for study materials within the Physics education app.
+It is currently populated with placeholder data representing the basic structure of the
+Sindh Textbook Board Physics Syllabus for grades 9-12.
+
+**Objective:** Populate this file with the actual curriculum content for grades 9-12,
+following the Sindh Textbook Board syllabus precisely.
+The data structure should include fields for grade, chapter, topic, and content (notes, examples, formulas, diagrams, etc.).
+Ensure the content is comprehensive and aligns with the official textbooks.
+*/
 [ {
     "id": "grade9",
     "name": "Grade IX",

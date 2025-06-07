@@ -1,4 +1,11 @@
 [[
+  /*
+👋 Gemini Code Generator Context:
+
+This JSON file contains philosophical questions related to physics. These questions are intended to stimulate deeper thinking and discussion among students, potentially used in a "Philosophical Physics" section of the app (`src/app/(app)/philosophical-physics/page.tsx`).
+
+The data should be an array of strings, where each string is a thought-provoking question connecting physics concepts to broader philosophical ideas.
+*/
     {
       "id": "nature-of-reality",
       "name": "The Nature of Physical Reality",

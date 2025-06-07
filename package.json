@@ -50,7 +50,7 @@
     "genkit": "^1.8.0",
     "katex": "^0.16.22",
     "lucide-react": "^0.475.0",
-    "next": "15.2.3",
+    "next": "^15.3.3",
     "next-themes": "^0.3.0",
     "patch-package": "^8.0.0",
     "pdf-parse": "^1.1.1",

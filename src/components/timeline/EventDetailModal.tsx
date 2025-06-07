@@ -73,6 +73,23 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, isO
            </p>
         )}
 
+        {/* Display External Links */}
+        {event.externalLinks && event.externalLinks.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <h3 className="text-lg font-medium border-b pb-1 mb-2">External Resources:</h3>
+            {event.externalLinks.map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline text-sm block"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        )}
         <p className="text-gray-700 mb-4 whitespace-pre-wrap">
           {event.detailedDescription || event.shortDescription || 'No detailed description available.'}
         </p>
@@ -81,6 +98,18 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, isO
         <div className="mb-4 p-3 bg-yellow-50 rounded-md border-l-4 border-yellow-500 text-yellow-800">
             <h3 className="font-medium text-yellow-800">Key Takeaways / Impact (Placeholder)</h3>
             <p className="text-sm italic">This section will contain a summary of the event's importance or consequences.</p>
+        </div>
+
+        {/* Placeholder Section for AI-Powered Connections */}
+        <div className="mb-4 p-3 bg-purple-50 rounded-md border-l-4 border-purple-500 text-purple-800">
+            <h3 className="font-medium text-purple-800">AI-Powered Connections (Placeholder)</h3>
+            <p className="text-sm italic">Related events, figures, and concepts suggested by AI will appear here.</p>
+        </div>
+
+        {/* Placeholder Section for AI-Powered Connections */}
+        <div className="mb-4 p-3 bg-purple-50 rounded-md border-l-4 border-purple-500 text-purple-800">
+            <h3 className="font-medium text-purple-800">AI-Powered Connections (Placeholder)</h3>
+            <p className="text-sm italic">Related events, figures, and concepts suggested by AI will appear here.</p>
         </div>
 
         {/* Removed old 'details' section as information is moved to main event */}
@@ -116,9 +145,6 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, isO
                   <audio src={media.url} controls className="w-full"></audio>
                 )}
               </div>
-            ))}
-             {event.mediaUrls.map((media, index) => (
-               <div key={index}>{media.type} at: {media.url}</div> // Simple display for now
             ))}
           </div>
         )}

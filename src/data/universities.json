@@ -1,1 +1,12 @@
+/* 
+👋 Gemini Code Generator Context:
+
+This JSON file lists universities with strong physics programs. This data will be used in a "Universities" or "University Programs" section of the app (`src/app/(app)/universities/page.tsx` or `src/app/(app)/university-programs/page.tsx`) to guide students interested in pursuing physics further.
+
+The data should be an array of objects, each representing a university. Each object should have properties like `name` (string), `location` (string), and potentially `physicsProgramUrl` (string) or `mainUrl` (string).
+
+Include reputable universities, both international and within Pakistan, known for their physics departments.
+*/
+[]
+
 []

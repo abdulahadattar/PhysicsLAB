@@ -1,1 +1,13 @@
+/* 
+👋 Gemini Code Generator Context:
+
+This JSON file lists common physics lab equipment. It will be used in a future "Lab Equipment" page (`src/app/(app)/lab-equipment/page.tsx`) to display information about each piece of equipment.
+
+The data structure should be an array of objects, each representing a piece of lab equipment. Each object should ideally have properties like `name` (string), `description` (string), and potentially `imageUrl` (string) pointing to an image of the equipment.
+
+Include equipment relevant to the Sindh Textbook Board Physics syllabus for grades 9-12, such as beakers, test tubes, Bunsen burners, meters, circuits components, optical benches, etc.
+*/
+{
+
+}
 {}

@@ -1,1 +1,18 @@
+[
+  {
+    "name": "CERN",
+    "location": "Geneva, Switzerland",
+    "url": "https://home.cern/"
+  }
+]
+
+/* 
+👋 Gemini Code Generator Context:
+
+This JSON file lists prominent physics research centers. This data will be used in a "Research Centers" section of the app (`src/app/(app)/research-centers/page.tsx`) to inform students about institutions involved in physics research.
+
+The data should be an array of objects, each representing a research center. Each object should have properties like `name` (string), `location` (string), and potentially `url` (string) for their website.
+
+Include well-known international and Pakistani research centers relevant to physics.
+*/
 []

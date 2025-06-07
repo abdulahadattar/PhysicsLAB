@@ -3,3 +3,6 @@
 
 git add .
 git commit -m "chore: push all workspace files (code, public, assets, etc)"
+
+
+git push

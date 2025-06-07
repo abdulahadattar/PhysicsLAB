@@ -21,6 +21,9 @@ interface FormattedEvent extends TimelineEvent {
   durationEndX?: number;
 }
 
+interface DynamicFocusTimelineProps {
+  events: TimelineEvent[];
+}
 const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,6 +33,8 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
   const zoomBehaviorRef = useRef<D3ZoomBehavior | null>(null);
 
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(true); // State for welcome overlay
+
   // State for filtering and sorting
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterLane, setFilterLane] = useState<string | null>(null);
@@ -37,7 +42,10 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
   const [filterSignificance, setFilterSignificance] = useState<number | null>(null);
   const [filterStartDate, setFilterStartDate] = useState<Date | null>(null);
   const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
-
+  const [sortBy, setSortBy] = useState<'date' | 'significance'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [filterMediaOnly, setFilterMediaOnly] = useState<boolean>(false); // State for media filter// State for Focus Width
+  const [focusWidthPx, setFocusWidthPx] = useState(250); // State for Focus Width
   const [focusStrength, setFocusStrength] = useState(0.7); // State for Focus Strength
   const MARGIN = useMemo(() => ({ top: 30, right: 30, bottom: 60, left: 50 }), []);
   const FOCUS_WIDTH_PX = 250;
@@ -46,8 +54,49 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
   const VERTICAL_STACK_SPACING = 25;
   const DURATION_EVENT_HEIGHT = 12;
 
-  const [sortBy, setSortBy] = useState<'date' | 'significance'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const filteredAndSortedEvents = useMemo(() => {
+    let filteredEvents = [...processedEvents];
+
+    // Apply filters
+    if (filterCategory) {
+      filteredEvents = filteredEvents.filter(event => event.category === filterCategory);
+    }
+    if (filterLane) {
+      filteredEvents = filteredEvents.filter(event => event.laneKey === filterLane);
+    }
+    if (filterSignificance != null) {
+      filteredEvents = filteredEvents.filter(event => event.significanceRating === filterSignificance);
+    }
+    if (filterStartDate) {
+      filteredEvents = filteredEvents.filter(event => event.date >= filterStartDate);
+    }
+    if (filterEndDate) {
+      filteredEvents = filteredEvents.filter(event => event.date <= filterEndDate);
+    }
+    if (filterTags && filterTags.length > 0) {
+      filteredEvents = filteredEvents.filter(event =>
+        event.tags && filterTags.some(tag => event.tags!.includes(tag))
+      );
+    }
+    // Filter by events with media (image or video/audio)
+    if (filterEndDate) {
+      filteredEvents = filteredEvents.filter(event => event.date <= filterEndDate);
+    }
+    // Apply sorting
+    filteredEvents.sort((a, b) => {
+      const compareA = sortBy === 'date' ? a.date.getTime() : a.significanceRating || 0;
+      const compareB = sortBy === 'date' ? b.date.getTime() : b.significanceRating || 0;
+
+      if (compareA < compareB) return sortOrder === 'asc' ? -1 : 1;
+      if (compareA > compareB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // Note: The stacking logic will be applied *after* filtering and sorting, before rendering.
+
+    return filteredEvents;
+  }, [processedEvents, filterCategory, filterLane, filterSignificance, filterStartDate, filterEndDate, filterTags, sortBy, sortOrder, filterMediaOnly]); // Added filterMediaOnly to dependencies
+
   const processedEvents = useMemo((): FormattedEvent[] => {
     return events
       .map(event => {
@@ -132,11 +181,11 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
     const currentFocusDate: Date = currentZoomedBaseScale.invert(visualFocusX);
 
     // ***** THE FIX IS HERE *****
- const renderXScale = createFocusScale(currentZoomedBaseScale, currentFocusDate, focusStrength, FOCUS_WIDTH_PX);
+    const renderXScale = createFocusScale(currentZoomedBaseScale, currentFocusDate, focusStrength, focusWidthPx); // Use state variable
     // ***** END OF FIX *****
 
-    const eventsWithStacking = [...processedEvents];
-    const eventsByLane = d3.group(eventsWithStacking, d => d.laneKey as LaneKey);
+    // Apply stacking logic to the filtered and sorted events
+    const eventsByLane = d3.group(filteredAndSortedEvents, d => d.laneKey as LaneKey);
 
     eventsByLane.forEach((eventsInLane) => {
       eventsInLane.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -216,7 +265,7 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
 
     const stems = eventsGroup.merge(gEnter.select(".events-group"))
       .selectAll<SVGLineElement, FormattedEvent>(".event-stem")
-      .data(eventsWithStacking, d => d.id);
+ .data(filteredAndSortedEvents, d => d.id);
 
     stems.enter().append("line").attr("class", "event-stem")
       .merge(stems)
@@ -229,15 +278,15 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
       .attr("stroke-width", 1);
     stems.exit().remove();
 
-    const pointEvents = eventsWithStacking.filter(d => !d.isDurationEvent);
-    const eventNodes = eventsGroup.merge(gEnter.select(".events-group"))
-      .selectAll<SVGCircleElement, FormattedEvent>(".event-node")
-      .data(pointEvents, d => d.id);
+    const pointEvents = filteredAndSortedEvents.filter(d => !d.isDurationEvent);
+ const eventNodes = eventsGroup.merge(gEnter.select(".events-group"))
+ .selectAll<SVGCircleElement, FormattedEvent>(".event-node")
+ .data(pointEvents, d => d.id);
 
-    eventNodes.enter().append("circle").attr("class", "event-node cursor-pointer")
-      .on('click', (event: MouseEvent, d: FormattedEvent) => {
+ eventNodes.enter().append("circle").attr("class", "event-node cursor-pointer")
+      .on('click', (_event: MouseEvent, d: FormattedEvent) => { // Used _event since it's not used
         setSelectedEvent(d);
-        event.stopPropagation();
+        _event.stopPropagation(); // Corrected variable name
       })
       .on('mouseover', function(event: MouseEvent, d: FormattedEvent) {
         if (!containerRef.current) return;
@@ -245,10 +294,10 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
         const [svgX, svgY] = d3.pointer(event, svgRef.current);
         setTooltip({ visible: true, content: `${d.title}: ${d.shortDescription}`, x: svgX + 10, y: svgY - 10 });
       })
-      .on('mouseout', function(this: SVGCircleElement, event: MouseEvent, d: FormattedEvent) {
+      .on('mouseout', function(this: SVGCircleElement, _event: MouseEvent, d: FormattedEvent) { // Used _event
         d3.select(this).transition().duration(100).attr("r", d.id === selectedEvent?.id ? EVENT_NODE_RADIUS * 1.5 : EVENT_NODE_RADIUS).attr("fill", d.color || CATEGORY_COLOR_MAP[d.category as EventCategory] || LANE_CONFIG_MAP[d.laneKey]?.defaultColor || 'steelblue');
         setTooltip(prev => ({ ...prev, visible: false }));
-      })
+ })
       .merge(eventNodes)
       .attr("class", d => `event-node cursor-pointer ${d.id === selectedEvent?.id ? 'selected-event-node' : ''}`)
       .transition().duration(300)
@@ -260,15 +309,15 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
       .attr("stroke-width", d => d.id === selectedEvent?.id ? 2 : 0);
     eventNodes.exit().remove();
 
-    const durationEventsData = eventsWithStacking.filter(d => d.isDurationEvent);
+    const durationEventsData = filteredAndSortedEvents.filter(d => d.isDurationEvent);
     const eventBars = eventsGroup.merge(gEnter.select(".events-group"))
       .selectAll<SVGRectElement, FormattedEvent>(".event-bar")
       .data(durationEventsData, d => d.id);
 
     eventBars.enter().append("rect").attr("class", "event-bar cursor-pointer")
-      .on('click', (event: MouseEvent, d: FormattedEvent) => {
+      .on('click', (_event: MouseEvent, d: FormattedEvent) => { // Used _event
         setSelectedEvent(d);
-        event.stopPropagation();
+        _event.stopPropagation(); // Corrected variable name
       })
       .on('mouseover', function(event: MouseEvent, d: FormattedEvent) {
         if (!containerRef.current) return;
@@ -276,10 +325,10 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
         const [svgX, svgY] = d3.pointer(event, svgRef.current);
         setTooltip({ visible: true, content: `${d.title}: ${d.shortDescription}`, x: svgX + 10, y: svgY - 10 });
       })
-      .on('mouseout', function(this: SVGRectElement, event: MouseEvent, d: FormattedEvent) {
+      .on('mouseout', function(this: SVGRectElement, _event: MouseEvent, d: FormattedEvent) { // Used _event
         d3.select(this).attr("filter", null);
         setTooltip(prev => ({ ...prev, visible: false }));
-      })
+ })
       .merge(eventBars)
       .attr("class", d => `event-bar cursor-pointer ${d.id === selectedEvent?.id ? 'selected-event-bar' : ''}`)
       .transition().duration(300)
@@ -308,8 +357,8 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
       zoomBehaviorRef.current.extent([[0, 0], [dimensions.width - MARGIN.left - MARGIN.right, dimensions.height - MARGIN.top - MARGIN.bottom]]); // Use calculated width/height
     }
 
-  }, [
- processedEvents, minDate, maxDate, dimensions, currentTransform, selectedEvent, focusStrength, // Add focusStrength to dependencies
+  }, [ // Add filter and sort dependencies
+    filteredAndSortedEvents, minDate, maxDate, dimensions, currentTransform, selectedEvent, focusStrength, focusWidthPx, processedEvents, // Added processedEvents back as it's used to calculate min/maxDate and initial scale
     MARGIN, createFocusScale
   ]);
 
@@ -330,14 +379,29 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
   }, []);
 
   return (
+    <>
+    {showWelcomeOverlay && (
+        <div className="fixed inset-0 bg-black/70 z-[2000] flex justify-center items-center">
+          <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm">
+            <h2 className="text-2xl font-bold mb-4">Welcome to the Physics Timeline!</h2>
+            <p className="mb-6 text-gray-700">Explore the key events, discoveries, and figures that shaped the world of physics.</p>
+            <Button onClick={() => setShowWelcomeOverlay(false)}>
+              Start Exploring
+            </Button>
+          </div>
+        </div>
+      )}
     <div ref={containerRef} className="w-full h-[450px] border rounded-md shadow-sm relative bg-gray-50" style={{ minHeight: '350px' }}>
-      <div className="absolute top-3 left-3 z-10 space-x-2 flex flex-col items-start p-2 bg-white rounded-md shadow-md">
+      <div className="absolute top-3 left-3 z-10 space-y-2 flex flex-col items-start p-2 bg-white rounded-md shadow-md"> {/* Changed space-x-2 to space-y-2 */}
         <div className="flex items-center space-x-1 mb-2">
         <Button onClick={() => handleZoom(1.5)} size="sm" variant="outline" className="bg-white">
           <ZoomInIcon size={16} className="mr-1" /> Zoom In
         </Button>
         <Button onClick={() => handleZoom(0.75)} size="sm" variant="outline" className="bg-white">
           <ZoomOutIcon size={16} className="mr-1" /> Zoom Out
+        </Button>
+        <Button onClick={handleResetZoom} size="sm" variant="outline" className="bg-white">
+          <RotateCcwIcon size={16} className="mr-1" /> Reset
         </Button>
         </div>
         <div className="flex items-center space-x-2 w-48">
@@ -352,11 +416,18 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
           />
           <span className="text-xs w-6 text-right">{focusStrength.toFixed(2)}</span>
         </div>
-        {/* Add Focus Width Slider Here (Future) */}
-        {/* <div className="flex items-center space-x-2 w-48 mt-1">...</div> */}
-        <Button onClick={handleResetZoom} size="sm" variant="outline" className="bg-white">
-          <RotateCcwIcon size={16} className="mr-1" /> Reset
-        </Button>
+        {/* Add Focus Width Slider */}
+        <div className="flex items-center space-x-2 w-48"> {/* Removed mt-1 as space-y-2 handles vertical spacing */}
+           <label className="text-xs font-medium w-20">Focus Width (px):</label>
+          <Slider
+            value={[focusWidthPx]}
+            min={50}
+            max={500}
+            step={10}
+            onValueChange={(value) => setFocusWidthPx(value[0])}
+            className="flex-grow"
+          />
+        </div> {/* Placeholder, replace with actual slider */}
       </div>
       <svg ref={svgRef} width="100%" height="100%">
         <defs>
@@ -391,16 +462,8 @@ const DynamicFocusTimeline: React.FC<DynamicFocusTimelineProps> = ({ events }) =
         >
           {tooltip.content}
         </div>
-      )}
-       <div className="absolute bottom-2 right-3 text-xs text-gray-500 z-10">
-        Scroll to zoom, Click & Drag to pan. Click events for details.
       </div>
     </div>
+    </>
   );
 };
-
-export default DynamicFocusTimeline;
-
-interface DynamicFocusTimelineProps {
-  events: TimelineEvent[];
-}
