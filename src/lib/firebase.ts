@@ -12,7 +12,8 @@
  * This file is a central point for Firebase-related code and is imported by other parts of the application that interact with Firebase services.
  * It provides the `auth`, `googleProvider`, and `db` (Firestore) instances.
  * Includes checks for missing environment variables and handles initialization errors gracefully
- * to prevent app crashes if Firebase is not configured, allowing other app features to function.\n * Enables Firestore offline persistence.
+ * to prevent app crashes if Firebase is not configured, allowing other app features to function.
+ * Enables Firestore offline persistence.
  */
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
@@ -62,7 +63,8 @@ if (!allKeysPresent) {
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CRITICAL Firebase Configuration Error:
 The following environment variable(s) are MISSING:
-  ${missingKeys.join('\n  ')}
+  ${missingKeys.join('
+  ')}
 
 Please ensure these variables are correctly set in your .env.local file.
 This file MUST be in the root directory of your project.
@@ -83,47 +85,63 @@ Firebase features like Google Sign-In and Firestore integration will be disabled
       db = getFirestore(app); // Initialize Firestore
       storage = getStorage(app); // Initialize Storage
       functions = getFunctions(app); // Initialize Functions
+
       if (auth) {
         auth.setPersistence(indexedDBLocalPersistence);
         console.log("Firebase Auth IndexedDB persistence enabled.");
       } else {
- console.warn("Firebase Auth not initialized, cannot enable IndexedDB persistence.");
+        console.warn("Firebase Auth not initialized, cannot enable IndexedDB persistence.");
       }
       console.log("Firebase app, auth, and Firestore initialized successfully.");
+
+      // Initialize googleProvider after successful app and auth init
+      if (app && auth) {
+         googleProvider = new GoogleAuthProvider();
+      }
+
     } catch (error) {
       console.error("Error initializing Firebase app (even after config check):", error);
       // Ensure auth, app, and db are undefined if initialization fails catastrophically
- app = undefined;
- auth = undefined;
- db = undefined;
- storage = undefined;
- functions = undefined;
+      app = undefined;
+      auth = undefined;
+      db = undefined;
+      storage = undefined;
+      functions = undefined;
+      googleProvider = undefined; // Ensure provider is undefined if init fails
     }
   } else {
     // Firebase app already initialized, get existing instance.
     app = getApps()[0];
     if (app) {
- auth = getAuth(app); // Get auth instance from existing app
- db = getFirestore(app); // Get Firestore instance from existing app
       try {
         auth = getAuth(app); // Get auth instance from existing app
         db = getFirestore(app); // Get Firestore instance from existing app
+        storage = getStorage(app); // Get Storage instance from existing app
+        functions = getFunctions(app); // Get Functions instance from existing app
+
         if (auth) {
-        auth.setPersistence(indexedDBLocalPersistence);
-        console.log("Firebase Auth IndexedDB persistence enabled on existing app.");
+          auth.setPersistence(indexedDBLocalPersistence);
+          console.log("Firebase Auth IndexedDB persistence enabled on existing app.");
         } else {
- console.warn("Firebase Auth not obtained from existing app, cannot enable IndexedDB persistence.");
+          console.warn("Firebase Auth not obtained from existing app, cannot enable IndexedDB persistence.");
         }
- storage = getStorage(app); // Get Storage instance from existing app
- functions = getFunctions(app); // Get Functions instance from existing app
-        googleProvider = new GoogleAuthProvider();
+
+        // Initialize googleProvider if it's not already defined
+        if (!googleProvider) {
+             googleProvider = new GoogleAuthProvider();
+        }
+
       } catch (error){
- console.error("Error getting Auth, Firestore, Storage, or Functions instance from existing Firebase app:", error);
- auth = undefined; // Ensure auth, db, storage, and functions are undefined on error
- db = undefined;
- storage = undefined;
- functions = undefined;
+        console.error("Error getting Auth, Firestore, Storage, or Functions instance from existing Firebase app:", error);
+        auth = undefined;
+        db = undefined;
+        storage = undefined;
+        functions = undefined;
+        googleProvider = undefined; // Ensure provider is undefined on error
       }
     }
   }
 }
+
+// Export the initialized instances (they might be undefined if init failed)
+export { app, auth, db, storage, functions, googleProvider };

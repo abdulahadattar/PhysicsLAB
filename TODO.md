@@ -166,3 +166,20 @@ formulas: array of { name: string, latex: string, explanation: string }
 multipleChoiceQuestions: array of { question: string, options: string[], correctAnswer: string, explanation: string }
 questionsAndAnswers: array of { question: string, answer: string }
 summary: string
+
+Defining and Implementing the Source of Truth for User Roles:
+
+Reason Not Done: The current implementation pulls roles from Firebase Authentication custom claims. The audit noted the possibility of using Firestore as the primary source or for supplementary role data. Deciding definitively which service (claims or Firestore) is the authoritative source, or how they are combined, is an architectural decision. Implementing this might require updating data models in Firestore and creating backend logic (e.g., a Firebase Cloud Function) to set custom claims or update Firestore documents upon user registration or role changes. These backend tasks are beyond the current tool capabilities.
+Required Next Action: The team must decide on the definitive source of truth for user roles. If Firestore is chosen or needs to be integrated, update the onAuthStateChanged listener (or the future AuthService) to fetch and process role data from Firestore. Develop necessary backend logic to manage user roles persistently and consistently across Firebase services.
+Implementing Robust Server-Side Authentication and Authorization:
+
+Reason Not Done: This is a critical security measure for protecting sensitive API routes (like those in src/app/api/teacher/). It involves using the Firebase Admin SDK on the server to verify the user's identity token and check their permissions before performing actions. Server-side code and Admin SDK usage are outside the scope of the current client-focused tools.
+Required Next Action: For all API routes handling sensitive operations (especially teacher-specific ones), implement server-side middleware or logic to:
+Validate the incoming Firebase ID token.
+Extract the user's UID and claims/role from the verified token.
+Based on the user's identity and role, determine if they are authorized to perform the requested action.
+Return appropriate error responses (401 Unauthorized, 403 Forbidden) if access is denied.
+Completing the Refactoring to a Dedicated Authentication Service (AuthService):
+
+Reason Not Done: While a basic structure for src/lib/auth/authService.ts was created, the full process of moving all core authentication state management logic (the state variables like currentUser, userRole, isLoading, and the onAuthStateChanged listener itself) out of src/contexts/user-session-context.tsx and into the AuthService was not completed. This refactoring requires modifying both files significantly and ensuring the Context correctly subscribes to and reflects the state managed by the AuthService.
+Required Next Action: Continue the refactoring process. Move the state variables and the primary onAuthStateChanged listener logic to src/lib/auth/authService.ts. Update src/contexts/user-session-context.tsx to use React's useState and useEffect to subscribe to the authService instance and update its own state based on service notifications. Expose the AuthService's public methods through the context.

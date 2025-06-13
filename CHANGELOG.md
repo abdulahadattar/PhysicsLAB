@@ -29,6 +29,7 @@ All notable changes to this project are documented here. This project follows [K
 
 ### Changed
 - Moved `MasterPhysicsTimeline.tsx` component to `src/components/timeline/`.
+- Updated `CATEGORY_COLOR_MAP` in `src/components/timeline/timeline-types.ts` to use colors distinct from `LANE_CONFIG_MAP` for improved visual clarity.
 
 ### Added
 - Created a placeholder `getIcon` utility function at `src/lib/getIcon.ts` for dynamic icon rendering.
@@ -72,3 +73,26 @@ All notable changes to this project are documented here. This project follows [K
 **Contributors:**
 - Please focus on replacing mock data with real student tracking and backend integration.
 - See `README.md` and `docs/blueprint.md` for more details and contribution guidelines.
+
+## [Unreleased] - Expected YYYY-MM-DD
+
+### Refactored date:[6/13/2025]
+
+- Refactored the `src/components/layout/app-shell.tsx` component to improve modularity and maintainability by separating concerns into smaller, dedicated components.
+  - Created new `src/features/search/GlobalSearch.tsx` component to encapsulate global search functionality.
+  - Created new `src/features/auth/AuthControl.tsx` component to encapsulate authentication-related UI logic.
+  - Created new `src/components/layout/sidebar/AppSidebar.tsx`, `src/components/layout/sidebar/SidebarNav.tsx`, and `src/components/layout/sidebar/SidebarProfile.tsx` components to manage the sidebar structure and content.
+  - Created new `src/components/layout/AppHeader.tsx` component to manage the header structure and content.
+  - The `src/components/layout/app-shell.tsx` now serves as a simplified layout component, composing the `AppHeader`, `AppSidebar`, and main content area.
+
+### Changed
+
+- Moved the `useOnlineStatus` and `useGlobalErrorHandler` hooks to `src/hooks/` (existing files, no code changes).
+
+### Added
+
+- Created the `src/features` directory to house complex, feature-specific components with encapsulated state and logic.
+
+### Removed
+
+- Removed significant amounts of code and logic from the original `src/components/layout/app-shell.tsx`, delegating responsibilities to the new feature and layout components.

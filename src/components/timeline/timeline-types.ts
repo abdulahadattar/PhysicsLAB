@@ -67,7 +67,7 @@ export const LANE_CONFIG_MAP = {
 
 export type LaneKey = keyof typeof LANE_CONFIG_MAP;
 
-// Add this new constant:
+// Updated to have distinct colors from LANE_CONFIG_MAP
 export const CATEGORY_COLOR_MAP: Record<EventCategory, string> = {
   'pre-science-milestone': '#A9A9A9', // DarkGray
   'pre-science-period': '#C0C0C0', // Silver
@@ -75,23 +75,23 @@ export const CATEGORY_COLOR_MAP: Record<EventCategory, string> = {
   'ancient-model': '#D2B48C', // Tan
   'medieval-tech': '#BC8F8F', // RosyBrown
   'renaissance-discovery': '#A0522D', // Sienna
-  'enlightenment-tech': '#8B4513', // SaddleBrown (already used in LANE_CONFIG_MAP, consider variety)
+  'enlightenment-tech': '#C34A2C', // Burnt Orange (Distinct from lane color)
   'classical-theory': '#6495ED', // CornflowerBlue
-  'classical-discovery': '#4682B4', // SteelBlue (already used in LANE_CONFIG_MAP)
+  'classical-discovery': '#5DADE2', // Pacific Blue (Distinct from lane color)
   'optics-electromagnetism': '#00CED1', // DarkTurquoise
-  'measurement': '#FFD700', // Gold (already used for an event color)
+  'measurement': '#DAF7A6', // Pale Lime Green (Distinct color)
   'modern-theory': '#3CB371', // MediumSeaGreen
-  'modern-discovery': '#2E8B57', // SeaGreen (already used in LANE_CONFIG_MAP)
+  'modern-discovery': '#48C9B0', // Aqua Teal (Distinct from lane color)
   'modern-model': '#90EE90', // LightGreen
   'quantum-mechanics': '#20B2AA', // LightSeaGreen
   'relativity-cosmology': '#AFEEEE', // PaleTurquoise
   'particle-discovery': '#DAA520', // Goldenrod
-  'particle-nuclear-physics': '#B8860B', // DarkGoldenrod (already used in LANE_CONFIG_MAP)
+  'particle-nuclear-physics': '#D68910', // Orange Peel (Distinct from lane color)
   'experimental-discovery': '#FF6347', // Tomato
   'machine-experiment': '#DB7093', // PaleVioletRed
-  'space-mission': '#1E90FF', // DodgerBlue (already used in LANE_CONFIG_MAP)
-  'earth-cosmic-event': '#FF8C00', // DarkOrange (already used in LANE_CONFIG_MAP)
-  'technology-application': '#9932CC', // DarkOrchid (already used in LANE_CONFIG_MAP)
+  'space-mission': '#85C1E9', // Light Blue (Distinct from lane color)
+  'earth-cosmic-event': '#F5B041', // Mustard Yellow (Distinct from lane color)
+  'technology-application': '#AF7AC5', // Lavender (Distinct from lane color)
   'technological-advancement': '#CD5C5C', // IndianRed
   'theory-development': '#BA55D3', // MediumOrchid
   'quantum-discovery': '#48D1CC', // MediumTurquoise

@@ -56,4 +56,4 @@ service firebase.storage {
       allow read: if request.auth != null; // Assuming authenticated users can read all files
     }
   }
-}
+}is 
